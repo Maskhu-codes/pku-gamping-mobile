@@ -9,7 +9,7 @@ const _primaryBlue = Color(0xFF0D4FC1);
 const _ink = Color(0xFF182238);
 const _muted = Color(0xFF91A3BE);
 const _page = Color(0xFFF7F9FC);
-const bool tampilkanRiwayat = false; // Ubah menjadi false untuk menyembunyikan menu Riwayat
+const bool tampilkanRiwayat = true; // Ubah menjadi false untuk menyembunyikan menu Riwayat
 
 class HomeScreenQueue extends StatefulWidget {
   final TopNotificationType? notification;
