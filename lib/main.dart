@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/screens/home_screen_queue.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'RS PKU Gamping - Portal Pasien',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -28,9 +29,10 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D4FC1)),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const HomeScreenQueue(),
     );
   }
 }
