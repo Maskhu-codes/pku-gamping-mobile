@@ -1,30 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:pku_gamping_app/main.dart';
+import 'package:pku_gamping_app/screens/register_screen.dart';
+import 'package:flutter/material.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('PkuGampingApp smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(const PkuGampingApp());
+    await tester.pumpAndSettle();
+    expect(find.byType(PkuGampingApp), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('RegisterScreen render smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RegisterScreen(),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verifikasi header
+    expect(find.text('Daftar Pasien Baru'), findsOneWidget);
+    expect(find.text('Lengkapi data diri Anda untuk mendaftar akun baru'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verifikasi stepper awal
+    expect(find.text('Langkah 1 dari 3'), findsOneWidget);
+    expect(find.text('Cek NIK & Lanjutkan →'), findsOneWidget);
   });
 }
