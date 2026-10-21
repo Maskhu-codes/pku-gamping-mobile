@@ -95,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '© 2024 PKU Muhammadiyah Gamping',
+                        '© ${DateTime.now().year} PKU Muhammadiyah Gamping',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: AppColors.textHint,
