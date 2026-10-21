@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/screens/jadwal_screen.dart';
+import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
+import 'package:pku_gamping_app/screens/profile_screen.dart';
 import 'package:pku_gamping_app/screens/queue_detail_screen.dart';
 import 'package:pku_gamping_app/screens/queue_screen.dart';
 import 'package:pku_gamping_app/screens/riwayat_screen.dart';
@@ -28,8 +31,6 @@ class _HomeScreenQueueState extends State<HomeScreenQueue> {
   int _selectedIndex = 0;
 
   @override
-
-  @override
   void initState() {
     super.initState();
 
@@ -43,6 +44,7 @@ class _HomeScreenQueueState extends State<HomeScreenQueue> {
     });
   }
   
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Theme(
@@ -57,16 +59,21 @@ class _HomeScreenQueueState extends State<HomeScreenQueue> {
             children: [
               const _BrandHeader(),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      _WelcomeAndQueue(),
-                      _QuickLinks(),
-                      _NewsSection(),
-                      _EmergencyContact(),
-                      SizedBox(height: 32),
-                    ],
+                child: ScrollConfiguration(
+                  behavior:
+                      ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        _WelcomeAndQueue(),
+                        _QuickLinks(),
+                        _NewsSection(),
+                        _EmergencyContact(),
+                        SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -74,22 +81,49 @@ class _HomeScreenQueueState extends State<HomeScreenQueue> {
         selectedIndex: _selectedIndex,
         onSelected: (index) {
           if (index == 1) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const QueueScreen(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-      );
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  },
-)
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const QueueScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => const PendaftaranScreen(),
+              ),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const JadwalScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          } else if (index == 4) {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const ProfileScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          } else {
+            setState(() {
+              _selectedIndex = index;
+            });
+          }
+        },
+      )
             ],
           ),
         ),
@@ -180,82 +214,81 @@ class _WelcomeAndQueue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 292,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            height: 200,
-            decoration: const BoxDecoration(
-              color: _primaryBlue,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(60)),
-            ),
+    return Stack(
+      children: [
+        Container(
+          height: 195,
+          decoration: const BoxDecoration(
+            color: _primaryBlue,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(60)),
           ),
-          Positioned(
-            top: 11,
-            left: 34,
-            right: 28,
-            child: Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB7B7B7),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 34,
-                  ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 11),
+              Padding(
+                padding: const EdgeInsets.only(left: 9, right: 3),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB7B7B7),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Selamat pagi,',
+                            style: TextStyle(color: Colors.white, fontSize: 14),
+                          ),
+                          Text(
+                            'Dahlan Muda',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'No. RM: 01-88-24-90  •',
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Selamat pagi,',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                      Text(
-                        'Dahlan Muda',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          height: 1.2,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'No. RM: 01-88-24-90  •',
-                        style: TextStyle(color: Colors.white, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 18),
+              _ActiveQueueCard(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const QueueDetailScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          Positioned(
-            top: 90,
-            left: 25,
-            right: 25,
-            child: _ActiveQueueCard(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const QueueDetailScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -286,10 +319,10 @@ class _ActiveQueueCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _QueueTag(
+              const _QueueTag(
                 label: 'Poli Jantung',
                 foreground: _primaryBlue,
-                background: const Color(0xFFF0F5FF),
+                background: Color(0xFFF0F5FF),
               ),
               const SizedBox(width: 8),
               const Expanded(
@@ -332,8 +365,8 @@ class _ActiveQueueCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            constraints: const BoxConstraints(minHeight: 36),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFF7F9FC),
               borderRadius: BorderRadius.circular(13),
@@ -377,9 +410,13 @@ class _ActiveQueueCard extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Pantau Antrean Langsung',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  Flexible(
+                    child: Text(
+                      'Pantau Antrean Langsung',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward_rounded, size: 21),
@@ -426,14 +463,18 @@ class _QueueTag extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              color: foreground,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -448,7 +489,7 @@ class _QuickLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 48, bottom: 54),
+      padding: const EdgeInsets.only(top: 24, bottom: 44),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -599,6 +640,7 @@ class _NewsSection extends StatelessWidget {
         SizedBox(
           height: 222,
           child: ListView.separated(
+            physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24),
             scrollDirection: Axis.horizontal,
             itemCount: _news.length,

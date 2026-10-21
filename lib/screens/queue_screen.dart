@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/screens/profile_screen.dart';
 import 'package:pku_gamping_app/screens/queue_detail_screen.dart';
 
 const _queueBlue = Color(0xFF0D4FC1);
@@ -32,27 +33,32 @@ class _QueueScreenState extends State<QueueScreen> {
             children: [
               const _QueueBrandHeader(),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 28),
-                  child: Column(
-                    children: [
-                      const _DoctorSummaryCard(),
-                      _ActiveQueueCard(
-                        soundReminderEnabled: _soundReminderEnabled,
-                        onSoundReminderChanged: (enabled) {
-                          setState(() => _soundReminderEnabled = enabled);
-                        },
-                        onDetailsPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (context) => const QueueDetailScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const _RoomDirectionsCard(),
-                      const _QueueServiceValueCard(),
-                    ],
+                child: ScrollConfiguration(
+                  behavior:
+                      ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 28),
+                    child: Column(
+                      children: [
+                        const _DoctorSummaryCard(),
+                        _ActiveQueueCard(
+                          soundReminderEnabled: _soundReminderEnabled,
+                          onSoundReminderChanged: (enabled) {
+                            setState(() => _soundReminderEnabled = enabled);
+                          },
+                          onDetailsPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => const QueueDetailScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const _RoomDirectionsCard(),
+                        const _QueueServiceValueCard(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -61,6 +67,16 @@ class _QueueScreenState extends State<QueueScreen> {
                 onSelected: (index) {
                   if (index == 0) {
                     Navigator.pop(context);
+                  } else if (index == 4) {
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const ProfileScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
                   } else {
                     setState(() {
                       _selectedIndex = index;
@@ -335,8 +351,8 @@ class _ActiveQueueCard extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            height: 58,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            constraints: const BoxConstraints(minHeight: 58),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
             color: _queueBlue,
             child: Row(
               children: [
@@ -356,6 +372,7 @@ class _ActiveQueueCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -366,6 +383,7 @@ class _ActiveQueueCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.circle, color: Color(0xFFFFC32A), size: 10),
                       SizedBox(width: 5),
@@ -387,30 +405,33 @@ class _ActiveQueueCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 22),
             child: Column(
               children: [
-                const Row(
-                  children: [
-                    Expanded(
-                      child: _QueueNumberPanel(
-                        label: 'NOMOR ANDA',
-                        number: 'A-023',
-                        caption: 'Pasien Terjadwal',
-                        backgroundColor: Color(0xFFF0F2F5),
-                        numberColor: Color(0xFF063F99),
-                        labelColor: Color(0xFF777F91),
+                const IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _QueueNumberPanel(
+                          label: 'NOMOR ANDA',
+                          number: 'A-023',
+                          caption: 'Pasien Terjadwal',
+                          backgroundColor: Color(0xFFF0F2F5),
+                          numberColor: Color(0xFF063F99),
+                          labelColor: Color(0xFF777F91),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: _QueueNumberPanel(
-                        label: 'SEDANG DILAYANI',
-                        number: 'A-019',
-                        caption: 'Dalam Ruang 204',
-                        backgroundColor: Color(0xFFFFF8EC),
-                        numberColor: Color(0xFF795500),
-                        labelColor: Color(0xFF795500),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: _QueueNumberPanel(
+                          label: 'SEDANG DILAYANI',
+                          number: 'A-019',
+                          caption: 'Dalam Ruang 204',
+                          backgroundColor: Color(0xFFFFF8EC),
+                          numberColor: Color(0xFF795500),
+                          labelColor: Color(0xFF795500),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const _QueueWaitStatus(),
@@ -507,8 +528,8 @@ class _QueueNumberPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 126,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 13),
+      constraints: const BoxConstraints(minHeight: 126),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(18),
@@ -629,9 +650,9 @@ class _RoomDirectionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
+      constraints: const BoxConstraints(minHeight: 60),
       margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF365FB6),
         borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/home_screen_queue.dart';
+import 'package:pku_gamping_app/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +32,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D4FC1)),
         useMaterial3: true,
       ),
-      home: const HomeScreenQueue(),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        overscroll: false,
+        physics: const ClampingScrollPhysics(),
+      ),
+      home: const HomeScreen(),
     );
   }
 }

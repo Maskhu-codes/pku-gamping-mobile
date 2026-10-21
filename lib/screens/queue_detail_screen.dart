@@ -96,10 +96,14 @@ class QueueDetailScreen extends StatelessWidget {
             children: [
               _DetailHeader(onHelpPressed: () => _showHelp(context)),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: ScrollConfiguration(
+                  behavior:
+                      ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const _QueueNumberCard(),
                       const SizedBox(height: 24),
@@ -168,7 +172,8 @@ class QueueDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
+            ),
+          ],
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/screens/profile_screen.dart';
 
 const _primaryBlue = Color(0xFF0D4FC1);
 const _ink = Color(0xFF202124);
@@ -31,30 +32,45 @@ class _QueueBlankState extends State<QueueBlank> {
             children: [
               const _BrandHeader(),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 28),
-                  child: Column(
-                    children: const [
-                      _EmptyQueueCard(),
-                      _HospitalDirections(),
-                      _ServiceValue(),
-                    ],
+                child: ScrollConfiguration(
+                  behavior:
+                      ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 28),
+                    child: Column(
+                      children: const [
+                        _EmptyQueueCard(),
+                        _HospitalDirections(),
+                        _ServiceValue(),
+                      ],
+                    ),
                   ),
                 ),
               ),
               
-_BottomNavigation(
-  selectedIndex: _selectedIndex,
-  onSelected: (index) {
-    if (index == 0) {
-      Navigator.pop(context);
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-  },
-),
+              _BottomNavigation(
+                selectedIndex: _selectedIndex,
+                onSelected: (index) {
+                  if (index == 0) {
+                    Navigator.pop(context);
+                  } else if (index == 4) {
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const ProfileScreen(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                  } else {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  }
+                },
+              ),
 
             ],
           ),
@@ -273,9 +289,9 @@ class _HospitalDirections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
+      constraints: const BoxConstraints(minHeight: 60),
       margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF365FB6),
         borderRadius: BorderRadius.circular(12),
