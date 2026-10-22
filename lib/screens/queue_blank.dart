@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/screens/profile_screen.dart';
+import 'package:pku_gamping_app/screens/jadwal_screen.dart';
+import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
 
 const _primaryBlue = Color(0xFF0D4FC1);
 const _ink = Color(0xFF202124);
@@ -205,7 +207,13 @@ class _EmptyQueueCard extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const PendaftaranScreen(),
+                      ),
+                    );
+                  },
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryBlue,
                 foregroundColor: Colors.white,
@@ -232,7 +240,17 @@ class _EmptyQueueCard extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const JadwalScreen(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+              },
               style: TextButton.styleFrom(
                 backgroundColor: _panel,
                 foregroundColor: _primaryBlue,
@@ -437,7 +455,13 @@ class _BottomNavigation extends StatelessWidget {
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => onSelected(2),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const PendaftaranScreen(),
+                      ),
+                    );
+                  },
                   child: Column(
                     children: [
                       Transform.translate(
@@ -476,7 +500,17 @@ class _BottomNavigation extends StatelessWidget {
                 icon: Icons.calendar_month_outlined,
                 label: 'Jadwal',
                 isSelected: selectedIndex == 3,
-                onTap: () => onSelected(3),
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const JadwalScreen(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
+                },
               ),
               _NavigationItem(
                 icon: Icons.person_outline_rounded,

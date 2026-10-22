@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/screens/login_screen.dart';
 
 /// Dialog Konfirmasi Keluar Akun — desain bersih centered
 /// Sesuai referensi UI: ikon atas, judul, subteks, dan dua tombol
@@ -90,8 +91,13 @@ class LogoutConfirmationDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context); // tutup dialog
-                      // TODO: Proses logout (clear session / navigasi ke login)
+                      // Navigasi ke halaman login dan hapus semua halaman sebelumnya
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/screens/queue_screen.dart';
+import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
+import 'package:pku_gamping_app/screens/jadwal_screen.dart';
 
 const _primaryBlue = Color(0xFF0D4FC1);
 const _muted = Color(0xFF91A3BE);
@@ -51,7 +53,13 @@ class ProfileBottomNav extends StatelessWidget {
               // 3. Daftar (Center Action)
               Expanded(
                 child: GestureDetector(
-                  onTap: () => Navigator.maybePop(context),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const PendaftaranScreen(),
+                      ),
+                    );
+                  },
                   child: Column(
                     children: [
                       Transform.translate(
@@ -82,7 +90,17 @@ class ProfileBottomNav extends StatelessWidget {
                 icon: Icons.calendar_month_outlined,
                 label: 'Jadwal',
                 isSelected: false,
-                onTap: () => Navigator.maybePop(context),
+                onTap: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const JadwalScreen(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                    (route) => route.isFirst,
+                  );
+                },
               ),
               // 5. Profil (aktif)
               _NavItem(
