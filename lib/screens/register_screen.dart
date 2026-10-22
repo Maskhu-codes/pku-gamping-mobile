@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../core/theme/app_colors.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -68,14 +68,15 @@ class _RegisterScreenState extends State<RegisterScreen>
       duration: const Duration(milliseconds: 400),
     );
 
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+    _fadeAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _animController.forward();
 
     _alamatController.addListener(() {
-      setState(() {});
+      if (mounted) setState(() {});
     });
 
     _emailKontakController.addListener(() {
@@ -104,11 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   void _goToLogin() {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void _goToPage(int page) {
@@ -126,16 +123,14 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _prevPage() {
     if (_currentPage > 0) {
       _goToPage(_currentPage - 1);
+    } else if (Navigator.canPop(context)) {
+      Navigator.pop(context);
     } else {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      } else {
-        _goToLogin();
-      }
+      _goToLogin();
     }
   }
 
-  void _cekNikAsync() async {
+  Future<void> _cekNikAsync() async {
     final nik = _nikController.text.trim();
 
     if (nik.length != 16) {
@@ -205,29 +200,30 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    // Auto-isi email langkah 3 jika belum diisi manual.
     if (_emailController.text.trim().isEmpty &&
         _emailKontakController.text.trim().isNotEmpty) {
       _emailController.text = _emailKontakController.text.trim();
     }
 
-    // Buat saran username jika masih kosong.
-    if (_usernameController.text.trim().isEmpty &&
-        _namaController.text.trim().isNotEmpty) {
-      final sanitized = _namaController.text
-          .trim()
-          .toLowerCase()
-          .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (_usernameController.text.trim().isEmpty) {
+      final sanitized = _namaController.text.trim().toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]'),
+        '',
+      );
+
+      final suffix = _nikController.text.length >= 4
+          ? _nikController.text.substring(12)
+          : 'pku';
 
       _usernameController.text = sanitized.isNotEmpty
-          ? '${sanitized}_${_nikController.text.length >= 4 ? _nikController.text.substring(12) : "pku"}'
+          ? '${sanitized}_$suffix'
           : 'pasien_pku';
     }
 
     _goToPage(2);
   }
 
-  void _handleDaftar() async {
+  Future<void> _handleDaftar() async {
     final email = _emailController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
@@ -281,18 +277,16 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     setState(() => _isLoading = false);
 
+    // Tampilkan pesan sebelum berpindah halaman agar tidak hilang.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Pendaftaran berhasil! Silakan masuk ke akun Anda.'),
         backgroundColor: AppColors.success,
+        duration: Duration(seconds: 2),
       ),
     );
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-          (route) => false,
-    );
+    _goToLogin();
   }
 
   @override
@@ -313,11 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                   onPageChanged: (idx) {
                     setState(() => _currentPage = idx);
                   },
-                  children: [
-                    _buildStep1(),
-                    _buildStep2(),
-                    _buildStep3(),
-                  ],
+                  children: [_buildStep1(), _buildStep2(), _buildStep3()],
                 ),
               ),
             ],
@@ -332,53 +322,48 @@ class _RegisterScreenState extends State<RegisterScreen>
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              InkWell(
-                onTap: _prevPage,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    size: 20,
+          InkWell(
+            onTap: _prevPage,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                size: 20,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Daftar Pasien Baru',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Daftar Pasien Baru',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Lengkapi data diri Anda untuk mendaftar akun baru',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Lengkapi data diri Anda untuk mendaftar akun baru',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -494,7 +479,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             ),
             const SizedBox(height: 12),
           ],
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -535,7 +519,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             ],
           ),
           const SizedBox(height: 8),
-
           Row(
             children: List.generate(_totalPages, (i) {
               final isPassedOrCurrent = i <= _currentPage;
@@ -558,7 +541,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             }),
           ),
           const SizedBox(height: 8),
-
           Row(
             children: [
               Expanded(child: _buildStepTab(0, '1. Cek NIK')),
@@ -578,9 +560,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     return GestureDetector(
       onTap: () {
-        if (index <= _currentPage) {
-          _goToPage(index);
-        }
+        if (index <= _currentPage) _goToPage(index);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -672,11 +652,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ),
                 child: Row(
                   children: [
-                    // Ikon kartu dihapus; input tetap memiliki jarak yang rapi.
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(left: 12),
                         child: TextFormField(
+                          key: const ValueKey('nikField'),
                           controller: _nikController,
                           keyboardType: TextInputType.number,
                           inputFormatters: [
@@ -692,9 +672,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                             hintText: 'Contoh: 347104xxxxxxxxx',
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              vertical: 14,
-                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 14),
                           ),
                           onChanged: (val) {
                             if (_isNikVerified) {
@@ -726,33 +704,33 @@ class _RegisterScreenState extends State<RegisterScreen>
                         ),
                         child: _isNikChecking
                             ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_isNikVerified) ...[
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                size: 14,
-                                color: Color(0xFF2E7D32),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_isNikVerified) ...[
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 14,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    _isNikVerified ? 'Valid' : 'Cek NIK',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                            ],
-                            Text(
-                              _isNikVerified ? 'Valid' : 'Cek NIK',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -768,9 +746,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -814,9 +790,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -839,8 +813,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ),
           ),
-
-          // Footer login dihapus.
         ],
       ),
     );
@@ -862,7 +834,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             ),
           ),
           const SizedBox(height: 14),
-
           _sectionBadgeHeader(
             icon: Icons.person_outline_rounded,
             title: 'Data Pasien',
@@ -874,12 +845,12 @@ class _RegisterScreenState extends State<RegisterScreen>
             children: [
               _fieldLabel('Nama Lengkap *'),
               _inputField(
+                key: const ValueKey('namaField'),
                 controller: _namaController,
                 hint: 'Masukkan nama lengkap sesuai KTP',
                 icon: Icons.person_outline_rounded,
               ),
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -888,6 +859,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       children: [
                         _fieldLabel('Tempat Lahir *'),
                         _inputField(
+                          key: const ValueKey('tempatLahirField'),
                           controller: _tempatLahirController,
                           hint: 'Kota Lahir',
                           icon: Icons.location_city_outlined,
@@ -908,7 +880,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ],
               ),
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -947,7 +918,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ],
               ),
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -993,7 +963,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ],
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Pekerjaan *'),
               _dropdown(
                 initialValue: _selectedPekerjaan,
@@ -1013,7 +982,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedPekerjaan = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Pendidikan Terakhir *'),
               _dropdown(
                 initialValue: _selectedPendidikan,
@@ -1032,7 +1000,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedPendidikan = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Status Kawin *'),
               _dropdown(
                 initialValue: _selectedStatusKawin,
@@ -1047,7 +1014,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedStatusKawin = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Nama Ibu Kandung *'),
               _inputField(
                 controller: _namaIbuController,
@@ -1064,18 +1030,15 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           _sectionBadgeHeader(
             icon: Icons.home_outlined,
             title: 'Alamat Tempat Tinggal',
             badge: 'Domisili',
             subtitle:
-            'Alamat domisili saat ini (tidak harus sama dengan KTP/KK)',
+                'Alamat domisili saat ini (tidak harus sama dengan KTP/KK)',
           ),
           const SizedBox(height: 8),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -1105,7 +1068,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             ),
           ),
           const SizedBox(height: 10),
-
           _card(
             children: [
               _fieldLabel('Provinsi *'),
@@ -1126,7 +1088,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedProvinsi = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Kabupaten / Kota *'),
               _dropdown(
                 initialValue: _selectedKabupaten,
@@ -1145,7 +1106,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedKabupaten = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Kecamatan *'),
               _dropdown(
                 initialValue: _selectedKecamatan,
@@ -1165,7 +1125,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedKecamatan = v),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Kelurahan / Desa *'),
               _dropdown(
                 initialValue: _selectedKelurahan,
@@ -1184,7 +1143,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 onChanged: (v) => setState(() => _selectedKelurahan = v),
               ),
               const SizedBox(height: 12),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1203,15 +1161,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                 hint: 'Masukkan nama jalan, RT/RW, nomor rumah, patokan alamat',
                 icon: Icons.home_outlined,
                 maxLines: 2,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(150),
-                ],
+                inputFormatters: [LengthLimitingTextInputFormatter(150)],
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           _sectionBadgeHeader(
             icon: Icons.contact_phone_outlined,
             title: 'Kontak Pasien',
@@ -1219,7 +1173,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             subtitle: 'Informasi kontak untuk verifikasi & notifikasi',
           ),
           const SizedBox(height: 10),
-
           _card(
             children: [
               _fieldLabel('No. Handphone / WhatsApp *'),
@@ -1292,9 +1245,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ),
               ),
               const SizedBox(height: 12),
-
               _fieldLabel('Alamat Email *'),
               _inputField(
+                key: const ValueKey('emailKontakField'),
                 controller: _emailKontakController,
                 hint: 'contoh@email.com',
                 icon: Icons.alternate_email_rounded,
@@ -1310,11 +1263,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          // Tombol Kembali & Lanjut Langkah 3.
-          // Ikon pada tombol Lanjut Langkah 3 dihapus.
           Row(
             children: [
               Expanded(
@@ -1323,10 +1272,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                   height: 48,
                   child: OutlinedButton.icon(
                     onPressed: () => _goToPage(0),
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      size: 16,
-                    ),
+                    icon: const Icon(Icons.arrow_back_rounded, size: 16),
                     label: Text(
                       'Kembali',
                       style: GoogleFonts.poppins(
@@ -1371,8 +1317,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-
-          // Footer login dihapus dan jarak bawah dirapikan.
         ],
       ),
     );
@@ -1392,28 +1336,28 @@ class _RegisterScreenState extends State<RegisterScreen>
             subtitle: 'Buat akun untuk login ke aplikasi PKU Gamping',
           ),
           const SizedBox(height: 12),
-
           _card(
             children: [
               _fieldLabel('Alamat Email *'),
               _inputField(
+                key: const ValueKey('emailAkunField'),
                 controller: _emailController,
                 hint: 'pasien.gamping@gmail.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 14),
-
               _fieldLabel('Username *'),
               _inputField(
+                key: const ValueKey('usernameField'),
                 controller: _usernameController,
                 hint: 'pku_gamping2381',
                 icon: Icons.account_circle_outlined,
               ),
               const SizedBox(height: 14),
-
               _fieldLabel('Kata Sandi Baru *'),
               _passInputField(
+                key: const ValueKey('passwordField'),
                 controller: _passwordController,
                 hint: 'Minimal 8 karakter',
                 obscure: _obscurePass,
@@ -1422,9 +1366,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                 },
               ),
               const SizedBox(height: 14),
-
               _fieldLabel('Konfirmasi Kata Sandi *'),
               _passInputField(
+                key: const ValueKey('confirmPasswordField'),
                 controller: _confirmPasswordController,
                 hint: 'Ulangi kata sandi',
                 obscure: _obscureConfirm,
@@ -1433,7 +1377,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 },
               ),
               const SizedBox(height: 10),
-
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -1463,9 +1406,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -1481,25 +1422,23 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
               child: _isLoading
                   ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
                   : Text(
-                'Daftar',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+                      'Daftar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
-
           const SizedBox(height: 14),
-
           Center(
             child: Text(
               'Dengan membuat akun, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi layanan digital RS PKU Muhammadiyah Gamping.',
@@ -1511,9 +1450,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ),
           ),
-
-          // Tombol Kembali dan teks "Sudah punya akun? Masuk" dihapus.
-          // Jarak kosong tambahan juga dihapus.
         ],
       ),
     );
@@ -1627,6 +1563,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Widget _inputField({
+    Key? key,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -1635,20 +1572,15 @@ class _RegisterScreenState extends State<RegisterScreen>
     int maxLines = 1,
   }) {
     return TextFormField(
+      key: key,
       controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       maxLines: maxLines,
-      style: GoogleFonts.poppins(
-        fontSize: 13,
-        color: AppColors.textPrimary,
-      ),
+      style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.poppins(
-          fontSize: 12,
-          color: AppColors.textHint,
-        ),
+        hintStyle: GoogleFonts.poppins(fontSize: 12, color: AppColors.textHint),
         prefixIcon: Icon(icon, color: AppColors.textHint, size: 18),
         filled: true,
         fillColor: AppColors.background,
@@ -1666,34 +1598,27 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );
   }
 
   Widget _passInputField({
+    Key? key,
     required TextEditingController controller,
     required String hint,
     required bool obscure,
     required VoidCallback onToggle,
   }) {
     return TextFormField(
+      key: key,
       controller: controller,
       obscureText: obscure,
-      style: GoogleFonts.poppins(
-        fontSize: 13,
-        color: AppColors.textPrimary,
-      ),
+      style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.poppins(
-          fontSize: 12,
-          color: AppColors.textHint,
-        ),
+        hintStyle: GoogleFonts.poppins(fontSize: 12, color: AppColors.textHint),
         prefixIcon: const Icon(
           Icons.lock_outline_rounded,
           color: AppColors.textHint,
@@ -1701,9 +1626,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         suffixIcon: IconButton(
           icon: Icon(
-            obscure
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined,
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
             color: AppColors.textHint,
             size: 18,
           ),
@@ -1725,10 +1648,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );
@@ -1747,10 +1667,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       initialValue: validValue,
       onChanged: onChanged,
       isExpanded: true,
-      style: GoogleFonts.poppins(
-        fontSize: 13,
-        color: AppColors.textPrimary,
-      ),
+      style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary),
       icon: const Icon(
         Icons.keyboard_arrow_down_rounded,
         color: AppColors.textHint,
@@ -1758,17 +1675,11 @@ class _RegisterScreenState extends State<RegisterScreen>
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.poppins(
-          fontSize: 12,
-          color: AppColors.textHint,
-        ),
+        hintStyle: GoogleFonts.poppins(fontSize: 12, color: AppColors.textHint),
         prefixIcon: Icon(icon, color: AppColors.textHint, size: 18),
         filled: true,
         fillColor: AppColors.background,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 4,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.border),
@@ -1779,25 +1690,22 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
       items: items
           .map(
-            (e) => DropdownMenuItem(
-          value: e,
-          child: Text(
-            e,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppColors.textPrimary,
+            (e) => DropdownMenuItem<String>(
+              value: e,
+              child: Text(
+                e,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
-          ),
-        ),
-      )
+          )
           .toList(),
     );
   }
