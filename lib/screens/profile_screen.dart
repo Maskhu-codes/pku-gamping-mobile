@@ -1,25 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_app_bar.dart';
-import 'package:pku_gamping_app/screens/profile_widgets/profile_bottom_nav.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_footer.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_header_card.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_logout_button.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_menu_section.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/sigap_membership_card.dart';
-import 'package:pku_gamping_app/screens/riwayat_pemeriksaan_screen.dart';
-import 'package:pku_gamping_app/screens/riwayat_resep_screen.dart';
+import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 
 /// Halaman Profil Pasien RS PKU Muhammadiyah Gamping
 /// Bersih, modular, dan terstruktur sesuai kaidah Clean Code.
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({
+    super.key,
+    this.embedded = false,
+  });
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: const ProfileAppBar(),
-      bottomNavigationBar: const ProfileBottomNav(),
+      bottomNavigationBar: embedded
+          ? null
+          : AppBottomNav(
+              selectedIndex: 4,
+              onItemSelected: (index) {
+                if (index == 4) return;
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.home,
+                  (route) => false,
+                  arguments: {'initialIndex': index},
+                );
+              },
+              onDaftarPressed: () {
+                Navigator.pushNamed(context, AppRoutes.pendaftaran);
+              },
+            ),
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -74,12 +94,9 @@ class ProfileScreen extends StatelessWidget {
                                 badgeTextColor: const Color(0xFFDC2626),
                                 showDivider: true,
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.pushNamed(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const RiwayatPemeriksaanScreen(),
-                                    ),
+                                    AppRoutes.riwayatPemeriksaan,
                                   );
                                 },
                               ),
@@ -92,12 +109,9 @@ class ProfileScreen extends StatelessWidget {
                                     'Daftar obat & status pengambilan farmasi',
                                 showDivider: false,
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.pushNamed(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const RiwayatResepScreen(),
-                                    ),
+                                    AppRoutes.riwayatResep,
                                   );
                                 },
                               ),

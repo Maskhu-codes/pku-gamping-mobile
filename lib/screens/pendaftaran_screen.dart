@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
+import 'package:pku_gamping_app/services/app_feedback_service.dart';
 import 'jadwal_widgets/jadwal_constants.dart' show DokterJadwal;
 import 'pendaftaran_widgets/pendaftaran_confirm_button.dart';
 import 'pendaftaran_widgets/pendaftaran_constants.dart';
@@ -44,7 +46,14 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedPasien = PendaftaranDummyData.defaultPasien;
+    _selectedPasien = PasienModel(
+      id: 'p-auth',
+      nama: SessionManager.namaPasien,
+      noRm: SessionManager.noRm,
+      nik: SessionManager.nik ?? '3471041234560001',
+      tanggalLahir: '24 Mei 1990',
+      hubungan: 'Diri Sendiri',
+    );
     _initFromInitialData();
   }
 
@@ -248,39 +257,43 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
 
   void _handleKonfirmasi() {
     if (!_isFormValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Lengkapi pilihan poli, dokter, dan jadwal kunjungan terlebih dahulu.',
-          ),
-          backgroundColor: Color(0xFFDC2626),
-          duration: Duration(seconds: 2),
-        ),
+      AppFeedback.showError(
+        context,
+        message: 'Lengkapi pilihan poli, dokter, dan jadwal kunjungan terlebih dahulu.',
       );
       return;
     }
 
-    // Simpan antrean aktif ke state service terpusat
-    AntreanService.buatAntrean(
-      nomorAntrean: 'A-014',
-      namaPasien: _selectedPasien.nama,
-      noRm: _selectedPasien.noRm,
-      poli: _selectedPoli!.nama,
-      dokter: _selectedDokter!.nama,
-      jam: _selectedSlot!.jam,
-      tanggal: _selectedSlot!.hariTanggal,
-      jenisJaminan: _selectedJaminan.label,
-    );
+    AppFeedback.showConfirmation(
+      context,
+      title: 'Konfirmasi',
+      message: 'Apakah Anda yakin ingin melanjutkan tindakan ini?',
+      confirmText: 'Lanjutkan',
+      cancelText: 'Batal',
+      onConfirm: () {
+        // Simpan antrean aktif ke state service terpusat
+        AntreanService.buatAntrean(
+          nomorAntrean: 'A-014',
+          namaPasien: _selectedPasien.nama,
+          noRm: _selectedPasien.noRm,
+          poli: _selectedPoli!.nama,
+          dokter: _selectedDokter!.nama,
+          jam: _selectedSlot!.jam,
+          tanggal: _selectedSlot!.hariTanggal,
+          jenisJaminan: _selectedJaminan.label,
+        );
 
-    // Tampilkan Modal Dialog Sukses Pendaftaran (Opsi 1)
-    PendaftaranSuccessDialog.show(
-      context: context,
-      nomorAntrean: 'A-014',
-      pasien: _selectedPasien,
-      poli: _selectedPoli!,
-      dokter: _selectedDokter!,
-      slot: _selectedSlot!,
-      jaminan: _selectedJaminan,
+        // Tampilkan Modal Dialog Sukses Pendaftaran
+        PendaftaranSuccessDialog.show(
+          context: context,
+          nomorAntrean: 'A-014',
+          pasien: _selectedPasien,
+          poli: _selectedPoli!,
+          dokter: _selectedDokter!,
+          slot: _selectedSlot!,
+          jaminan: _selectedJaminan,
+        );
+      },
     );
   }
 }

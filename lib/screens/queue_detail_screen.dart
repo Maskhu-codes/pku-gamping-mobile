@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/home_screen.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
 const _primaryBlue = Color(0xFF0D4FC1);
@@ -8,6 +9,12 @@ const _ink = Color(0xFF202124);
 const _muted = Color(0xFF777F91);
 const _page = Color(0xFFF6F8FA);
 
+/// Layar Detail Antrean Rawat Jalan.
+///
+/// Menampilkan informasi lengkap kunjungan pasien: nomor antrean,
+/// poli, dokter, jadwal, dan lokasi ruangan. Seluruh data ditarik
+/// dari [AntreanService] sehingga selalu konsisten dengan
+/// data pendaftaran yang baru saja dilakukan.
 class QueueDetailScreen extends StatelessWidget {
   const QueueDetailScreen({super.key, this.onCancel, this.onContact});
 
@@ -69,22 +76,24 @@ class QueueDetailScreen extends StatelessWidget {
     );
 
     if (shouldCancel == true) {
-  if (!context.mounted) return;
+      if (!context.mounted) return;
 
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (_) => const HomeScreen(
-        notification: TopNotificationType.queueCancelled,
-      ),
-    ),
-    (route) => false,
-  );
-}
+      // Bersihkan state antrean dari service terpusat
+      AntreanService.kosongkanAntrean();
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.home,
+        (route) => false,
+        arguments: TopNotificationType.queueCancelled,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final antrean = AntreanService.antreanAktif.value;
     final baseTheme = Theme.of(context);
+
     return Theme(
       data: baseTheme.copyWith(
         textTheme: baseTheme.textTheme.apply(fontFamily: 'Plus Jakarta Sans'),
@@ -97,89 +106,111 @@ class QueueDetailScreen extends StatelessWidget {
               _DetailHeader(onHelpPressed: () => _showHelp(context)),
               Expanded(
                 child: ScrollConfiguration(
-                  behavior:
-                      ScrollConfiguration.of(context).copyWith(overscroll: false),
+                  behavior: ScrollConfiguration.of(context)
+                      .copyWith(overscroll: false),
                   child: SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _QueueNumberCard(),
-                      const SizedBox(height: 24),
-                      const _VisitInformationCard(),
-                      const SizedBox(height: 26),
-                      SizedBox(
-                        height: 52,
-                        child: TextButton(
-                          onPressed: () => _confirmCancel(context),
-                          style: TextButton.styleFrom(
-                            backgroundColor: const Color(0xFFF0F2F5),
-                            foregroundColor: const Color(0xFF454B59),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(13),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.close_rounded, size: 21),
-                              SizedBox(width: 5),
-                              Text(
-                                'Batalkan Antrean',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                      children: [
+                        // ── Kartu Nomor Antrean ──
+                        _QueueNumberCard(
+                          nomorAntrean: antrean?.nomorAntrean ?? 'A-000',
+                          nomorSebelumnya: antrean?.nomorSebelumnya ?? '-',
+                          poli: antrean?.poli ?? '-',
+                          gedungLokasi: antrean?.gedungLokasi ?? '-',
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Kendala antrean atau perubahan data jadwal?',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: _muted, fontSize: 12),
-                      ),
-                      TextButton.icon(
-                        onPressed:
-                            onContact ??
-                            () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Silakan hubungi petugas informasi RS PKU.',
+                        const SizedBox(height: 24),
+
+                        // ── Kartu Informasi Kunjungan ──
+                        _VisitInformationCard(
+                          poli: antrean?.poli ?? '-',
+                          dokter: antrean?.dokter ?? '-',
+                          tanggalJam:
+                              '${antrean?.tanggal ?? '-'} • ${antrean?.jam ?? '-'}',
+                          gedungLokasi: antrean?.gedungLokasi ?? '-',
+                          jenisJaminan: antrean?.jenisJaminan ?? '-',
+                        ),
+                        const SizedBox(height: 26),
+
+                        // ── Tombol Batalkan Antrean ──
+                        SizedBox(
+                          height: 52,
+                          child: TextButton(
+                            onPressed: () => _confirmCancel(context),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFFF0F2F5),
+                              foregroundColor: const Color(0xFF454B59),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.close_rounded, size: 21),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Batalkan Antrean',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              );
-                            },
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF315BB2),
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                        ),
-                        icon: const Icon(Icons.support_agent, size: 18),
-                        label: const Text(
-                          'Hubungi Petugas Informasi RS PKU',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+
+                        // ── Kontak Bantuan ──
+                        const Text(
+                          'Kendala antrean atau perubahan data jadwal?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: _muted, fontSize: 12),
+                        ),
+                        TextButton.icon(
+                          onPressed: onContact ??
+                              () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Silakan hubungi petugas informasi RS PKU.',
+                                    ),
+                                  ),
+                                );
+                              },
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF315BB2),
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                          ),
+                          icon: const Icon(Icons.support_agent, size: 18),
+                          label: const Text(
+                            'Hubungi Petugas Informasi RS PKU',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+// ============================================================
+// HEADER NAVIGASI ATAS
+// ============================================================
 
 class _DetailHeader extends StatelessWidget {
   const _DetailHeader({required this.onHelpPressed});
@@ -215,7 +246,7 @@ class _DetailHeader extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Detail Antre',
+                    'Detail Antrean',
                     style: TextStyle(
                       color: _ink,
                       fontSize: 18,
@@ -242,8 +273,22 @@ class _DetailHeader extends StatelessWidget {
   }
 }
 
+// ============================================================
+// KARTU NOMOR ANTREAN (DATA DINAMIS DARI AntreanService)
+// ============================================================
+
 class _QueueNumberCard extends StatelessWidget {
-  const _QueueNumberCard();
+  const _QueueNumberCard({
+    required this.nomorAntrean,
+    required this.nomorSebelumnya,
+    required this.poli,
+    required this.gedungLokasi,
+  });
+
+  final String nomorAntrean;
+  final String nomorSebelumnya;
+  final String poli;
+  final String gedungLokasi;
 
   @override
   Widget build(BuildContext context) {
@@ -271,21 +316,21 @@ class _QueueNumberCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const Text(
-            'Poli Penyakit Dalam',
-            style: TextStyle(
+          Text(
+            poli,
+            style: const TextStyle(
               color: _muted,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 23),
-          const Center(
+          Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                'A-023',
-                style: TextStyle(
+                nomorAntrean,
+                style: const TextStyle(
                   color: _deepBlue,
                   fontSize: 58,
                   height: 1.15,
@@ -321,29 +366,35 @@ class _QueueNumberCard extends StatelessWidget {
               color: const Color(0xFFF2F5FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, color: _deepBlue, size: 19),
-                SizedBox(width: 5),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  color: _deepBlue,
+                  size: 19,
+                ),
+                const SizedBox(width: 5),
                 Expanded(
                   child: Text.rich(
                     TextSpan(
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: _primaryBlue,
                         fontSize: 12,
                         height: 1.4,
                       ),
                       children: [
-                        TextSpan(text: 'Silakan bersiap di ruang tunggu '),
-                        TextSpan(
-                          text: 'Poli Penyakit Dalam Lantai 2',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                        const TextSpan(
+                          text: 'Silakan bersiap di ruang tunggu ',
                         ),
-                        TextSpan(text: ' saat antrean mencapai '),
                         TextSpan(
-                          text: 'A-022.',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                          text: '$poli $gedungLokasi',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const TextSpan(text: ' saat antrean mencapai '),
+                        TextSpan(
+                          text: '$nomorSebelumnya.',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -358,8 +409,24 @@ class _QueueNumberCard extends StatelessWidget {
   }
 }
 
+// ============================================================
+// KARTU INFORMASI KUNJUNGAN (DATA DINAMIS DARI AntreanService)
+// ============================================================
+
 class _VisitInformationCard extends StatelessWidget {
-  const _VisitInformationCard();
+  const _VisitInformationCard({
+    required this.poli,
+    required this.dokter,
+    required this.tanggalJam,
+    required this.gedungLokasi,
+    required this.jenisJaminan,
+  });
+
+  final String poli;
+  final String dokter;
+  final String tanggalJam;
+  final String gedungLokasi;
+  final String jenisJaminan;
 
   @override
   Widget build(BuildContext context) {
@@ -400,9 +467,9 @@ class _VisitInformationCard extends StatelessWidget {
                   color: const Color(0xFFEFF0F2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'BPJS Kesehatan',
-                  style: TextStyle(
+                child: Text(
+                  jenisJaminan,
+                  style: const TextStyle(
                     color: Color(0xFF454B59),
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -412,42 +479,46 @@ class _VisitInformationCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 17),
-          const _VisitInformationRow(
+          _VisitInformationRow(
             icon: Icons.add_box_outlined,
             iconColor: _deepBlue,
-            iconBackground: Color(0xFFDCE4FF),
+            iconBackground: const Color(0xFFDCE4FF),
             label: 'Poliklinik',
-            value: 'Poli Penyakit Dalam',
+            value: poli,
           ),
           const SizedBox(height: 15),
-          const _VisitInformationRow(
+          _VisitInformationRow(
             icon: Icons.medical_services_outlined,
             iconColor: _primaryBlue,
-            iconBackground: Color(0xFFDCE4FF),
+            iconBackground: const Color(0xFFDCE4FF),
             label: 'Dokter Pemeriksa',
-            value: 'dr. Ahmad, Sp.PD',
+            value: dokter,
           ),
           const SizedBox(height: 15),
-          const _VisitInformationRow(
+          _VisitInformationRow(
             icon: Icons.calendar_today_outlined,
-            iconColor: Color(0xFF454B59),
-            iconBackground: Color(0xFFE8E9EB),
+            iconColor: const Color(0xFF454B59),
+            iconBackground: const Color(0xFFE8E9EB),
             label: 'Waktu Periksa',
-            value: 'Rabu, 07 Oktober 2026 • 10:30 WIB',
+            value: tanggalJam,
           ),
           const SizedBox(height: 15),
-          const _VisitInformationRow(
+          _VisitInformationRow(
             icon: Icons.location_on_outlined,
-            iconColor: Color(0xFF795500),
-            iconBackground: Color(0xFFFFDEA3),
+            iconColor: const Color(0xFF795500),
+            iconBackground: const Color(0xFFFFDEA3),
             label: 'Lokasi Pelayanan',
-            value: 'Ruang Poli 204 • Gedung Rawat Jalan Lt. 2',
+            value: gedungLokasi,
           ),
         ],
       ),
     );
   }
 }
+
+// ============================================================
+// BARIS INFORMASI KUNJUNGAN (REUSABLE)
+// ============================================================
 
 class _VisitInformationRow extends StatelessWidget {
   const _VisitInformationRow({

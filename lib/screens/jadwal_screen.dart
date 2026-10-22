@@ -7,56 +7,14 @@ import 'jadwal_widgets/jadwal_date_strip.dart';
 import 'jadwal_widgets/jadwal_poli_filter.dart';
 import 'jadwal_widgets/jadwal_dokter_list.dart';
 import 'jadwal_widgets/jadwal_footer_note.dart';
-import 'jadwal_widgets/jadwal_bottom_nav.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
+import 'package:pku_gamping_app/widgets/hospital_brand_header.dart';
 
-/// ─── Data Dummy Jadwal Dokter ───
-/// Data statis sebagai placeholder sebelum disambungkan ke API.
-const _dummyDokter = <DokterJadwal>[
-  DokterJadwal(
-    nama: 'dr. H. Ahmad Farhan, Sp.PD',
-    poli: 'Poli Penyakit Dalam',
-    jamMulai: '09.00',
-    jamSelesai: '12.00',
-    status: StatusDokter.tersedia,
-  ),
-  DokterJadwal(
-    nama: 'dr. Siti Nurhaliza, Sp.JP',
-    poli: 'Poli Jantung',
-    jamMulai: '10.00',
-    jamSelesai: '13.00',
-    status: StatusDokter.tersedia,
-  ),
-  DokterJadwal(
-    nama: 'dr. Budi Santoso, Sp.A',
-    poli: 'Poli Anak',
-    jamMulai: '08.00',
-    jamSelesai: '11.00',
-    status: StatusDokter.selesai,
-  ),
-  DokterJadwal(
-    nama: 'dr. Rina Kusuma, Sp.M',
-    poli: 'Poli Mata',
-    jamMulai: '13.00',
-    jamSelesai: '16.00',
-    status: StatusDokter.tersedia,
-  ),
-  DokterJadwal(
-    nama: 'dr. Dewi Anggraini, Sp.PD',
-    poli: 'Poli Penyakit Dalam',
-    jamMulai: '14.00',
-    jamSelesai: '17.00',
-    status: StatusDokter.tersedia,
-  ),
-  DokterJadwal(
-    nama: 'dr. Hendra Wijaya, Sp.B',
-    poli: 'Poli Bedah',
-    jamMulai: '08.00',
-    jamSelesai: '12.00',
-    status: StatusDokter.cuti,
-  ),
-];
+import 'package:pku_gamping_app/services/simrs_service.dart';
 
-/// Daftar poli unik dari data dokter.
+/// Data jadwal dokter dan daftar poli terintegrasi dari SimrsService
+final List<DokterJadwal> _dummyDokter = SimrsService.defaultJadwalDokter;
 const _poliList = <String>[
   'Penyakit Dalam',
   'Anak',
@@ -70,7 +28,12 @@ const _poliList = <String>[
 /// Screen utama yang menggabungkan seluruh widget jadwal secara modular:
 /// Header → Search → DateStrip → PoliFilter → DokterList → FooterNote
 class JadwalScreen extends StatefulWidget {
-  const JadwalScreen({super.key});
+  const JadwalScreen({
+    super.key,
+    this.embedded = false,
+  });
+
+  final bool embedded;
 
   @override
   State<JadwalScreen> createState() => _JadwalScreenState();
@@ -137,8 +100,8 @@ class _JadwalScreenState extends State<JadwalScreen> {
           bottom: false,
           child: Column(
             children: [
-              // ── Brand Header (reuse dari pola home) ──
-              _buildBrandHeader(),
+              // ── Brand Header ──
+              const HospitalBrandHeader(useGradient: true),
 
               // ── Konten Scrollable ──
               Expanded(
@@ -199,7 +162,22 @@ class _JadwalScreenState extends State<JadwalScreen> {
               ),
 
               // ── Bottom Navigation ──
-              const JadwalBottomNav(),
+              if (!widget.embedded)
+                AppBottomNav(
+                  selectedIndex: 3,
+                  onItemSelected: (index) {
+                    if (index == 3) return;
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.home,
+                      (route) => false,
+                      arguments: {'initialIndex': index},
+                    );
+                  },
+                  onDaftarPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.pendaftaran);
+                  },
+                ),
             ],
           ),
         ),
@@ -207,92 +185,6 @@ class _JadwalScreenState extends State<JadwalScreen> {
     );
   }
 
-  /// Brand header RS PKU Gamping — konsisten dengan halaman lain.
-  Widget _buildBrandHeader() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF4F7FC), Color(0xFFD2DEF2)],
-        ),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/images/logo_pkugamping.png',
-            width: 30,
-            height: 30,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A237E),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.local_hospital,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ),
-          const SizedBox(width: 9),
-          const Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'RS PKU Gamping',
-                  style: TextStyle(
-                    color: kInk,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  'Portal Pasien',
-                  style: TextStyle(color: kMuted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          Stack(
-            alignment: Alignment.topRight,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: kInk,
-                  size: 22,
-                ),
-                onPressed: () {
-                  // TODO: Buka notifikasi
-                },
-              ),
-              Positioned(
-                top: 11,
-                right: 11,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: kPrimaryBlue,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Sub-header section "Jadwal Dokter" dengan label keterangan.
   Widget _buildSectionTitle() {

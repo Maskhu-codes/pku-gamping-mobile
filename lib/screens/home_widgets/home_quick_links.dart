@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/riwayat_screen.dart';
-import 'package:pku_gamping_app/screens/test_results.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
 import 'home_constants.dart';
 
 /// Baris menu cepat beranda: Hasil Lab dan Riwayat.
@@ -14,17 +14,12 @@ class HomeQuickLinks extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // 1. Hasil Lab
+          // 1. Hasil Lab (Pemeriksaan Penunjang)
           _QuickLinkItem(
             icon: Icons.biotech_outlined,
             label: 'Hasil Lab',
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (context) => const TestResults(),
-                ),
-              );
+              Navigator.pushNamed(context, AppRoutes.pemeriksaanPenunjang);
             },
           ),
           const SizedBox(width: 42),
@@ -33,21 +28,14 @@ class HomeQuickLinks extends StatelessWidget {
           _QuickLinkItem(
             icon: Icons.description_outlined,
             label: 'Riwayat',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final riwayatList =
+                  await PemeriksaanPenunjangService.getRiwayatPemeriksaan();
+              if (!context.mounted) return;
+              Navigator.pushNamed(
                 context,
-                MaterialPageRoute<void>(
-                  builder: (context) => const RiwayatScreen(
-                    riwayat: [
-                      RiwayatPemeriksaan(
-                        tanggal: '20 Oktober 2026',
-                        namaPemeriksaan: 'Pemeriksaan Umum',
-                        poli: 'Poli Penyakit Dalam',
-                        dokter: 'dr. Hendra Wicaksono, Sp.PD',
-                      ),
-                    ],
-                  ),
-                ),
+                AppRoutes.riwayatPemeriksaan,
+                arguments: riwayatList,
               );
             },
           ),

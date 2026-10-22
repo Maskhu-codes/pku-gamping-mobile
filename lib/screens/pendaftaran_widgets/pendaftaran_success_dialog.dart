@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/home_screen_queue.dart';
-import 'package:pku_gamping_app/screens/queue_screen.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'pendaftaran_constants.dart';
 
 /// Modal Bottom Sheet Sukses Pendaftaran (Opsi 1).
@@ -287,11 +286,10 @@ class PendaftaranSuccessDialog extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context); // Tutup dialog
-                    Navigator.pushReplacement(
+                    Navigator.pushReplacementNamed(
                       context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => const QueueScreen(),
-                      ),
+                      AppRoutes.home,
+                      arguments: {'initialIndex': 1},
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -328,11 +326,9 @@ class PendaftaranSuccessDialog extends StatelessWidget {
                 child: TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.pushAndRemoveUntil(
+                    Navigator.pushNamedAndRemoveUntil(
                       context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => const HomeScreenQueue(),
-                      ),
+                      AppRoutes.home,
                       (route) => false,
                     );
                   },

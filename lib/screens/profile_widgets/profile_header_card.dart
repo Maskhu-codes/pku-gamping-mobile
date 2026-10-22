@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 
 /// Kartu header profil pasien — avatar inisial, nama, No. RM, status verifikasi, dan tab chip
 class ProfileHeaderCard extends StatelessWidget {
@@ -6,6 +7,12 @@ class ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nama = SessionManager.namaPasien;
+    final noRm = SessionManager.noRm;
+    final parts = nama.trim().split(RegExp(r'\s+'));
+    final inisial = parts.length >= 2
+        ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+        : (parts.isNotEmpty && parts[0].isNotEmpty ? parts[0].substring(0, 1).toUpperCase() : 'DM');
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -49,10 +56,10 @@ class ProfileHeaderCard extends StatelessWidget {
                           width: 2,
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'BD',
-                          style: TextStyle(
+                          inisial,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E3A8A),
@@ -86,9 +93,9 @@ class ProfileHeaderCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Dahlan Muda',
-                        style: TextStyle(
+                      Text(
+                        nama,
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -106,9 +113,9 @@ class ProfileHeaderCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'No. RM: 00-24-10-092',
-                          style: TextStyle(
+                        child: Text(
+                          'No. RM: $noRm',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: Colors.white,
                             fontWeight: FontWeight.w500,

@@ -1,7 +1,8 @@
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import '../core/theme/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -62,6 +63,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     });
   }
 
+  @override
+  void dispose() {
+    _passwordController.removeListener(_checkStrength);
+    _passwordController.dispose();
+    _confirmController.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -80,144 +90,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       _isLoading = false;
     });
 
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.25),
-      builder: (dialogContext) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: 8,
-            sigmaY: 8,
-          ),
-          child: Dialog(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(
-                        alpha: 0.12,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      size: 48,
-                      color: AppColors.success,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'Kata Sandi Berhasil Diubah',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    'Kata sandi kamu berhasil diperbarui. '
-                        'Silakan masuk menggunakan kata sandi baru.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      height: 1.6,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.border,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.shield_outlined,
-                          color: AppColors.success,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Akun Terlindungi • SIGAP PKU',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-
-                        Navigator.of(context)
-                            .pushNamedAndRemoveUntil(
-                          '/login',
-                              (route) => false,
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.arrow_forward_rounded,
-                      ),
-                      label: Text(
-                        'Kembali ke Login',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    AppFeedback.showSuccess(
+      context,
+      title: 'Kata Sandi Berhasil Diubah',
+      message: 'Kata sandi kamu berhasil diperbarui. Silakan masuk menggunakan kata sandi baru.',
+      confirmText: 'Kembali ke Login',
+      onDone: () {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.login,
+          (route) => false,
         );
       },
     );
@@ -231,83 +112,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     required VoidCallback onToggle,
     String? Function(String?)? validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
+    return AppTextField(
+      label: label,
+      hint: hint,
+      controller: controller,
+      obscureText: obscureText,
+      isPassword: true,
+      suffixIcon: IconButton(
+        onPressed: onToggle,
+        icon: Icon(
+          obscureText
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+          color: AppColors.textHint,
+          size: 20,
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          validator: validator,
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              fontSize: 13,
-              color: AppColors.textHint,
-            ),
-            suffixIcon: IconButton(
-              onPressed: onToggle,
-              icon: Icon(
-                obscureText
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: AppColors.textHint,
-                size: 20,
-              ),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 15,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.border,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.border,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.error,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.error,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
+      validator: validator,
     );
   }
 
@@ -552,13 +373,5 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         child: _buildForm(context),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
-    super.dispose();
   }
 }

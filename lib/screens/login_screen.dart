@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import 'package:pku_gamping_app/screens/home_screen.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
+import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,8 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
-  final bool _isLoading = false;
+  bool _isLoading = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -47,6 +49,31 @@ class _LoginScreenState extends State<LoginScreen>
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      await SimrsService.login(
+        username: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.home,
+        arguments: TopNotificationType.loginSuccess,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      AppFeedback.showError(
+        context,
+        message: 'Gagal masuk: periksa kredensial atau koneksi Anda.',
+      );
+    }
   }
 
   @override
@@ -95,14 +122,13 @@ class _LoginScreenState extends State<LoginScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Email
-                        _formLabel('Nama Email'),
-                        const SizedBox(height: 6),
-
-                        _textField(
+                        AppTextField(
+                          label: 'Nama Email',
                           controller: _emailController,
                           hint: 'nama@gmail.com',
-                          icon: Icons.email_outlined,
+                          prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          fillColor: AppColors.background,
                           validator: (v) {
                             if (v == null || v.isEmpty) {
                               return 'Email wajib diisi';
@@ -116,40 +142,19 @@ class _LoginScreenState extends State<LoginScreen>
                         const SizedBox(height: 16),
 
                         // Kata Sandi
-                        _formLabel('Kata Sandi'),
-                        const SizedBox(height: 6),
-
-                        TextFormField(
+                        AppTextField(
+                          label: 'Kata Sandi',
                           controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          style: TextStyle (
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                          ),
+                          hint: 'Masukan Kata Sandi',
+                          prefixIcon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          fillColor: AppColors.background,
                           validator: (v) {
                             if (v == null || v.isEmpty) {
                               return 'Kata sandi wajib diisi';
                             }
                             return null;
                           },
-                          decoration: _inputDecoration(
-                            hint: 'Masukan Kata Sandi',
-                            icon: Icons.lock_outline_rounded,
-                            suffix: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: AppColors.textHint,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 10),
 
@@ -160,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen>
                             onTap: () {
                               Navigator.pushNamed(
                                 context,
-                                '/forgot-password',
+                                AppRoutes.forgotPassword,
                               );
                             },
                             child: Text(
@@ -179,18 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
                         _primaryButton(
                           label: 'Masuk',
                           isLoading: _isLoading,
-                          onTap: () {
-                            if (_formKey.currentState!.validate()) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomeScreen(
-                                    notification: TopNotificationType.loginSuccess,
-                                    ),
-                                  ),
-                              );
-                            }
-                          },
+                          onTap: _handleLogin,
                         ),
                         const SizedBox(height: 24),
 
@@ -211,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 onTap: () {
                                   Navigator.pushNamed(
                                     context,
-                                    '/register',
+                                    AppRoutes.register,
                                   );
                                 },
                                 child: Text(
@@ -288,101 +282,7 @@ AppBar buildAppBar(BuildContext context, String title) {
   );
 }
 
-// Label Form
-Widget _formLabel(String label) {
-  return Text(
-    label,
-    style: TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-      color: AppColors.textPrimary,
-    ),
-  );
-}
 
-// Dekorasi Input
-InputDecoration _inputDecoration({
-  required String hint,
-  required IconData icon,
-  Widget? suffix,
-}) {
-  return InputDecoration(
-    hintText: hint,
-    hintStyle: TextStyle(
-      fontSize: 13,
-      color: AppColors.textHint,
-    ),
-    prefixIcon: Icon(
-      icon,
-      color: AppColors.textHint,
-      size: 20,
-    ),
-    suffixIcon: suffix,
-    filled: true,
-    fillColor: AppColors.background,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 14,
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(
-        color: AppColors.border,
-      ),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(
-        color: AppColors.border,
-      ),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(
-        color: AppColors.primary,
-        width: 1.5,
-      ),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(
-        color: AppColors.error,
-      ),
-    ),
-    focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(
-        color: AppColors.error,
-        width: 1.5,
-      ),
-    ),
-  );
-}
-
-// Text Field
-Widget _textField({
-  required TextEditingController controller,
-  required String hint,
-  required IconData icon,
-  TextInputType keyboardType = TextInputType.text,
-  bool obscure = false,
-  String? Function(String?)? validator,
-}) {
-  return TextFormField(
-    controller: controller,
-    obscureText: obscure,
-    keyboardType: keyboardType,
-    validator: validator,
-    style: TextStyle(
-      fontSize: 14,
-      color: AppColors.textPrimary,
-    ),
-    decoration: _inputDecoration(
-      hint: hint,
-      icon: icon,
-    ),
-  );
-}
 
 // Tombol Utama
 Widget _primaryButton({

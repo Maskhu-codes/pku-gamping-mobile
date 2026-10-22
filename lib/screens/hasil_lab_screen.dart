@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
+import 'package:pku_gamping_app/models/hasil_pemeriksaan_model.dart';
+import 'package:pku_gamping_app/widgets/app_empty_state.dart';
 
-const _primaryBlue = Color(0xFF0D4FC1);
-const _ink = Color(0xFF202124);
-const _muted = Color(0xFF777F91);
-const _page = Color(0xFFF6F8FA);
-
-class TestLabResults extends StatelessWidget {
-  const TestLabResults({super.key, this.results = const []});
+/// Halaman Hasil Pemeriksaan Laboratorium RS PKU Gamping
+class HasilLabScreen extends StatelessWidget {
+  const HasilLabScreen({super.key, this.results = const []});
 
   final List<LabResult> results;
 
@@ -18,7 +17,7 @@ class TestLabResults extends StatelessWidget {
         textTheme: baseTheme.textTheme.apply(fontFamily: 'Plus Jakarta Sans'),
       ),
       child: Scaffold(
-        backgroundColor: _page,
+        backgroundColor: AppColors.pageBackground,
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,14 +36,6 @@ class TestLabResults extends StatelessWidget {
   }
 }
 
-class LabResult {
-  const LabResult({required this.title, required this.date, required this.time});
-
-  final String title;
-  final String date;
-  final String time;
-}
-
 class _LaboratoryHeader extends StatelessWidget {
   const _LaboratoryHeader();
 
@@ -57,13 +48,17 @@ class _LaboratoryHeader extends StatelessWidget {
           IconButton(
             onPressed: () => Navigator.maybePop(context),
             tooltip: 'Kembali',
-            icon: const Icon(Icons.chevron_left_rounded, color: _ink, size: 30),
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: AppColors.textPrimary,
+              size: 30,
+            ),
           ),
           const SizedBox(width: 4),
           const Text(
             'Laboratorium',
             style: TextStyle(
-              color: _ink,
+              color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -79,52 +74,18 @@ class _EmptyResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        child: SizedBox(
-          height: constraints.maxHeight,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDCE4FF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.science_outlined,
-                  color: _primaryBlue,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 28),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Belum Ada Hasil Laboratorium',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _ink,
-                    fontSize: 29,
-                    fontWeight: FontWeight.w600,
-                    height: 1.25,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  'Hasil pemeriksaan laboratorium Anda belum tersedia.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: _muted, fontSize: 18, height: 1.5),
-                ),
-              ),
-              const SizedBox(height: 82),
-              const _SynchronizationNotice(),
-            ],
+    return const Center(
+      child: SingleChildScrollView(
+        child: AppEmptyState(
+          icon: Icons.science_outlined,
+          title: 'Belum Ada Hasil Laboratorium',
+          message: 'Hasil pemeriksaan laboratorium Anda belum tersedia.',
+          circleSize: 100,
+          iconSize: 48,
+          circleBackgroundColor: Color(0xFFDCE4FF),
+          action: Padding(
+            padding: EdgeInsets.only(top: 24),
+            child: _SynchronizationNotice(),
           ),
         ),
       ),
@@ -145,7 +106,7 @@ class _ResultsList extends StatelessWidget {
         const Text(
           'Hasil Laboratorium',
           style: TextStyle(
-            color: _ink,
+            color: AppColors.textPrimary,
             fontSize: 26,
             fontWeight: FontWeight.w600,
           ),
@@ -153,7 +114,11 @@ class _ResultsList extends StatelessWidget {
         const SizedBox(height: 18),
         const Text(
           'Lihat detail hasil pemeriksaan laboratorium Anda.',
-          style: TextStyle(color: _muted, fontSize: 16, height: 1.4),
+          style: TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 16,
+            height: 1.4,
+          ),
         ),
         const SizedBox(height: 20),
         for (final result in results) ...[
@@ -194,7 +159,7 @@ class _ResultCard extends StatelessWidget {
               Text(
                 result.title,
                 style: const TextStyle(
-                  color: _ink,
+                  color: AppColors.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                 ),
@@ -202,7 +167,10 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${result.date} | ${result.time}',
-                style: const TextStyle(color: _muted, fontSize: 16),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
@@ -227,7 +195,7 @@ class _SynchronizationNotice extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.circle, color: _primaryBlue, size: 12),
+          Icon(Icons.circle, color: AppColors.primary, size: 12),
           SizedBox(width: 8),
           Flexible(
             child: Text(

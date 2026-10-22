@@ -44,6 +44,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
     expect(find.text('Valid'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
 
     // Lanjut ke Langkah 2
     final cekNikButton = find.text('Cek NIK & Lanjutkan →');

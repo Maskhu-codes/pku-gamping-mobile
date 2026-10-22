@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/shared_widgets/logout_confirmation_dialog.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 
 /// Tombol Keluar dari Akun (digunakan di ProfileScreen)
 class ProfileLogoutButton extends StatelessWidget {
@@ -10,7 +12,21 @@ class ProfileLogoutButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () => LogoutConfirmationDialog.show(context),
+        onPressed: () {
+          AppFeedback.showConfirmation(
+            context,
+            title: 'Konfirmasi',
+            message: 'Yakin keluar akun?',
+            confirmText: 'Ya, Keluar',
+            cancelText: 'Batal',
+            onConfirm: () async {
+              await SimrsService.logout();
+              if (!context.mounted) return;
+              Navigator.of(context, rootNavigator: true)
+                  .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+            },
+          );
+        },
         icon: const Icon(
           Icons.logout_rounded,
           size: 18,

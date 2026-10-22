@@ -2,27 +2,29 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Blue - warna utama RS PKU Muhammadiyah Gamping
-  static const Color primary = Color(0xFF1565C0);
+  static const Color primary = Color(0xFF0D4FC1);
   static const Color primaryLight = Color(0xFF1976D2);
-  static const Color primaryDark = Color(0xFF0D47A1);
+  static const Color primaryDark = Color(0xFF073F9F);
 
   // Accent
   static const Color accent = Color(0xFFFFC107);
 
   // Background & Surface
   static const Color background = Color(0xFFF5F7FA);
+  static const Color pageBackground = Color(0xFFF6F8FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color cardBackground = Color(0xFFFFFFFF);
 
   // Text
-  static const Color textPrimary = Color(0xFF1A1A2E);
+  static const Color textPrimary = Color(0xFF202124);
   static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF777F91);
   static const Color textHint = Color(0xFF9CA3AF);
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   // Border
   static const Color border = Color(0xFFE5E7EB);
-  static const Color borderFocus = Color(0xFF1565C0);
+  static const Color borderFocus = Color(0xFF0D4FC1);
 
   // Status
   static const Color success = Color(0xFF22C55E);

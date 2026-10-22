@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
-import 'package:pku_gamping_app/screens/forgot_password_screen.dart';
-import 'package:pku_gamping_app/screens/home_screen.dart';
-import 'package:pku_gamping_app/screens/login_screen.dart';
-import 'package:pku_gamping_app/screens/otp_screen.dart';
-import 'package:pku_gamping_app/screens/register_screen.dart';
-import 'package:pku_gamping_app/screens/reset_password_screen.dart';
-import 'package:pku_gamping_app/screens/splash_screen.dart';
+import 'package:pku_gamping_app/services/antrean_service.dart';
+import 'package:pku_gamping_app/services/app_feedback_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SessionManager.init();
+  await AntreanService.initFromStorage();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -32,6 +32,7 @@ class PkuGampingApp extends StatelessWidget {
     return MaterialApp(
       title: 'PKU Gamping - Daftar Pasien',
       debugShowCheckedModeBanner: false,
+      navigatorKey: AppFeedback.navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
@@ -41,21 +42,39 @@ class PkuGampingApp extends StatelessWidget {
         fontFamily: 'Plus Jakarta Sans',
         scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          hintStyle: const TextStyle(fontSize: 13, color: AppColors.textHint),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+          ),
+        ),
       ),
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         overscroll: false,
         physics: const ClampingScrollPhysics(),
       ),
-      initialRoute: '/splash',
-      routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/otp': (context) => const OtpScreen(),
-        '/reset-password': (context) => const ResetPasswordScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
-      },
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

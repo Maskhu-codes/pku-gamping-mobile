@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'jadwal_constants.dart';
 import 'jadwal_dokter_card.dart';
 
@@ -42,12 +42,9 @@ class JadwalDokterList extends StatelessWidget {
               dokter: dokterList[index],
               showDivider: !isLast,
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => PendaftaranScreen(
-                      initialDokter: dokterList[index],
-                    ),
-                  ),
+                Navigator.of(context).pushNamed(
+                  AppRoutes.pendaftaran,
+                  arguments: {'initialDokter': dokterList[index]},
                 );
               },
             );

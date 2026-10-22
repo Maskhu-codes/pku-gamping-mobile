@@ -44,7 +44,8 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredList = PendaftaranDummyData.listPoli.where((poli) {
+    final allPoli = PendaftaranDummyData.listPoli;
+    final filteredList = allPoli.where((poli) {
       return poli.nama.toLowerCase().contains(_query.toLowerCase()) ||
           poli.deskripsi.toLowerCase().contains(_query.toLowerCase());
     }).toList();

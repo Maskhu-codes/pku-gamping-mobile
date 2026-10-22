@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'login_screen.dart' show buildAppBar;
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -43,14 +44,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      if (mounted) {
-        Navigator.pushNamed(
-          context,
-          '/otp',
-          arguments: {'email': _emailController.text.trim()},
-        );
-      }
+      Navigator.pushNamed(
+        context,
+        '/otp',
+        arguments: {'email': _emailController.text.trim()},
+      );
     }
   }
 
@@ -139,22 +139,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
+                      AppTextField(
+                        label: 'Email',
                         controller: _emailController,
+                        hint: 'Masukkan Email Anda',
+                        prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
+                        fillColor: AppColors.background,
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'Email wajib diisi';
@@ -164,49 +155,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           }
                           return null;
                         },
-                        decoration: InputDecoration(
-                          hintText: 'Masukkan Email Anda',
-                          hintStyle: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textHint,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
-                            color: AppColors.textHint,
-                            size: 20,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.background,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: AppColors.border,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: AppColors.border,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 28),
 
