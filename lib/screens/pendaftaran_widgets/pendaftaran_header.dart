@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/widgets/hospital_brand_header.dart';
 import 'pendaftaran_constants.dart';
 
 /// Header atas untuk layar Pendaftaran.
@@ -21,81 +22,7 @@ class PendaftaranHeader extends StatelessWidget {
       child: Column(
         children: [
           // ── Brand Header (Konsisten dengan seluruh aplikasi) ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: kPendaftaranDivider)),
-            ),
-            child: Row(
-              children: [
-                // Logo RS PKU Gamping
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                  ),
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0F9D58),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'PKU',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: kPendaftaranFontFamily,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'RS PKU Gamping',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: kPendaftaranInk,
-                          fontFamily: kPendaftaranFontFamily,
-                        ),
-                      ),
-                      Text(
-                        'Portal Pasien',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: kPendaftaranMuted,
-                          fontFamily: kPendaftaranFontFamily,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Lonceng Notifikasi
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: kPendaftaranInk,
-                    size: 24,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
+          const HospitalBrandHeader(),
 
           // ── Sub-Header: Back Button + Title + Icon Berkas ──
           Padding(
