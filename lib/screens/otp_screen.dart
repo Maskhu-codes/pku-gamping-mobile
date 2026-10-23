@@ -515,30 +515,59 @@ class _OtpScreenState extends State<OtpScreen>
               ],
             ],
           ),
-          TextField(
-            controller: _otpController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            textAlign: TextAlign.center,
-            maxLength: 6,
-            showCursor: false,
-            style: const TextStyle(color: Colors.transparent),
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(6),
-            ],
-            autofillHints: const [AutofillHints.oneTimeCode],
-            decoration: const InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+          Positioned.fill(
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                inputDecorationTheme: const InputDecorationTheme(
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              child: Opacity(
+                opacity: 0.0,
+                child: TextField(
+                  controller: _otpController,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  textAlign: TextAlign.center,
+                  maxLength: 6,
+                  showCursor: false,
+                  cursorColor: Colors.transparent,
+                  style: const TextStyle(color: Colors.transparent),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(6),
+                  ],
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _otpCode = value;
+                      _hasError = false;
+                    });
+                  },
+                ),
+              ),
             ),
-            onChanged: (value) {
-              setState(() {
-                _otpCode = value;
-                _hasError = false;
-              });
-            },
           ),
         ],
       ),
