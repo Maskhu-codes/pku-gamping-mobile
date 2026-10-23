@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/models/dokter_jadwal_model.dart';
 import 'package:pku_gamping_app/models/hasil_pemeriksaan_model.dart';
 import 'package:pku_gamping_app/models/riwayat_pemeriksaan_model.dart';
+import 'package:pku_gamping_app/screens/edit_profile_screen.dart';
 import 'package:pku_gamping_app/screens/forgot_password_screen.dart';
 import 'package:pku_gamping_app/screens/hasil_lab_screen.dart';
 import 'package:pku_gamping_app/screens/hasil_radiologi_screen.dart';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const hasilRadiologi = '/hasil-radiologi';
   static const riwayatPemeriksaan = '/riwayat-pemeriksaan';
   static const riwayatResep = '/riwayat-resep';
+  static const editProfile = '/edit-profile';
 }
 
 /// Router terpusat menggunakan onGenerateRoute bawaan Flutter
@@ -114,6 +116,11 @@ class AppRouter {
       case AppRoutes.riwayatResep:
         return MaterialPageRoute(
           builder: (_) => const RiwayatResepScreen(),
+        );
+
+      case AppRoutes.editProfile:
+        return MaterialPageRoute(
+          builder: (_) => const EditProfileScreen(),
         );
 
       default:

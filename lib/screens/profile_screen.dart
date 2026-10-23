@@ -131,11 +131,14 @@ class ProfileScreen extends StatelessWidget {
                                 icon: Icons.person_outline_rounded,
                                 iconBgColor: const Color(0xFFEFF6FF),
                                 iconColor: const Color(0xFF2563EB),
-                                title: 'Edit Profil',
-                                subtitle: 'Perbarui data pribadi dan pengaturan akun',
+                                title: 'Data & Profil Pasien',
+                                subtitle: 'Perbarui biodata dan kontak domisili',
                                 showDivider: true,
                                 onTap: () {
-                                  // TODO: Navigasi ke Edit Profil
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.editProfile,
+                                  );
                                 },
                               ),
                               MenuItemRow(
