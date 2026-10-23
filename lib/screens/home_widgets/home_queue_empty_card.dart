@@ -72,34 +72,7 @@ class HomeQueueEmptyCard extends StatelessWidget {
           const SizedBox(height: 14),
 
           // Tombol CTA Daftar Sekarang
-          SizedBox(
-            height: 38,
-            child: ElevatedButton.icon(
-              onPressed: onDaftarPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kHomePrimaryBlue,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              icon: const Icon(
-                Icons.add_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-              label: const Text(
-                'Daftar Sekarang',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: kHomeFontFamily,
-                ),
-              ),
-            ),
-          ),
+
         ],
       ),
     );

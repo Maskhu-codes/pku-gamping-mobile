@@ -5,11 +5,9 @@ import 'package:pku_gamping_app/screens/home_widgets/home_brand_header.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_constants.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_emergency_contact.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_news_section.dart';
-import 'package:pku_gamping_app/screens/home_widgets/home_patient_header.dart';
-import 'package:pku_gamping_app/screens/home_widgets/home_queue_active_card.dart';
-import 'package:pku_gamping_app/screens/home_widgets/home_queue_empty_card.dart';
+import 'package:pku_gamping_app/screens/home_widgets/home_with_queue.dart';
+import 'package:pku_gamping_app/screens/home_widgets/home_without_queue.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_quick_links.dart';
-import 'package:pku_gamping_app/screens/home_widgets/home_simulation_bar.dart';
 import 'package:pku_gamping_app/screens/jadwal_screen.dart';
 import 'package:pku_gamping_app/screens/profile_screen.dart';
 import 'package:pku_gamping_app/screens/queue_screen.dart';
@@ -20,7 +18,7 @@ import 'package:pku_gamping_app/widgets/top_notification.dart';
 /// Screen Utama & Single Shell Navigation Hub RS PKU Gamping.
 ///
 /// Menggunakan arsitektur modular dan reaktif dengan [IndexedStack]:
-/// - Tab 0: Beranda (Patient Header, Menu Cepat, Berita, IGD, Simulasi).
+/// - Tab 0: Beranda (Patient Header, Menu Cepat, Berita, IGD).
 /// - Tab 1: Antrean (Reaktif: [QueueScreen] saat ada antrean aktif, [QueueBlank] jika kosong).
 /// - Tab 2: Tombol (+) Daftar (Membuka [PendaftaranScreen]).
 /// - Tab 3: Jadwal Dokter ([JadwalScreen]).
@@ -28,11 +26,7 @@ import 'package:pku_gamping_app/widgets/top_notification.dart';
 ///
 /// Navigasi antar tab instan tanpa lag dan tanpa penumpukan memori rute.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    this.initialIndex = 0,
-    this.notification,
-  });
+  const HomeScreen({super.key, this.initialIndex = 0, this.notification});
 
   final int initialIndex;
   final TopNotificationType? notification;
@@ -115,8 +109,8 @@ class HomeTabContent extends StatelessWidget {
           // 2. Konten Scrollable Beranda
           Expanded(
             child: ScrollConfiguration(
-              behavior:
-                  ScrollConfiguration.of(context).copyWith(overscroll: false),
+              behavior: ScrollConfiguration.of(context)
+                  .copyWith(overscroll: false),
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
                 child: Column(
@@ -126,29 +120,24 @@ class HomeTabContent extends StatelessWidget {
                     ValueListenableBuilder<AntreanAktifModel?>(
                       valueListenable: AntreanService.antreanAktif,
                       builder: (context, antrean, _) {
-                        final queueCard = antrean == null
-                            ? HomeQueueEmptyCard(
-                                onDaftarPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.pendaftaran,
-                                  );
-                                },
-                              )
-                            : HomeQueueActiveCard(
-                                antrean: antrean,
-                                onPantauPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.queueDetail,
-                                  );
-                                },
+                        if (antrean == null) {
+                          return HomeWithoutQueue(
+                            namaPasien: SessionManager.namaPasien,
+                            noRm: SessionManager.noRm,
+                            onDaftarPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.pendaftaran,
                               );
+                            },
+                          );
+                        }
 
-                        return HomePatientHeader(
-                          queueCard: queueCard,
-                          namaPasien: antrean?.namaPasien ?? SessionManager.namaPasien,
-                          noRm: antrean?.noRm ?? SessionManager.noRm,
+                        return HomeWithQueue(
+                          antrean: antrean,
+                          onPantauPressed: () {
+                            Navigator.pushNamed(context, AppRoutes.queueDetail);
+                          },
                         );
                       },
                     ),
@@ -162,10 +151,6 @@ class HomeTabContent extends StatelessWidget {
 
                     // ── Layanan Gawat Darurat (IGD 24 Jam) ──
                     const HomeEmergencyContact(),
-                    const SizedBox(height: 18),
-
-                    // ── Panel Simulasi Testing Antrean ──
-                    const HomeSimulationBar(),
                     const SizedBox(height: 28),
                   ],
                 ),
