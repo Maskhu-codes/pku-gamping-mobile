@@ -35,6 +35,22 @@ class PoliSelectionSheet extends StatefulWidget {
 class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  List<PoliModel> _listPoli = PendaftaranDummyData.listPoli;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPoliFromService();
+  }
+
+  Future<void> _loadPoliFromService() async {
+    try {
+      final list = await PendaftaranService.getListPoli();
+      if (mounted && list.isNotEmpty) {
+        setState(() => _listPoli = list);
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -44,10 +60,12 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final allPoli = PendaftaranDummyData.listPoli;
+    final allPoli = _listPoli;
+    final query = _query.trim().toLowerCase();
     final filteredList = allPoli.where((poli) {
-      return poli.nama.toLowerCase().contains(_query.toLowerCase()) ||
-          poli.deskripsi.toLowerCase().contains(_query.toLowerCase());
+      if (query.isEmpty) return true;
+      return poli.nama.toLowerCase().contains(query) ||
+          poli.deskripsi.toLowerCase().contains(query);
     }).toList();
 
     return Container(
@@ -78,14 +96,30 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Pilih Poli Tujuan',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: kPendaftaranInk,
-                    fontFamily: kPendaftaranFontFamily,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pilih Poli Tujuan',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: kPendaftaranInk,
+                        fontFamily: kPendaftaranFontFamily,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      query.isEmpty
+                          ? '${allPoli.length} Poliklinik Tersedia'
+                          : '${filteredList.length} dari ${allPoli.length} Poliklinik',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: kPendaftaranMuted,
+                        fontFamily: kPendaftaranFontFamily,
+                      ),
+                    ),
+                  ],
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
@@ -303,10 +337,9 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter dokter hanya yang ada di poli terpilih
-    final doktersInPoli = PendaftaranDummyData.listDokter.where((d) {
-      return d.poliId == widget.selectedPoli.id;
-    }).toList();
+    // Filter dokter yang bertugas di poli terpilih (didukung dokter spesialis representatif)
+    final doktersInPoli =
+        PendaftaranDummyData.getDokterByPoliId(widget.selectedPoli.id);
 
     final filteredList = doktersInPoli.where((d) {
       return d.nama.toLowerCase().contains(_query.toLowerCase()) ||

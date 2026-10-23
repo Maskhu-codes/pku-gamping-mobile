@@ -81,10 +81,9 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
         );
       } catch (_) {
         // Fallback ke dokter pertama di poli tersebut
-        _selectedDokter = PendaftaranDummyData.listDokter.firstWhere(
-          (d) => d.poliId == _selectedPoli?.id,
-          orElse: () => PendaftaranDummyData.listDokter.first,
-        );
+        _selectedDokter = _selectedPoli != null
+            ? PendaftaranDummyData.getDokterByPoliId(_selectedPoli!.id).first
+            : PendaftaranDummyData.listDokter.first;
       }
 
       // Pilih slot pertama yang tersedia secara otomatis

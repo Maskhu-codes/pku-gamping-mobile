@@ -76,8 +76,6 @@ class PendaftaranService {
     if (poliId == null) {
       return PendaftaranDummyData.listDokter;
     }
-    return PendaftaranDummyData.listDokter
-        .where((d) => d.poliId == poliId)
-        .toList();
+    return PendaftaranDummyData.getDokterByPoliId(poliId);
   }
 }
