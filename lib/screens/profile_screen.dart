@@ -6,6 +6,7 @@ import 'package:pku_gamping_app/screens/profile_widgets/profile_header_card.dart
 import 'package:pku_gamping_app/screens/profile_widgets/profile_logout_button.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_menu_section.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/sigap_membership_card.dart';
+import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 
 /// Halaman Profil Pasien RS PKU Muhammadiyah Gamping
@@ -93,10 +94,15 @@ class ProfileScreen extends StatelessWidget {
                                 badgeBgColor: const Color(0xFFFEE2E2),
                                 badgeTextColor: const Color(0xFFDC2626),
                                 showDivider: true,
-                                onTap: () {
+                                onTap: () async {
+                                  final riwayatList =
+                                      await PemeriksaanPenunjangService
+                                          .getRiwayatPemeriksaan();
+                                  if (!context.mounted) return;
                                   Navigator.pushNamed(
                                     context,
                                     AppRoutes.riwayatPemeriksaan,
+                                    arguments: riwayatList,
                                   );
                                 },
                               ),

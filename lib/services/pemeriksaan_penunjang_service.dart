@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:pku_gamping_app/core/network/api_client.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/models/hasil_pemeriksaan_model.dart';
 import 'package:pku_gamping_app/models/riwayat_pemeriksaan_model.dart';
 
@@ -11,6 +12,12 @@ class PemeriksaanPenunjangService {
   PemeriksaanPenunjangService._();
 
   static Dio get _dio => ApiClient.dio;
+
+  static String? _riwayatCacheToken;
+  static bool _hasRiwayatCache = false;
+  static List<RiwayatPemeriksaan>? _riwayatCache;
+  static String? _riwayatRequestToken;
+  static Future<List<RiwayatPemeriksaan>>? _riwayatRequest;
 
   /// Mengambil daftar hasil laboratorium pasien
   static Future<List<LabResult>> getHasilLab() async {
@@ -47,21 +54,51 @@ class PemeriksaanPenunjangService {
   }
 
   /// Mengambil riwayat pemeriksaan dokter rawat jalan
-  static Future<List<RiwayatPemeriksaan>> getRiwayatPemeriksaan() async {
+  static Future<List<RiwayatPemeriksaan>> getRiwayatPemeriksaan() {
+    final token = SessionManager.token;
+    if (_hasRiwayatCache && _riwayatCacheToken == token) {
+      return Future.value(_riwayatCache!);
+    }
+    if (_riwayatRequest != null && _riwayatRequestToken == token) {
+      return _riwayatRequest!;
+    }
+
+    _riwayatRequestToken = token;
+    final request = _fetchRiwayatPemeriksaan(token);
+    _riwayatRequest = request;
+    return request;
+  }
+
+  static Future<List<RiwayatPemeriksaan>> _fetchRiwayatPemeriksaan(
+    String? token,
+  ) async {
+    late final List<RiwayatPemeriksaan> riwayat;
     try {
       final response = await _dio.get('/pasien/riwayat-pemeriksaan');
       if (response.data is List) {
-        return (response.data as List)
+        riwayat = (response.data as List)
             .map((json) =>
                 RiwayatPemeriksaan.fromJson(json as Map<String, dynamic>))
             .toList();
+      } else {
+        riwayat = defaultRiwayat;
       }
-      return defaultRiwayat;
     } on DioException catch (_) {
-      return defaultRiwayat;
+      riwayat = defaultRiwayat;
     } catch (_) {
-      return defaultRiwayat;
+      riwayat = defaultRiwayat;
     }
+
+    final result = List<RiwayatPemeriksaan>.unmodifiable(riwayat);
+    if (SessionManager.token == token) {
+      _riwayatCacheToken = token;
+      _riwayatCache = result;
+      _hasRiwayatCache = true;
+    }
+    if (_riwayatRequestToken == token) {
+      _riwayatRequest = null;
+    }
+    return result;
   }
 
   // ─── Default Mock Data untuk Fallback Offline ───
