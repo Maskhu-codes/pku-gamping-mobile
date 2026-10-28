@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
+import 'package:pku_gamping_app/data/wilayah_data.dart';
 
 /// Langkah 2: Pengisian Biodata Pasien, Alamat, dan Kontak.
+///
+/// Revisi:
+/// - Tempat lahir sebagai dropdown (searchable)
+/// - Cascading dropdown: Provinsi → Kabupaten/Kota → Kecamatan → Kelurahan/Desa
+/// - Alamat email dihapus dari kontak pasien
 class RegisterStep2Pasien extends StatelessWidget {
   const RegisterStep2Pasien({
     super.key,
     required this.namaController,
-    required this.tempatLahirController,
+    required this.selectedTempatLahir,
     required this.selectedTanggalLahir,
     required this.selectedJenisKelamin,
     required this.selectedGolDarah,
@@ -23,7 +29,7 @@ class RegisterStep2Pasien extends StatelessWidget {
     required this.selectedKelurahan,
     required this.alamatController,
     required this.nomorHpController,
-    required this.emailKontakController,
+    required this.onTempatLahirChanged,
     required this.onTanggalLahirChanged,
     required this.onJenisKelaminChanged,
     required this.onGolDarahChanged,
@@ -41,7 +47,7 @@ class RegisterStep2Pasien extends StatelessWidget {
   });
 
   final TextEditingController namaController;
-  final TextEditingController tempatLahirController;
+  final String? selectedTempatLahir;
   final DateTime? selectedTanggalLahir;
   final String? selectedJenisKelamin;
   final String? selectedGolDarah;
@@ -59,8 +65,8 @@ class RegisterStep2Pasien extends StatelessWidget {
   final TextEditingController alamatController;
 
   final TextEditingController nomorHpController;
-  final TextEditingController emailKontakController;
 
+  final ValueChanged<String?> onTempatLahirChanged;
   final ValueChanged<DateTime> onTanggalLahirChanged;
   final ValueChanged<String?> onJenisKelaminChanged;
   final ValueChanged<String?> onGolDarahChanged;
@@ -79,6 +85,14 @@ class RegisterStep2Pasien extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cascading data
+    final kabupatenList =
+        WilayahData.getKabupatenByProvinsi(selectedProvinsi);
+    final kecamatanList =
+        WilayahData.getKecamatanByKabupaten(selectedKabupaten);
+    final kelurahanList =
+        WilayahData.getKelurahanByKecamatan(selectedKecamatan);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
       child: Column(
@@ -119,10 +133,13 @@ class RegisterStep2Pasien extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildFieldLabel('Tempat Lahir *'),
-                        _buildInputField(
-                          controller: tempatLahirController,
-                          hint: 'Kota Lahir',
+                        _buildSearchableDropdown(
+                          context: context,
+                          value: selectedTempatLahir,
+                          items: TempatLahirData.tempatLahirList,
+                          hint: 'Pilih Tempat Lahir',
                           icon: Icons.location_city_outlined,
+                          onChanged: onTempatLahirChanged,
                         ),
                       ],
                     ),
@@ -310,16 +327,7 @@ class RegisterStep2Pasien extends StatelessWidget {
               _buildFieldLabel('Provinsi *'),
               _buildDropdown(
                 initialValue: selectedProvinsi,
-                items: const [
-                  'D.I. Yogyakarta',
-                  'Jawa Tengah',
-                  'Jawa Timur',
-                  'Jawa Barat',
-                  'DKI Jakarta',
-                  'Banten',
-                  'Bali',
-                  'Lainnya',
-                ],
+                items: WilayahData.provinsiList,
                 hint: 'Pilih Provinsi',
                 icon: Icons.map_outlined,
                 onChanged: onProvinsiChanged,
@@ -329,16 +337,7 @@ class RegisterStep2Pasien extends StatelessWidget {
               _buildFieldLabel('Kabupaten / Kota *'),
               _buildDropdown(
                 initialValue: selectedKabupaten,
-                items: const [
-                  'Kab. Sleman',
-                  'Kab. Bantul',
-                  'Kota Yogyakarta',
-                  'Kab. Kulon Progo',
-                  'Kab. Gunungkidul',
-                  'Kab. Magelang',
-                  'Kab. Klaten',
-                  'Lainnya',
-                ],
+                items: kabupatenList,
                 hint: 'Pilih Kabupaten / Kota',
                 icon: Icons.location_city_outlined,
                 onChanged: onKabupatenChanged,
@@ -348,17 +347,7 @@ class RegisterStep2Pasien extends StatelessWidget {
               _buildFieldLabel('Kecamatan *'),
               _buildDropdown(
                 initialValue: selectedKecamatan,
-                items: const [
-                  'Gamping',
-                  'Godean',
-                  'Mlati',
-                  'Seyegan',
-                  'Depok',
-                  'Kasihan',
-                  'Sedayu',
-                  'Pajangan',
-                  'Lainnya',
-                ],
+                items: kecamatanList,
                 hint: 'Pilih Kecamatan',
                 icon: Icons.navigation_outlined,
                 onChanged: onKecamatanChanged,
@@ -368,16 +357,7 @@ class RegisterStep2Pasien extends StatelessWidget {
               _buildFieldLabel('Kelurahan / Desa *'),
               _buildDropdown(
                 initialValue: selectedKelurahan,
-                items: const [
-                  'Ambarketawang',
-                  'Balecatur',
-                  'Banyuraden',
-                  'Nogotirto',
-                  'Trihanggo',
-                  'Sidoagung',
-                  'Sidomoyo',
-                  'Lainnya',
-                ],
+                items: kelurahanList,
                 hint: 'Pilih Kelurahan / Desa',
                 icon: Icons.home_work_outlined,
                 onChanged: onKelurahanChanged,
@@ -399,7 +379,7 @@ class RegisterStep2Pasien extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          // ── 3. Kontak Pasien Card ──
+          // ── 3. Kontak Pasien Card (tanpa email) ──
           _buildBadgeHeader(
             icon: Icons.contact_phone_outlined,
             title: 'Kontak Pasien',
@@ -478,18 +458,9 @@ class RegisterStep2Pasien extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-
-              _buildFieldLabel('Alamat Email *'),
-              _buildInputField(
-                controller: emailKontakController,
-                hint: 'contoh@email.com',
-                icon: Icons.alternate_email_rounded,
-                keyboardType: TextInputType.emailAddress,
-              ),
               const SizedBox(height: 6),
               const Text(
-                'Status verifikasi melalui nomor telepon / WhatsApp & email Anda.',
+                'Status verifikasi melalui nomor telepon / WhatsApp Anda.',
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textSecondary,
@@ -787,6 +758,62 @@ class RegisterStep2Pasien extends StatelessWidget {
     );
   }
 
+  /// Dropdown Tempat Lahir dengan fitur pencarian
+  Widget _buildSearchableDropdown({
+    required BuildContext context,
+    required String? value,
+    required List<String> items,
+    required String hint,
+    required IconData icon,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final selected = await showDialog<String>(
+          context: context,
+          builder: (ctx) => _SearchableDropdownDialog(
+            title: 'Pilih Tempat Lahir',
+            items: items,
+            selectedValue: value,
+          ),
+        );
+        if (selected != null) {
+          onChanged(selected);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textHint, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value ?? hint,
+                style: TextStyle(
+                  fontSize: 12,
+                  color:
+                      value == null ? AppColors.textHint : AppColors.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.textHint,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDatePicker(BuildContext context) {
     return GestureDetector(
       onTap: () async {
@@ -839,6 +866,166 @@ class RegisterStep2Pasien extends StatelessWidget {
                       : AppColors.textPrimary,
                 ),
                 overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog pencarian untuk dropdown Tempat Lahir
+class _SearchableDropdownDialog extends StatefulWidget {
+  const _SearchableDropdownDialog({
+    required this.title,
+    required this.items,
+    this.selectedValue,
+  });
+
+  final String title;
+  final List<String> items;
+  final String? selectedValue;
+
+  @override
+  State<_SearchableDropdownDialog> createState() =>
+      _SearchableDropdownDialogState();
+}
+
+class _SearchableDropdownDialogState extends State<_SearchableDropdownDialog> {
+  final _searchController = TextEditingController();
+  late List<String> _filteredItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredItems = widget.items;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filter(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredItems = widget.items;
+      } else {
+        _filteredItems = widget.items
+            .where((item) =>
+                item.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Search field
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _filter,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Cari kota...',
+                      hintStyle: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textHint,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        size: 18,
+                        color: AppColors.textHint,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.background,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // List
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _filteredItems.length,
+                itemBuilder: (context, index) {
+                  final item = _filteredItems[index];
+                  final isSelected = item == widget.selectedValue;
+                  return ListTile(
+                    dense: true,
+                    selected: isSelected,
+                    selectedTileColor:
+                        AppColors.primary.withValues(alpha: 0.08),
+                    title: Text(
+                      item,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, item),
+                  );
+                },
               ),
             ),
           ],

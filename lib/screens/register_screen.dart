@@ -33,10 +33,12 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _nikController = TextEditingController();
   bool _isNikChecking = false;
   bool _isNikVerified = false;
+  bool _isNikAlreadyRegistered = false;
+  bool _nikHasBeenChecked = false;
 
   // Step 2: Data Pasien
   final _namaController = TextEditingController();
-  final _tempatLahirController = TextEditingController();
+  String? _selectedTempatLahir;
   DateTime? _selectedTanggalLahir;
   String? _selectedJenisKelamin;
   String? _selectedGolDarah;
@@ -48,19 +50,17 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _namaIbuController = TextEditingController();
 
   // Alamat
-  String? _selectedProvinsi = 'D.I. Yogyakarta';
-  String? _selectedKabupaten = 'Kab. Sleman';
-  String? _selectedKecamatan = 'Gamping';
+  String? _selectedProvinsi;
+  String? _selectedKabupaten;
+  String? _selectedKecamatan;
   String? _selectedKelurahan;
   final _alamatController = TextEditingController();
 
   // Kontak
   final _nomorHpController = TextEditingController();
-  final _emailKontakController = TextEditingController();
 
   // Step 3: Buat Akun & Keamanan
   final _emailController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePass = true;
@@ -82,30 +82,18 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
 
     _animController.forward();
-
-    _emailKontakController.addListener(_syncEmailKontak);
-  }
-
-  void _syncEmailKontak() {
-    if (_emailController.text.isEmpty && _currentPage < 2) {
-      _emailController.text = _emailKontakController.text;
-    }
   }
 
   @override
   void dispose() {
-    _emailKontakController.removeListener(_syncEmailKontak);
     _animController.dispose();
     _pageController.dispose();
     _nikController.dispose();
     _namaController.dispose();
-    _tempatLahirController.dispose();
     _namaIbuController.dispose();
     _alamatController.dispose();
     _nomorHpController.dispose();
-    _emailKontakController.dispose();
     _emailController.dispose();
-    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -158,23 +146,37 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     setState(() => _isNikChecking = true);
 
-    final isValid = await SimrsService.cekNik(nik);
+    // Cek apakah NIK sudah terdaftar
+    final isAlreadyRegistered = await SimrsService.isNikAlreadyRegistered(nik);
 
     if (!mounted) return;
 
     setState(() {
       _isNikChecking = false;
-      _isNikVerified = isValid;
+      _nikHasBeenChecked = true;
+      _isNikAlreadyRegistered = isAlreadyRegistered;
+      _isNikVerified = !isAlreadyRegistered;
     });
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('NIK valid dan terhubung dengan SIMRS PKU Gamping.'),
-        backgroundColor: AppColors.success,
-        duration: Duration(milliseconds: 600),
-      ),
-    );
+
+    if (isAlreadyRegistered) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('NIK valid dan belum terdaftar. Silakan lanjutkan pendaftaran.'),
+          backgroundColor: AppColors.success,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _handleStep1Submit() {
@@ -201,7 +203,36 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    _isNikVerified = true;
+    if (!_nikHasBeenChecked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan cek NIK terlebih dahulu sebelum melanjutkan.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (_isNikAlreadyRegistered) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Masukkan NIK yang belum terdaftar di RS PKU Gamping.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (!_isNikVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('NIK belum terverifikasi. Silakan cek NIK terlebih dahulu.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     _goToPage(1);
   }
 
@@ -216,10 +247,10 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    if (_tempatLahirController.text.trim().isEmpty) {
+    if (_selectedTempatLahir == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tempat Lahir wajib diisi.'),
+          content: Text('Tempat Lahir wajib dipilih.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -244,28 +275,11 @@ class _RegisterScreenState extends State<RegisterScreen>
       _nomorHpController.text = '81234567890';
     }
 
-    if (_emailController.text.isEmpty) {
-      _emailController.text = _emailKontakController.text;
-    }
-
-    if (_usernameController.text.isEmpty) {
-      final cleanName = _namaController.text
-          .trim()
-          .toLowerCase()
-          .replaceAll(RegExp(r'\s+'), '_')
-          .replaceAll(RegExp(r'[^a-z0-9_]'), '');
-      final lastNik = _nikController.text.length >= 4
-          ? _nikController.text.substring(_nikController.text.length - 4)
-          : '0001';
-      _usernameController.text = '${cleanName}_$lastNik';
-    }
-
     _goToPage(2);
   }
 
   void _handleDaftar() async {
     final email = _emailController.text.trim();
-    final username = _usernameController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
@@ -289,30 +303,20 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    if (username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Username wajib diisi.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    if (username.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Username minimal 4 karakter.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
     if (password.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Kata sandi minimal 8 karakter.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kata sandi harus mengandung angka.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -331,30 +335,63 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     setState(() => _isLoading = true);
 
-    await SimrsService.registerPasien({
-      'email': email,
-      'username': username,
-      'password': password,
-      'nik': _nikController.text.trim(),
-      'nama': _namaController.text.trim(),
-    });
+    try {
+      final result = await SimrsService.registerPasien({
+        'email': email,
+        'password': password,
+        'nik': _nikController.text.trim(),
+        'nama': _namaController.text.trim(),
+        'tempat_lahir': _selectedTempatLahir ?? '',
+        'tanggal_lahir': _selectedTanggalLahir?.toIso8601String() ?? '',
+        'jenis_kelamin': _selectedJenisKelamin ?? '',
+        'gol_darah': _selectedGolDarah ?? '',
+        'agama': _selectedAgama ?? '',
+        'warga_negara': _selectedWargaNegara ?? '',
+        'pekerjaan': _selectedPekerjaan ?? '',
+        'pendidikan': _selectedPendidikan ?? '',
+        'status_kawin': _selectedStatusKawin ?? '',
+        'nama_ibu': _namaIbuController.text.trim(),
+        'provinsi': _selectedProvinsi ?? '',
+        'kabupaten': _selectedKabupaten ?? '',
+        'kecamatan': _selectedKecamatan ?? '',
+        'kelurahan': _selectedKelurahan ?? '',
+        'alamat': _alamatController.text.trim(),
+        'nomor_hp': _nomorHpController.text.trim(),
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pendaftaran berhasil! Silakan masuk ke akun Anda.'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+      final successMsg = result['message'] as String? ?? 'Pendaftaran berhasil! Silakan masuk ke akun Anda.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successMsg),
+          backgroundColor: AppColors.success,
+        ),
+      );
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      final errorMsg = e.toString().contains('Exception:')
+          ? e.toString().replaceAll('Exception: ', '')
+          : 'Gagal melakukan pendaftaran. Periksa koneksi dan coba lagi.';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
@@ -384,13 +421,25 @@ class _RegisterScreenState extends State<RegisterScreen>
                       nikController: _nikController,
                       isNikChecking: _isNikChecking,
                       isNikVerified: _isNikVerified,
+                      isNikAlreadyRegistered: _isNikAlreadyRegistered,
+                      nikHasBeenChecked: _nikHasBeenChecked,
                       onCekNik: _cekNikAsync,
                       onLanjut: _handleStep1Submit,
                       onLoginTap: _goToLogin,
+                      onNikChanged: () {
+                        // Reset status ketika NIK berubah
+                        if (_nikHasBeenChecked) {
+                          setState(() {
+                            _nikHasBeenChecked = false;
+                            _isNikVerified = false;
+                            _isNikAlreadyRegistered = false;
+                          });
+                        }
+                      },
                     ),
                     RegisterStep2Pasien(
                       namaController: _namaController,
-                      tempatLahirController: _tempatLahirController,
+                      selectedTempatLahir: _selectedTempatLahir,
                       selectedTanggalLahir: _selectedTanggalLahir,
                       selectedJenisKelamin: _selectedJenisKelamin,
                       selectedGolDarah: _selectedGolDarah,
@@ -406,7 +455,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                       selectedKelurahan: _selectedKelurahan,
                       alamatController: _alamatController,
                       nomorHpController: _nomorHpController,
-                      emailKontakController: _emailKontakController,
+                      onTempatLahirChanged: (v) =>
+                          setState(() => _selectedTempatLahir = v),
                       onTanggalLahirChanged: (d) =>
                           setState(() => _selectedTanggalLahir = d),
                       onJenisKelaminChanged: (v) =>
@@ -423,12 +473,27 @@ class _RegisterScreenState extends State<RegisterScreen>
                           setState(() => _selectedPendidikan = v),
                       onStatusKawinChanged: (v) =>
                           setState(() => _selectedStatusKawin = v),
-                      onProvinsiChanged: (v) =>
-                          setState(() => _selectedProvinsi = v),
-                      onKabupatenChanged: (v) =>
-                          setState(() => _selectedKabupaten = v),
-                      onKecamatanChanged: (v) =>
-                          setState(() => _selectedKecamatan = v),
+                      onProvinsiChanged: (v) {
+                        setState(() {
+                          _selectedProvinsi = v;
+                          _selectedKabupaten = null;
+                          _selectedKecamatan = null;
+                          _selectedKelurahan = null;
+                        });
+                      },
+                      onKabupatenChanged: (v) {
+                        setState(() {
+                          _selectedKabupaten = v;
+                          _selectedKecamatan = null;
+                          _selectedKelurahan = null;
+                        });
+                      },
+                      onKecamatanChanged: (v) {
+                        setState(() {
+                          _selectedKecamatan = v;
+                          _selectedKelurahan = null;
+                        });
+                      },
                       onKelurahanChanged: (v) =>
                           setState(() => _selectedKelurahan = v),
                       onPrev: () => _goToPage(0),
@@ -436,7 +501,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                     ),
                     RegisterStep3Akun(
                       emailController: _emailController,
-                      usernameController: _usernameController,
                       passwordController: _passwordController,
                       confirmPasswordController: _confirmPasswordController,
                       obscurePass: _obscurePass,

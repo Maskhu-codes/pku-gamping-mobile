@@ -4,17 +4,18 @@ import 'package:pku_gamping_app/core/network/api_client.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/models/dokter_jadwal_model.dart';
 
-/// Layanan integrasi backend SIMRS RS PKU Muhammadiyah Gamping.
+/// Layanan integrasi murni backend SIMRS RS PKU Muhammadiyah Gamping.
 ///
-/// Mendukung dual-mode (Online Backend & Offline Resilient Mock Fallback)
-/// sehingga aplikasi tetap dapat berjalan lancar saat server SIMRS lokal
-/// dalam pemeliharaan atau dalam lingkungan pengujian.
+/// Seluruh komunikasi dan otentikasi diproses langsung secara terpusat
+/// oleh server backend tanpa ketergantungan simulasi akun lokal.
 class SimrsService {
   SimrsService._();
 
   static Dio get _dio => ApiClient.dio;
 
-  /// Autentikasi Login Pasien
+  /// Autentikasi Login Pasien ke Backend SIMRS
+  ///
+  /// Mengirim kredensial langsung ke server backend (/auth/login).
   static Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -24,39 +25,51 @@ class SimrsService {
         '/auth/login',
         data: {
           'username': username,
+          'email': username,
           'password': password,
         },
       );
 
-      final data = response.data as Map<String, dynamic>;
-      final token = data['token'] as String? ?? 'mock_token_jwt_${DateTime.now().millisecondsSinceEpoch}';
-      final nama = data['nama'] as String? ?? 'Dahlan Muda';
-      final noRm = data['no_rm'] as String? ?? '01-88-24-90';
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : <String, dynamic>{};
 
+      // Parsing token autentikasi dari backend
+      final token = data['token'] as String? ??
+          data['access_token'] as String? ??
+          (data['data'] is Map ? data['data']['token'] as String? : null) ??
+          '';
+
+      // Parsing objek identitas pasien
+      final userObj = (data['pasien'] ?? data['user'] ?? data['data'] ?? data) as Map<String, dynamic>;
+      final nama = userObj['nama'] as String? ??
+          userObj['name'] as String? ??
+          data['nama'] as String? ??
+          'Pasien';
+      final noRm = userObj['no_rm'] as String? ??
+          data['no_rm'] as String? ??
+          '-';
+      final nik = userObj['nik'] as String? ?? data['nik'] as String?;
+
+      // Simpan tiket sesi dan data pasien ke SessionManager
       await SessionManager.saveSession(
         token: token,
         namaPasien: nama,
         noRm: noRm,
         username: username,
+        nik: nik,
       );
+
+      await SessionManager.savePatientData(userObj);
 
       return data;
     } on DioException catch (e) {
-      debugPrint('[SimrsService] Login offline fallback: ${e.message}');
-      // Fallback untuk kemudahan demonstrasi & environment offline
-      const mockToken = 'mock_jwt_token_simrs_pku_gamping';
-      await SessionManager.saveSession(
-        token: mockToken,
-        namaPasien: 'Dahlan Muda',
-        noRm: '01-88-24-90',
-        username: username,
+      debugPrint('[SimrsService] Login error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Email atau kata sandi salah. Silakan periksa kembali.',
       );
-      return {
-        'status': 'success',
-        'token': mockToken,
-        'nama': 'Dahlan Muda',
-        'no_rm': '01-88-24-90',
-      };
+      throw Exception(errorMessage);
     }
   }
 
@@ -65,14 +78,32 @@ class SimrsService {
     if (nik.length != 16) return false;
     try {
       final response = await _dio.get('/pasien/cek-nik/$nik');
-      return response.data['valid'] == true;
+      if (response.data is Map) {
+        return response.data['valid'] == true;
+      }
+      return true;
     } on DioException catch (_) {
-      // Fallback validasi lokal 16 digit
-      return nik.length == 16;
+      // Fallback format 16 digit angka jika endpoint belum terpasang
+      return RegExp(r'^[0-9]{16}$').hasMatch(nik);
     }
   }
 
-  /// Registrasi Pasien Baru ke SIMRS
+  /// Cek apakah NIK sudah terdaftar di SIMRS
+  static Future<bool> isNikAlreadyRegistered(String nik) async {
+    try {
+      final response = await _dio.get('/pasien/cek-nik-registered/$nik');
+      if (response.data is Map) {
+        return response.data['registered'] == true;
+      }
+      return false;
+    } on DioException catch (_) {
+      return false;
+    }
+  }
+
+  /// Registrasi Pasien Baru ke Backend SIMRS
+  ///
+  /// Mengirim seluruh payload pendaftaran langsung ke server backend (/pasien/register).
   static Future<Map<String, dynamic>> registerPasien(
     Map<String, dynamic> payload,
   ) async {
@@ -81,14 +112,19 @@ class SimrsService {
         '/pasien/register',
         data: payload,
       );
-      return response.data as Map<String, dynamic>;
+
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : <String, dynamic>{'status': 'success', 'message': 'Pendaftaran berhasil'};
+
+      return data;
     } on DioException catch (e) {
-      debugPrint('[SimrsService] Register offline fallback: ${e.message}');
-      return {
-        'status': 'success',
-        'no_rm': '01-88-${DateTime.now().millisecond}-90',
-        'message': 'Pasien berhasil didaftarkan ke SIMRS.',
-      };
+      debugPrint('[SimrsService] Register error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Gagal melakukan pendaftaran. Silakan periksa kembali data Anda.',
+      );
+      throw Exception(errorMessage);
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manajer sesi lokal untuk autentikasi dan profil pasien RS PKU Gamping.
@@ -15,6 +16,7 @@ class SessionManager {
   static const String _keyNoRm = 'pku_no_rm';
   static const String _keyNik = 'pku_nik';
   static const String _keyUsername = 'pku_username';
+  static const String _keyPatientData = 'pku_patient_data';
 
   /// Inisialisasi SharedPreferences saat awal aplikasi berjalan
   static Future<void> init() async {
@@ -50,6 +52,17 @@ class SessionManager {
   /// Ambil username
   static String? get username => _prefs?.getString(_keyUsername);
 
+  /// Ambil data pasien lengkap
+  static Map<String, dynamic>? get patientData {
+    final jsonStr = _prefs?.getString(_keyPatientData);
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      return jsonDecode(jsonStr) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Simpan sesi baru setelah login / registrasi berhasil
   static Future<void> saveSession({
     required String token,
@@ -70,6 +83,19 @@ class SessionManager {
     ]);
   }
 
+  /// Simpan data pasien lengkap ke session (dengan sanitasi kredensial keamanan)
+  static Future<void> savePatientData(Map<String, dynamic> data) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    // Sanitasi: pastikan data sensitif seperti kata sandi tidak pernah tersimpan di lokal
+    final safeData = Map<String, dynamic>.from(data)
+      ..remove('password')
+      ..remove('kata_sandi')
+      ..remove('confirm_password')
+      ..remove('pin');
+    await p.setString(_keyPatientData, jsonEncode(safeData));
+  }
+
   /// Hapus seluruh sesi aktif (saat logout)
   static Future<void> clearSession() async {
     final p = _prefs ?? await SharedPreferences.getInstance();
@@ -81,6 +107,7 @@ class SessionManager {
       p.remove(_keyNoRm),
       p.remove(_keyNik),
       p.remove(_keyUsername),
+      p.remove(_keyPatientData),
     ]);
   }
 }

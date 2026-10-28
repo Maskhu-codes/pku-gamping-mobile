@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 
 /// Langkah 3: Pembuatan Akun Pasien & Kata Sandi SIMRS.
+///
+/// Revisi:
+/// - Username dihapus
+/// - Syarat password: Minimal 8 karakter dan mengandung angka
+/// - Semua syarat validasi harus terpenuhi sebelum registrasi dapat diselesaikan
 class RegisterStep3Akun extends StatelessWidget {
   const RegisterStep3Akun({
     super.key,
     required this.emailController,
-    required this.usernameController,
     required this.passwordController,
     required this.confirmPasswordController,
     required this.obscurePass,
@@ -20,7 +24,6 @@ class RegisterStep3Akun extends StatelessWidget {
   });
 
   final TextEditingController emailController;
-  final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
 
@@ -36,6 +39,16 @@ class RegisterStep3Akun extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    // Validasi syarat password
+    final hasMinLength = password.length >= 8;
+    final hasNumber = password.contains(RegExp(r'[0-9]'));
+    final passwordsMatch =
+        password.isNotEmpty && confirmPassword.isNotEmpty && password == confirmPassword;
+    final allValid = hasMinLength && hasNumber && passwordsMatch && emailController.text.trim().isNotEmpty;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
       child: Column(
@@ -60,17 +73,9 @@ class RegisterStep3Akun extends StatelessWidget {
                 icon: Icons.alternate_email_rounded,
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 12),
-
-              _buildFieldLabel('Username *'),
-              _buildInputField(
-                controller: usernameController,
-                hint: 'ahmadfauzi_0001',
-                icon: Icons.alternate_email_rounded,
-              ),
               const SizedBox(height: 4),
               const Text(
-                'Gunakan huruf kecil, angka, atau garis bawah (_).',
+                'Email ini akan digunakan untuk login ke akun Anda.',
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textSecondary,
@@ -98,26 +103,80 @@ class RegisterStep3Akun extends StatelessWidget {
 
               // Ketentuan Kata Sandi
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: Row(
-                  children: const [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 15,
-                      color: AppColors.primary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Persyaratan Kata Sandi',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(height: 8),
+                    _buildRequirementItem(
+                      label: 'Kata sandi minimal 8 karakter',
+                      isMet: hasMinLength,
+                    ),
+                    const SizedBox(height: 4),
+                    _buildRequirementItem(
+                      label: 'Mengandung angka',
+                      isMet: hasNumber,
+                    ),
+                    const SizedBox(height: 4),
+                    _buildRequirementItem(
+                      label: 'Konfirmasi kata sandi cocok',
+                      isMet: passwordsMatch,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Pesan validasi keseluruhan
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: allValid
+                      ? const Color(0xFFECFDF5)
+                      : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: allValid
+                        ? const Color(0xFF86EFAC)
+                        : const Color(0xFFFECACA),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      allValid
+                          ? Icons.check_circle_outline_rounded
+                          : Icons.info_outline_rounded,
+                      size: 15,
+                      color: allValid
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFDC2626),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Minimal 8 karakter, kombinasi huruf, angka & simbol',
+                        allValid
+                            ? 'Semua syarat terpenuhi. Silakan klik Daftar.'
+                            : 'Semua syarat validasi harus terpenuhi sebelum registrasi dapat diselesaikan.',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF475569),
+                          color: allValid
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFDC2626),
                         ),
                       ),
                     ),
@@ -236,6 +295,32 @@ class RegisterStep3Akun extends StatelessWidget {
   }
 
   // ── Helper Widgets ──
+
+  Widget _buildRequirementItem({
+    required String label,
+    required bool isMet,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          isMet ? Icons.check_circle_rounded : Icons.circle_outlined,
+          size: 15,
+          color: isMet ? AppColors.success : AppColors.textHint,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isMet ? AppColors.success : AppColors.textSecondary,
+              fontWeight: isMet ? FontWeight.w500 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildBadgeHeader({
     required IconData icon,

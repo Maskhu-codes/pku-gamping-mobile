@@ -71,7 +71,9 @@ class _LoginScreenState extends State<LoginScreen>
       setState(() => _isLoading = false);
       AppFeedback.showError(
         context,
-        message: 'Gagal masuk: periksa kredensial atau koneksi Anda.',
+        message: e.toString().contains('Exception:')
+            ? e.toString().replaceAll('Exception: ', '')
+            : 'Email atau kata sandi salah. Pastikan akun sudah terdaftar.',
       );
     }
   }

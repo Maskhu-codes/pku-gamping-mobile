@@ -3,26 +3,65 @@ import 'package:flutter/services.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 
 /// Langkah 1: Pengecekan NIK KTP Terintegrasi SIMRS.
+///
+/// Menampilkan status tombol Cek NIK:
+/// - Default (biru): belum dicek
+/// - Valid (hijau): NIK belum terdaftar → bisa lanjut
+/// - Tidak Valid (merah): NIK sudah terdaftar → tidak bisa lanjut
 class RegisterStep1Nik extends StatelessWidget {
   const RegisterStep1Nik({
     super.key,
     required this.nikController,
     required this.isNikChecking,
     required this.isNikVerified,
+    required this.isNikAlreadyRegistered,
+    required this.nikHasBeenChecked,
     required this.onCekNik,
     required this.onLanjut,
     required this.onLoginTap,
+    required this.onNikChanged,
   });
 
   final TextEditingController nikController;
   final bool isNikChecking;
   final bool isNikVerified;
+  final bool isNikAlreadyRegistered;
+  final bool nikHasBeenChecked;
   final VoidCallback onCekNik;
   final VoidCallback onLanjut;
   final VoidCallback onLoginTap;
+  final VoidCallback onNikChanged;
 
   @override
   Widget build(BuildContext context) {
+    // Warna tombol berdasarkan status
+    Color buttonBgColor;
+    Color buttonFgColor;
+    if (nikHasBeenChecked && isNikAlreadyRegistered) {
+      buttonBgColor = const Color(0xFFFEE2E2);
+      buttonFgColor = const Color(0xFFDC2626);
+    } else if (nikHasBeenChecked && isNikVerified) {
+      buttonBgColor = const Color(0xFFE8F5E9);
+      buttonFgColor = const Color(0xFF2E7D32);
+    } else {
+      buttonBgColor = AppColors.primary;
+      buttonFgColor = Colors.white;
+    }
+
+    // Warna tombol bawah "Cek NIK & Lanjutkan"
+    Color mainButtonBg;
+    Color mainButtonFg;
+    if (nikHasBeenChecked && isNikAlreadyRegistered) {
+      mainButtonBg = const Color(0xFFDC2626);
+      mainButtonFg = Colors.white;
+    } else if (nikHasBeenChecked && isNikVerified) {
+      mainButtonBg = const Color(0xFF2E7D32);
+      mainButtonFg = Colors.white;
+    } else {
+      mainButtonBg = AppColors.primary;
+      mainButtonFg = Colors.white;
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
       child: Column(
@@ -104,7 +143,15 @@ class RegisterStep1Nik extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(
+                      color: nikHasBeenChecked
+                          ? (isNikAlreadyRegistered
+                              ? const Color(0xFFDC2626)
+                              : (isNikVerified
+                                  ? const Color(0xFF2E7D32)
+                                  : AppColors.border))
+                          : AppColors.border,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -112,6 +159,7 @@ class RegisterStep1Nik extends StatelessWidget {
                         child: TextFormField(
                           controller: nikController,
                           keyboardType: TextInputType.number,
+                          onChanged: (_) => onNikChanged(),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(16),
@@ -148,12 +196,8 @@ class RegisterStep1Nik extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: isNikChecking ? null : onCekNik,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isNikVerified
-                                ? const Color(0xFFE8F5E9)
-                                : AppColors.primary,
-                            foregroundColor: isNikVerified
-                                ? const Color(0xFF2E7D32)
-                                : Colors.white,
+                            backgroundColor: buttonBgColor,
+                            foregroundColor: buttonFgColor,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -175,7 +219,7 @@ class RegisterStep1Nik extends StatelessWidget {
                               : Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (isNikVerified) ...[
+                                    if (nikHasBeenChecked && isNikVerified) ...[
                                       const Icon(
                                         Icons.check_circle_rounded,
                                         size: 14,
@@ -183,8 +227,21 @@ class RegisterStep1Nik extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                     ],
+                                    if (nikHasBeenChecked &&
+                                        isNikAlreadyRegistered) ...[
+                                      const Icon(
+                                        Icons.cancel_rounded,
+                                        size: 14,
+                                        color: Color(0xFFDC2626),
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
                                     Text(
-                                      isNikVerified ? 'Valid' : 'Cek NIK',
+                                      nikHasBeenChecked
+                                          ? (isNikAlreadyRegistered
+                                              ? 'Tidak Valid'
+                                              : 'Valid')
+                                          : 'Cek NIK',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -198,13 +255,52 @@ class RegisterStep1Nik extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Pastikan nomor NIK sesuai dengan KTP Anda.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
+
+                // Pesan status di bawah input NIK
+                if (nikHasBeenChecked && isNikAlreadyRegistered)
+                  Row(
+                    children: const [
+                      Icon(Icons.error_outline_rounded,
+                          size: 13, color: Color(0xFFDC2626)),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFDC2626),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (nikHasBeenChecked && isNikVerified)
+                  Row(
+                    children: const [
+                      Icon(Icons.check_circle_outline_rounded,
+                          size: 13, color: Color(0xFF2E7D32)),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'NIK valid dan belum terdaftar. Silakan lanjutkan.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  const Text(
+                    'Pastikan nomor NIK sesuai dengan KTP Anda.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -265,16 +361,18 @@ class RegisterStep1Nik extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onLanjut,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: mainButtonBg,
+                foregroundColor: mainButtonFg,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Cek NIK & Lanjutkan →',
-                style: TextStyle(
+              child: Text(
+                nikHasBeenChecked && isNikVerified
+                    ? 'Lanjutkan →'
+                    : 'Cek NIK & Lanjutkan →',
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

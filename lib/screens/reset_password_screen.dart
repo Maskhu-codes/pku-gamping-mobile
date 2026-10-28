@@ -25,9 +25,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   bool _isLoading = false;
 
   bool _hasMinLength = false;
-  bool _hasUppercase = false;
   bool _hasNumber = false;
-  bool _hasSpecialChar = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -56,10 +54,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
     setState(() {
       _hasMinLength = password.length >= 8;
-      _hasUppercase = password.contains(RegExp(r'[A-Z]'));
       _hasNumber = password.contains(RegExp(r'[0-9]'));
-      _hasSpecialChar =
-          password.contains(RegExp(r'[!@#\$&*~_\-]'));
     });
   }
 
@@ -74,6 +69,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Pastikan semua syarat terpenuhi
+    if (!_hasMinLength || !_hasNumber) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kata sandi harus minimal 8 karakter dan mengandung angka.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
       return;
     }
 
@@ -188,20 +194,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
           ),
           const SizedBox(height: 10),
           _strengthItem(
-            label: 'Minimal 8 karakter',
+            label: 'Kata sandi minimal 8 karakter',
             isMet: _hasMinLength,
-          ),
-          _strengthItem(
-            label: 'Mengandung huruf kapital',
-            isMet: _hasUppercase,
           ),
           _strengthItem(
             label: 'Mengandung angka',
             isMet: _hasNumber,
-          ),
-          _strengthItem(
-            label: 'Mengandung karakter khusus',
-            isMet: _hasSpecialChar,
           ),
         ],
       ),
@@ -260,6 +258,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
                   if (value.length < 8) {
                     return 'Kata sandi minimal 8 karakter';
+                  }
+
+                  if (!value.contains(RegExp(r'[0-9]'))) {
+                    return 'Kata sandi harus mengandung angka';
                   }
 
                   return null;
