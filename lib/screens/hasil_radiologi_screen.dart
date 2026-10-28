@@ -162,7 +162,7 @@ class _ResultCard extends StatelessWidget {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
-      elevation: 1,
+      
       shadowColor: const Color(0x16000000),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
@@ -227,8 +227,7 @@ class _ResultInformation extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _AvailableBadge(),
-        const SizedBox(height: 8),
+        const SizedBox(height: 0),
         Text(
           result.title,
           style: const TextStyle(
@@ -237,20 +236,9 @@ class _ResultInformation extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _ResultMetadata(result: result),
       ],
-    );
-  }
-}
-
-class _AvailableBadge extends StatelessWidget {
-  const _AvailableBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      
     );
   }
 }
