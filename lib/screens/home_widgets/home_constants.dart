@@ -45,4 +45,39 @@ const List<HomeNewsItem> kHomeNewsList = [
     category: 'Pengumuman',
     icon: Icons.campaign_outlined,
   ),
+  HomeNewsItem(
+    title: 'RS PKU Gamping Raih Akreditasi Paripurna',
+    date: '15 Okt 2026',
+    category: 'Prestasi',
+    icon: Icons.verified_outlined,
+  ),
+  HomeNewsItem(
+    title: 'Pendaftaran Vaksinasi Influenza Telah Dibuka',
+    date: '7 Okt 2026',
+    category: 'Pengumuman',
+    icon: Icons.vaccines_outlined,
+  ),
+  HomeNewsItem(
+    title: 'Mengenal Layanan Home Care RS PKU Gamping',
+    date: '30 Sep 2026',
+    category: 'Layanan',
+    icon: Icons.home_outlined,
+  ),
+  HomeNewsItem(
+    title: 'Kegiatan Donor Darah Bersama PMI Yogyakarta',
+    date: '24 Sep 2026',
+    category: 'Kegiatan',
+    icon: Icons.bloodtype_outlined,
+  ),
+  HomeNewsItem(
+    title: 'Pentingnya Pemeriksaan Kesehatan Berkala',
+    date: '16 Sep 2026',
+    category: 'Edukasi',
+    icon: Icons.monitor_heart_outlined,
+  ),
 ];
+
+/// Empat berita terbaru yang ditampilkan pada Beranda.
+final List<HomeNewsItem> kHomeLatestNews = kHomeNewsList
+    .take(4)
+    .toList(growable: false);

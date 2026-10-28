@@ -8,6 +8,7 @@ import 'package:pku_gamping_app/screens/hasil_lab_screen.dart';
 import 'package:pku_gamping_app/screens/hasil_radiologi_screen.dart';
 import 'package:pku_gamping_app/screens/home_screen.dart';
 import 'package:pku_gamping_app/screens/login_screen.dart';
+import 'package:pku_gamping_app/screens/news_screen.dart';
 import 'package:pku_gamping_app/screens/otp_screen.dart';
 import 'package:pku_gamping_app/screens/pemeriksaan_penunjang_screen.dart';
 import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
@@ -28,6 +29,7 @@ class AppRoutes {
   static const otp = '/otp';
   static const resetPassword = '/reset-password';
   static const home = '/home';
+  static const news = '/news';
   static const pendaftaran = '/pendaftaran';
   static const queueDetail = '/queue-detail';
   static const pemeriksaanPenunjang = '/pemeriksaan-penunjang';
@@ -79,6 +81,9 @@ class AppRouter {
             initialIndex: initialIndex,
           ),
         );
+
+      case AppRoutes.news:
+        return MaterialPageRoute(builder: (_) => const NewsScreen());
 
       case AppRoutes.pendaftaran:
         final args = settings.arguments as Map<String, dynamic>?;

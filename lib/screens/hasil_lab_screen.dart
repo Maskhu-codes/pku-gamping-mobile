@@ -103,22 +103,9 @@ class _ResultsList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
       children: [
-        const Text(
-          'Hasil Laboratorium',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 18),
-        const Text(
-          'Lihat detail hasil pemeriksaan laboratorium Anda.',
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 16,
-            height: 1.4,
-          ),
+        const _ResultsIntro(
+          title: 'Hasil Laboratorium',
+          description: 'Lihat detail hasil pemeriksaan laboratorium Anda.',
         ),
         const SizedBox(height: 20),
         for (final result in results) ...[
@@ -127,6 +114,39 @@ class _ResultsList extends StatelessWidget {
         ],
         const SizedBox(height: 2),
         const _SynchronizationNotice(),
+      ],
+    );
+  }
+}
+
+class _ResultsIntro extends StatelessWidget {
+  const _ResultsIntro({required this.title, required this.description});
+
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 26,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          description,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 16,
+            height: 1.4,
+          ),
+        ),
       ],
     );
   }
@@ -152,30 +172,121 @@ class _ResultCard extends StatelessWidget {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(23, 22, 20, 21),
-          child: Column(
+          padding: const EdgeInsets.all(18),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                result.title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${result.date} | ${result.time}',
-                style: const TextStyle(
+              const _ResultIcon(),
+              const SizedBox(width: 14),
+              Expanded(child: _ResultInformation(result: result)),
+              const SizedBox(width: 8),
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Icon(
+                  Icons.chevron_right_rounded,
                   color: AppColors.textMuted,
-                  fontSize: 16,
+                  size: 24,
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ResultIcon extends StatelessWidget {
+  const _ResultIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE7EEFF),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: const Icon(
+        Icons.science_outlined,
+        color: AppColors.primary,
+        size: 25,
+      ),
+    );
+  }
+}
+
+class _ResultInformation extends StatelessWidget {
+  const _ResultInformation({required this.result});
+
+  final LabResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _AvailableBadge(),
+        const SizedBox(height: 8),
+        Text(
+          result.title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _ResultMetadata(result: result),
+      ],
+    );
+  }
+}
+
+class _AvailableBadge extends StatelessWidget {
+  const _AvailableBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
+class _ResultMetadata extends StatelessWidget {
+  const _ResultMetadata({required this.result});
+
+  final LabResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.calendar_today_outlined,
+          color: AppColors.textMuted,
+          size: 14,
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            result.date,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Icon(
+          Icons.access_time_rounded,
+          color: AppColors.textMuted,
+          size: 15,
+        ),
+        const SizedBox(width: 5),
+        Text(
+          result.time,
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
+      ],
     );
   }
 }

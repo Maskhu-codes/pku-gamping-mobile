@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
+
 import 'home_constants.dart';
 
 /// Bagian Informasi & Berita rumah sakit pada beranda.
@@ -27,12 +29,7 @@ class HomeNewsSection extends StatelessWidget {
               ),
               InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Membuka semua berita RS PKU Gamping.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.news);
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: const Padding(
@@ -59,10 +56,10 @@ class HomeNewsSection extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             scrollDirection: Axis.horizontal,
-            itemCount: kHomeNewsList.length,
+            itemCount: kHomeLatestNews.length,
             separatorBuilder: (context, index) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
-              final news = kHomeNewsList[index];
+              final news = kHomeLatestNews[index];
               return Container(
                 width: 240,
                 decoration: BoxDecoration(
