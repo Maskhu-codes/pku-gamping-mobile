@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../core/theme/app_colors.dart';
+
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
-import 'package:pku_gamping_app/services/app_feedback_service.dart';
-import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -33,12 +33,10 @@ class _LoginScreenState extends State<LoginScreen>
       duration: const Duration(milliseconds: 600),
     );
 
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: Curves.easeOut,
-      ),
-    );
+    _fadeAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _animController.forward();
   }
@@ -51,31 +49,14 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-    try {
-      await SimrsService.login(
-        username: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.home,
-        arguments: TopNotificationType.loginSuccess,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      AppFeedback.showError(
-        context,
-        message: e.toString().contains('Exception:')
-            ? e.toString().replaceAll('Exception: ', '')
-            : 'Email atau kata sandi salah. Pastikan akun sudah terdaftar.',
-      );
-    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
+      arguments: TopNotificationType.loginSuccess,
+    );
   }
 
   @override
@@ -244,9 +225,7 @@ class _LoginScreenState extends State<LoginScreen>
 class _PkuLogoWidget extends StatelessWidget {
   final double size;
 
-  const _PkuLogoWidget({
-    required this.size,
-  });
+  const _PkuLogoWidget({required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -266,10 +245,7 @@ AppBar buildAppBar(BuildContext context, String title) {
     elevation: 0,
     centerTitle: true,
     leading: IconButton(
-      icon: const Icon(
-        Icons.arrow_back_ios_new_rounded,
-        size: 18,
-      ),
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
       color: AppColors.textPrimary,
       onPressed: () => Navigator.pop(context),
     ),
@@ -283,8 +259,6 @@ AppBar buildAppBar(BuildContext context, String title) {
     ),
   );
 }
-
-
 
 // Tombol Utama
 Widget _primaryButton({
@@ -301,37 +275,29 @@ Widget _primaryButton({
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: isLoading
           ? const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          color: Colors.white,
-        ),
-      )
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Colors.white,
+              ),
+            )
           : Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 18),
+              ],
             ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(
-            Icons.arrow_forward_rounded,
-            size: 18,
-          ),
-        ],
-      ),
     ),
   );
 }

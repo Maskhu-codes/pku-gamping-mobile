@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'package:pku_gamping_app/screens/register_widgets/register_header_stepper.dart';
 import 'package:pku_gamping_app/screens/register_widgets/register_step1_nik.dart';
 import 'package:pku_gamping_app/screens/register_widgets/register_step2_pasien.dart';
@@ -66,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _obscurePass = true;
   bool _obscureConfirm = true;
 
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -77,9 +78,10 @@ class _RegisterScreenState extends State<RegisterScreen>
       duration: const Duration(milliseconds: 400),
     );
 
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+    _fadeAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _animController.forward();
   }
@@ -102,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _goToLogin() {
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/login',
+      AppRoutes.login,
       (route) => false,
     );
   }
@@ -163,7 +165,9 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (isAlreadyRegistered) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.'),
+          content: Text(
+            'NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.',
+          ),
           backgroundColor: AppColors.error,
           duration: Duration(seconds: 3),
         ),
@@ -171,7 +175,9 @@ class _RegisterScreenState extends State<RegisterScreen>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('NIK valid dan belum terdaftar. Silakan lanjutkan pendaftaran.'),
+          content: Text(
+            'NIK valid dan belum terdaftar. Silakan lanjutkan pendaftaran.',
+          ),
           backgroundColor: AppColors.success,
           duration: Duration(seconds: 2),
         ),
@@ -226,7 +232,9 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (!_isNikVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('NIK belum terverifikasi. Silakan cek NIK terlebih dahulu.'),
+          content: Text(
+            'NIK belum terverifikasi. Silakan cek NIK terlebih dahulu.',
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -278,7 +286,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     _goToPage(2);
   }
 
-  void _handleDaftar() async {
+  void _handleDaftar() {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
@@ -333,65 +341,14 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    setState(() => _isLoading = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Pendaftaran berhasil! Silakan masuk ke akun Anda.'),
+        backgroundColor: AppColors.success,
+      ),
+    );
 
-    try {
-      final result = await SimrsService.registerPasien({
-        'email': email,
-        'password': password,
-        'nik': _nikController.text.trim(),
-        'nama': _namaController.text.trim(),
-        'tempat_lahir': _selectedTempatLahir ?? '',
-        'tanggal_lahir': _selectedTanggalLahir?.toIso8601String() ?? '',
-        'jenis_kelamin': _selectedJenisKelamin ?? '',
-        'gol_darah': _selectedGolDarah ?? '',
-        'agama': _selectedAgama ?? '',
-        'warga_negara': _selectedWargaNegara ?? '',
-        'pekerjaan': _selectedPekerjaan ?? '',
-        'pendidikan': _selectedPendidikan ?? '',
-        'status_kawin': _selectedStatusKawin ?? '',
-        'nama_ibu': _namaIbuController.text.trim(),
-        'provinsi': _selectedProvinsi ?? '',
-        'kabupaten': _selectedKabupaten ?? '',
-        'kecamatan': _selectedKecamatan ?? '',
-        'kelurahan': _selectedKelurahan ?? '',
-        'alamat': _alamatController.text.trim(),
-        'nomor_hp': _nomorHpController.text.trim(),
-      });
-
-      if (!mounted) return;
-
-      setState(() => _isLoading = false);
-
-      final successMsg = result['message'] as String? ?? 'Pendaftaran berhasil! Silakan masuk ke akun Anda.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(successMsg),
-          backgroundColor: AppColors.success,
-        ),
-      );
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      final errorMsg = e.toString().contains('Exception:')
-          ? e.toString().replaceAll('Exception: ', '')
-          : 'Gagal melakukan pendaftaran. Periksa koneksi dan coba lagi.';
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMsg),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    }
+    _goToLogin();
   }
 
   @override
@@ -463,8 +420,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                           setState(() => _selectedJenisKelamin = v),
                       onGolDarahChanged: (v) =>
                           setState(() => _selectedGolDarah = v),
-                      onAgamaChanged: (v) =>
-                          setState(() => _selectedAgama = v),
+                      onAgamaChanged: (v) => setState(() => _selectedAgama = v),
                       onWargaNegaraChanged: (v) =>
                           setState(() => _selectedWargaNegara = v),
                       onPekerjaanChanged: (v) =>
