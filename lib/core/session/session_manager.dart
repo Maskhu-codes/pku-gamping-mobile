@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manajer sesi lokal untuk autentikasi dan profil pasien RS PKU Gamping.
@@ -17,10 +18,17 @@ class SessionManager {
   static const String _keyNik = 'pku_nik';
   static const String _keyUsername = 'pku_username';
   static const String _keyPatientData = 'pku_patient_data';
+  static const String _keyProfilePhotoPath = 'pku_profile_photo_path';
+  static const String _keyNotificationEnabled = 'pku_notification_enabled';
+
+  /// Notifier reaktif untuk foto profil pasien
+  static final ValueNotifier<String?> profilePhotoNotifier =
+      ValueNotifier<String?>(null);
 
   /// Inisialisasi SharedPreferences saat awal aplikasi berjalan
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
+    profilePhotoNotifier.value = _prefs?.getString(_keyProfilePhotoPath);
   }
 
   /// Memastikan _prefs telah terinisialisasi
@@ -96,6 +104,33 @@ class SessionManager {
     await p.setString(_keyPatientData, jsonEncode(safeData));
   }
 
+  /// Ambil path foto profil pasien
+  static String? get profilePhotoPath =>
+      _prefs?.getString(_keyProfilePhotoPath);
+
+  /// Simpan atau hapus path foto profil
+  static Future<void> setProfilePhotoPath(String? path) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    if (path != null && path.isNotEmpty) {
+      await p.setString(_keyProfilePhotoPath, path);
+    } else {
+      await p.remove(_keyProfilePhotoPath);
+    }
+    profilePhotoNotifier.value = path;
+  }
+
+  /// Ambil status izin notifikasi pasien
+  static bool get isNotificationEnabled =>
+      _prefs?.getBool(_keyNotificationEnabled) ?? false;
+
+  /// Simpan status izin notifikasi
+  static Future<void> setNotificationEnabled(bool enabled) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    await p.setBool(_keyNotificationEnabled, enabled);
+  }
+
   /// Hapus seluruh sesi aktif (saat logout)
   static Future<void> clearSession() async {
     final p = _prefs ?? await SharedPreferences.getInstance();
@@ -108,6 +143,8 @@ class SessionManager {
       p.remove(_keyNik),
       p.remove(_keyUsername),
       p.remove(_keyPatientData),
+      p.remove(_keyProfilePhotoPath),
     ]);
+    profilePhotoNotifier.value = null;
   }
 }

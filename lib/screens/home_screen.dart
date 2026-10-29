@@ -13,6 +13,7 @@ import 'package:pku_gamping_app/screens/profile_screen.dart';
 import 'package:pku_gamping_app/screens/queue_screen.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
+import 'package:pku_gamping_app/widgets/notifications/home_notification_banner.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
 /// Screen Utama & Single Shell Navigation Hub RS PKU Gamping.
@@ -141,6 +142,9 @@ class HomeTabContent extends StatelessWidget {
                         );
                       },
                     ),
+
+                    // ── Banner Edukasi Notifikasi (Sebelum Aktif) ──
+                    const HomeNotificationBanner(),
 
                     // ── Menu Cepat (Hasil Lab, Riwayat, Ambil Obat) ──
                     const HomeQuickLinks(),

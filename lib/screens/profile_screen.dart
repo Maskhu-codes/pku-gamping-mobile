@@ -5,7 +5,9 @@ import 'package:pku_gamping_app/screens/profile_widgets/profile_footer.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_header_card.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_logout_button.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_menu_section.dart';
+import 'package:pku_gamping_app/screens/profile_widgets/profile_support_sheets.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/sigap_membership_card.dart';
+import 'package:pku_gamping_app/services/app_notification_service.dart';
 import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 
@@ -147,6 +149,56 @@ class ProfileScreen extends StatelessWidget {
                                   );
                                 },
                               ),
+                              ValueListenableBuilder<bool>(
+                                valueListenable:
+                                    AppNotificationService.isEnabledNotifier,
+                                builder: (context, isEnabled, _) {
+                                  return ValueListenableBuilder<int>(
+                                    valueListenable:
+                                        AppNotificationService.unreadCountNotifier,
+                                    builder: (context, unreadCount, _) {
+                                      return MenuItemRow(
+                                        icon: isEnabled
+                                            ? Icons.notifications_active_rounded
+                                            : Icons.notifications_off_outlined,
+                                        iconBgColor: isEnabled
+                                            ? const Color(0xFFEFF6FF)
+                                            : const Color(0xFFF1F5F9),
+                                        iconColor: isEnabled
+                                            ? const Color(0xFF2563EB)
+                                            : const Color(0xFF94A3B8),
+                                        title: 'Notifikasi Layanan',
+                                        subtitle: isEnabled
+                                            ? (unreadCount > 0
+                                                ? '$unreadCount notifikasi baru belum dibaca'
+                                                : 'Aktif • Info antrean & hasil medis')
+                                            : 'Nonaktif • Ketuk untuk aktifkan',
+                                        badge: isEnabled
+                                            ? (unreadCount > 0
+                                                ? '$unreadCount Baru'
+                                                : 'Aktif')
+                                            : 'Nonaktif',
+                                        badgeBgColor: isEnabled
+                                            ? (unreadCount > 0
+                                                ? const Color(0xFFFEE2E2)
+                                                : const Color(0xFFDCFCE7))
+                                            : const Color(0xFFF1F5F9),
+                                        badgeTextColor: isEnabled
+                                            ? (unreadCount > 0
+                                                ? const Color(0xFFDC2626)
+                                                : const Color(0xFF16A34A))
+                                            : const Color(0xFF64748B),
+                                        showDivider: true,
+                                        onTap: () {
+                                          AppNotificationService.handleBellTap(
+                                            context,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                               MenuItemRow(
                                 icon: Icons.help_outline_rounded,
                                 iconBgColor: const Color(0xFFF0FDF4),
@@ -154,7 +206,7 @@ class ProfileScreen extends StatelessWidget {
                                 title: 'Bantuan & Dukungan',
                                 subtitle: 'Hubungi tim layanan RS PKU Gamping',
                                 showDivider: true,
-                                onTap: () {},
+                                onTap: () => BantuanSheet.show(context),
                               ),
                               MenuItemRow(
                                 icon: Icons.info_outline_rounded,
@@ -163,7 +215,7 @@ class ProfileScreen extends StatelessWidget {
                                 title: 'Tentang Aplikasi',
                                 subtitle: 'SIGAP Mobile v2.4.0',
                                 showDivider: false,
-                                onTap: () {},
+                                onTap: () => TentangAplikasiSheet.show(context),
                               ),
                             ],
                           ),

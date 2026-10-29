@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
+import 'package:pku_gamping_app/services/app_notification_service.dart';
 
 /// Header Brand Bar RS PKU Muhammadiyah Gamping
 /// Reusable di seluruh halaman portal pasien (Beranda, Antrean, Jadwal, Pendaftaran, Profil, dll).
@@ -87,41 +88,90 @@ class HospitalBrandHeader extends StatelessWidget {
             ),
           ),
 
-          // Lonceng Notifikasi dengan Unread Dot yang menempel pas di kanan atas lonceng
-          IconButton(
-            onPressed: () {
-              AppFeedback.showNotificationPermission(context);
-            },
-            tooltip: 'Notifikasi',
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: SizedBox(
-              width: 24,
-              height: 24,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(
-                    Icons.notifications_none_rounded,
-                    color: Color(0xFF1E293B),
-                    size: 24,
-                  ),
-                  Positioned(
-                    top: 1,
-                    right: 2,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+          // Lonceng Notifikasi: Berbeda tampilan sebelum vs setelah aktif
+          ValueListenableBuilder<bool>(
+            valueListenable: AppNotificationService.isEnabledNotifier,
+            builder: (context, isEnabled, _) {
+              return ValueListenableBuilder<int>(
+                valueListenable: AppNotificationService.unreadCountNotifier,
+                builder: (context, unreadCount, _) {
+                  return IconButton(
+                    onPressed: () {
+                      AppNotificationService.handleBellTap(context);
+                    },
+                    tooltip: isEnabled ? 'Pusat Notifikasi' : 'Aktifkan Notifikasi',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            isEnabled
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_none_rounded,
+                            color: isEnabled
+                                ? AppColors.primary
+                                : const Color(0xFF64748B),
+                            size: 24,
+                          ),
+                          // Badge: Jika belum aktif -> titik oranye peringatan; Jika aktif dan ada pesan -> angka unread merah
+                          if (!isEnabled)
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B),
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 1.5),
+                                ),
+                              ),
+                            )
+                          else if (unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDC2626),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border:
+                                      Border.all(color: Colors.white, width: 1.5),
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  unreadCount > 9 ? '9+' : '$unreadCount',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),

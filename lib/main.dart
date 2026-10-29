@@ -5,11 +5,13 @@ import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/services/app_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SessionManager.init();
   await AntreanService.initFromStorage();
+  await AppNotificationService.init();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

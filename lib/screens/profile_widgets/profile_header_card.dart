@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/services/profile_photo_service.dart';
 
-/// Kartu header profil pasien — avatar inisial, nama, No. RM, status verifikasi, dan tab chip
+/// Kartu header profil pasien — avatar foto/inisial, nama, No. RM, status verifikasi, dan tab chip
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({super.key});
 
@@ -42,51 +44,74 @@ class ProfileHeaderCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Avatar inisial BD
-                Stack(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDBE4F8),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          inisial,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A8A),
-                            letterSpacing: 1,
+                // Avatar foto / inisial pasien (dapat ditekan untuk ganti foto)
+                GestureDetector(
+                  onTap: () => ProfilePhotoService.showPhotoActionSheet(context),
+                  child: ValueListenableBuilder<String?>(
+                    valueListenable: SessionManager.profilePhotoNotifier,
+                    builder: (context, photoPath, _) {
+                      final hasPhoto = photoPath != null &&
+                          photoPath.isNotEmpty &&
+                          File(photoPath).existsSync();
+
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDBE4F8),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: hasPhoto
+                                  ? Image.file(
+                                      File(photoPath),
+                                      width: 58,
+                                      height: 58,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        inisial,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1E3A8A),
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                      ),
-                    ),
-                  ],
+                          // Badge ikon kamera kecil (menandakan bisa diubah)
+                          Positioned(
+                            bottom: -2,
+                            right: -2,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF22C55E),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 1.5),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

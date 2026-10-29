@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'home_constants.dart';
 
 /// Bagian salam pasien, avatar, nomor rekam medis, dan lengkungan biru beranda.
@@ -43,20 +45,38 @@ class HomePatientHeader extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 9, right: 3),
                 child: Row(
                   children: [
-                    // Avatar Lingkaran
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB7B7B7),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 34,
-                      ),
+                    // Avatar Lingkaran (menyesuaikan foto profil yang aktif)
+                    ValueListenableBuilder<String?>(
+                      valueListenable: SessionManager.profilePhotoNotifier,
+                      builder: (context, photoPath, _) {
+                        final hasPhoto = photoPath != null &&
+                            photoPath.isNotEmpty &&
+                            File(photoPath).existsSync();
+
+                        return Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB7B7B7),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: ClipOval(
+                            child: hasPhoto
+                                ? Image.file(
+                                    File(photoPath),
+                                    width: 46,
+                                    height: 46,
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    color: Colors.white,
+                                    size: 34,
+                                  ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(width: 11),
 
