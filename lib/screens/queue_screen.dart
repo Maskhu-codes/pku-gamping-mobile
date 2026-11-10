@@ -9,6 +9,7 @@ import 'package:pku_gamping_app/screens/queue_widgets/queue_service_value_card.d
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 import 'package:pku_gamping_app/widgets/app_empty_state.dart';
+import 'package:pku_gamping_app/screens/queue_widgets/queue_api_status.dart';
 
 /// Layar Antrean Aktif Rawat Jalan.
 ///
@@ -46,6 +47,7 @@ class _QueueScreenState extends State<QueueScreen> {
           child: Column(
             children: [
               const QueueBrandHeader(),
+              const QueueApiStatus(),
 
               // ── Konten Utama Reaktif (Auto-update saat data antrean berubah) ──
               Expanded(
@@ -74,24 +76,48 @@ class _QueueScreenState extends State<QueueScreen> {
                             ),
 
                             // ── Kartu Antrean Aktif + Nomor Live ──
-                            ActiveQueueCard(
-                              nomorAntrean: antrean.nomorAntrean,
-                              nomorDilayani: antrean.nomorSedangDilayani,
-                              sisaAntrean: antrean.sisaAntrean,
-                              poli: antrean.poli,
-                              soundReminderEnabled: _soundReminderEnabled,
-                              onSoundReminderChanged: (enabled) {
-                                setState(
-                                  () => _soundReminderEnabled = enabled,
-                                );
-                              },
-                              onDetailsPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.queueDetail,
-                                );
-                              },
-                            ),
+                            
+                      AnimatedBuilder(
+                        animation: Listenable.merge([
+                          AntreanService.statusAntrean,
+                          AntreanService.antreanTerverifikasiApi,
+                        ]),
+                        builder: (context, _) {
+                          final status = AntreanService.statusAntrean.value;
+
+                          final dataDariApi =
+                              AntreanService.antreanTerverifikasiApi.value &&
+                              status != null;
+
+                          final nomorDilayani = dataDariApi
+                              ? status.sedangDilayani.toString()
+                              : (antrean.noBooking != null &&
+                                      antrean.noBooking!.isNotEmpty
+                                  ? '-'
+                                  : antrean.nomorSedangDilayani);
+
+                          return ActiveQueueCard(
+                            nomorAntrean: antrean.nomorAntrean,
+                            nomorDilayani: nomorDilayani,
+                            sisaAntrean: antrean.sisaAntrean,
+                            poli: antrean.poli,
+                            dataDariApi: dataDariApi,
+                            soundReminderEnabled: _soundReminderEnabled,
+                            onSoundReminderChanged: (enabled) {
+                              setState(() {
+                                _soundReminderEnabled = enabled;
+                              });
+                            },
+                            onDetailsPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.queueDetail,
+                              );
+                            },
+                          );
+                        },
+                      ),
+
 
                             // ── Petunjuk Lokasi Ruangan ──
                             RoomDirectionsCard(

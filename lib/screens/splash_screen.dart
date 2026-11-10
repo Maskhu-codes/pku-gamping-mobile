@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/core/routes/app_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,15 +41,26 @@ class _SplashScreenState extends State<SplashScreen>
     _startAnimation();
   }
 
-  void _startAnimation() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _fadeController.forward();
-    _slideController.forward();
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
-  }
+  Future<void> _startAnimation() async {
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  _fadeController.forward();
+  _slideController.forward();
+
+  await Future.delayed(const Duration(milliseconds: 2500));
+
+  if (!mounted) return;
+
+  // Periksa status login dan keberadaan token
+  final bool hasValidSession =
+      SessionManager.isLoggedIn &&
+      (SessionManager.token?.trim().isNotEmpty ?? false);
+
+  Navigator.pushReplacementNamed(
+    context,
+    hasValidSession ? AppRoutes.home : AppRoutes.login,
+  );
+}
 
   @override
   void dispose() {

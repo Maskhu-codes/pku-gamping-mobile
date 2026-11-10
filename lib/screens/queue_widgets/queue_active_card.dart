@@ -12,6 +12,7 @@ class ActiveQueueCard extends StatelessWidget {
     required this.soundReminderEnabled,
     required this.onSoundReminderChanged,
     required this.onDetailsPressed,
+    this.dataDariApi = false,
   });
 
   final String nomorAntrean;
@@ -21,6 +22,7 @@ class ActiveQueueCard extends StatelessWidget {
   final bool soundReminderEnabled;
   final ValueChanged<bool> onSoundReminderChanged;
   final VoidCallback onDetailsPressed;
+  final bool dataDariApi;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +85,7 @@ class ActiveQueueCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'Live $poli',
+                        dataDariApi ? 'Terhubung • $poli' : 'Demo • $poli',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -133,7 +135,9 @@ class ActiveQueueCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // ── Status Sisa Antrean ──
-                QueueWaitStatus(sisaAntrean: sisaAntrean),
+                dataDariApi
+                    ? const QueueWaitStatus(sisaAntrean: null)
+                    : QueueWaitStatus(sisaAntrean: sisaAntrean),
                 const SizedBox(height: 14),
 
                 // ── Toggle Pengingat Suara ──
@@ -287,12 +291,13 @@ class QueueNumberPanel extends StatelessWidget {
 class QueueWaitStatus extends StatelessWidget {
   const QueueWaitStatus({super.key, required this.sisaAntrean});
 
-  final int sisaAntrean;
+  final int? sisaAntrean;
 
   @override
   Widget build(BuildContext context) {
     // Estimasi waktu tunggu: ~5 menit per pasien
-    final estimasiMin = sisaAntrean * 5;
+    final jumlah = sisaAntrean;
+    final estimasiMin = jumlah == null ? 0 : jumlah * 5;
     final estimasiMax = estimasiMin + 5;
 
     return Container(
@@ -323,7 +328,9 @@ class QueueWaitStatus extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$sisaAntrean Pasien Lagi di Depan Anda',
+                  jumlah == null
+                      ? 'Jumlah antrean tersisa belum tersedia'
+                      : '$jumlah Pasien Lagi di Depan Anda',
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 12,
@@ -331,8 +338,13 @@ class QueueWaitStatus extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Estimasi tunggu: ± $estimasiMin - $estimasiMax Menit',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  jumlah == null
+                      ? 'Menunggu informasi dari sistem antrean'
+                      : 'Estimasi tunggu: ± $estimasiMin - $estimasiMax Menit',
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -345,7 +357,11 @@ class QueueWaitStatus extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              sisaAntrean <= 2 ? 'Segera Bersiap' : 'Menunggu',
+              jumlah == null
+                  ? 'Belum tersedia'
+                  : jumlah <= 2
+                  ? 'Segera Bersiap'
+                  : 'Menunggu',
               style: const TextStyle(
                 color: Color(0xFF092C68),
                 fontSize: 10,

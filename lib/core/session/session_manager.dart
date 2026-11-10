@@ -34,17 +34,22 @@ class SessionManager {
   }
 
   /// Cek status login pengguna
-  static bool get isLoggedIn => _prefs?.getBool(_keyIsLoggedIn) ?? false;
+  static bool get isLoggedIn {
+  final hasLogin = _prefs?.getBool(_keyIsLoggedIn) ?? false;
+  final hasToken = _prefs?.getString(_keyToken)?.isNotEmpty ?? false;
+
+  return hasLogin && hasToken;
+}
 
   /// Ambil JWT / Auth token
   static String? get token => _prefs?.getString(_keyToken);
 
   /// Ambil nama pasien (default: 'Dahlan Muda')
   static String get namaPasien =>
-      _prefs?.getString(_keyNamaPasien) ?? 'Dahlan Muda';
+      _prefs?.getString(_keyNamaPasien) ?? 'Pasien';
 
-  /// Ambil nomor rekam medis (default: '01-88-24-90')
-  static String get noRm => _prefs?.getString(_keyNoRm) ?? '01-88-24-90';
+  static String get noRm =>
+      _prefs?.getString(_keyNoRm) ?? '-';
 
   /// Ambil NIK pasien
   static String? get nik => _prefs?.getString(_keyNik);

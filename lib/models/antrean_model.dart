@@ -11,20 +11,29 @@ class AntreanAktifModel {
   final int sisaAntrean; // e.g. 3
   final String tanggal; // e.g. "Jumat, 9 Oktober 2026"
   final String jenisJaminan; // e.g. "Umum / Pribadi"
+  final String? noBooking;
+final int? noUrut;
+final String? kodeLayanan;
+final String? kodeDokter;
 
   const AntreanAktifModel({
-    required this.nomorAntrean,
-    required this.namaPasien,
-    required this.noRm,
-    required this.poli,
-    this.gedungLokasi = 'Gedung A • Lt. 2',
-    required this.dokter,
-    required this.jam,
-    this.statusAntrean = 'Antrean Berjalan',
-    this.sisaAntrean = 3,
-    required this.tanggal,
-    this.jenisJaminan = 'Umum / Pribadi',
-  });
+  required this.nomorAntrean,
+  required this.namaPasien,
+  required this.noRm,
+  required this.poli,
+  required this.gedungLokasi,
+  required this.dokter,
+  required this.jam,
+  required this.statusAntrean,
+  required this.sisaAntrean,
+  required this.tanggal,
+  required this.jenisJaminan,
+
+  this.noBooking,
+  this.noUrut,
+  this.kodeLayanan,
+  this.kodeDokter,
+});
 
   Map<String, dynamic> toJson() => {
         'nomorAntrean': nomorAntrean,
@@ -38,6 +47,10 @@ class AntreanAktifModel {
         'sisaAntrean': sisaAntrean,
         'tanggal': tanggal,
         'jenisJaminan': jenisJaminan,
+        'no_booking': noBooking,
+        'no_urut': noUrut,
+        'fs_kd_layanan': kodeLayanan,
+        'fs_kd_petugas_medis': kodeDokter,
       };
 
   factory AntreanAktifModel.fromJson(Map<String, dynamic> json) =>
@@ -53,8 +66,52 @@ class AntreanAktifModel {
         sisaAntrean: (json['sisaAntrean'] as num?)?.toInt() ?? 3,
         tanggal: json['tanggal'] as String? ?? 'Hari Ini',
         jenisJaminan: json['jenisJaminan'] as String? ?? 'Umum / Pribadi',
+        noBooking: json['no_booking']?.toString(),
+        noUrut: json['no_urut'] is int
+            ? json['no_urut']
+            : int.tryParse(json['no_urut']?.toString() ?? ''),
+        kodeLayanan: json['fs_kd_layanan']?.toString(),
+        kodeDokter: json['fs_kd_petugas_medis']?.toString(),
       );
 
+      
+  factory AntreanAktifModel.fromBookingJson(
+  Map<String, dynamic> json,
+) {
+  String bacaString(String key) {
+    return json[key]?.toString() ?? '';
+  }
+
+  int? bacaInt(String key) {
+    final value = json[key];
+
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    return int.tryParse(value.toString());
+  }
+
+  return AntreanAktifModel(
+    nomorAntrean: bacaString('no_antrian'),
+    namaPasien: bacaString('nama_pasien'),
+    noRm: bacaString('fs_rm'),
+    poli: bacaString('poliName'),
+    gedungLokasi: bacaString('lokasi'),
+    dokter: bacaString('dokterName'),
+    jam: bacaString('fs_jam_mulai'),
+    statusAntrean: 'Terdaftar',
+    sisaAntrean: 0,
+    tanggal: bacaString('fd_tgl_periksa'),
+    jenisJaminan: bacaString('jenis_jaminan'),
+
+    // Data backend
+    noBooking: bacaString('no_booking'),
+    noUrut: bacaInt('no_urut'),
+    kodeLayanan: bacaString('fs_kd_layanan'),
+    kodeDokter: bacaString('fs_kd_petugas_medis'),
+  );
+}
   /// Menghitung nomor antrean yang sedang dilayani saat ini
   /// Contoh: nomorAntrean="A-014", sisaAntrean=3 → "A-011"
   String get nomorSedangDilayani {
