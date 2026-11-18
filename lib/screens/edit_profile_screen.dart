@@ -179,7 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _selectedTanggalLahir = parsedDate ?? DateTime(1995, 1, 1);
 
     // Golongan Darah
-    final rawGol = getVal(['golongan_darah', 'fs_gol_darah', 'FS_GOL_DARAH'])?.toString()?.toUpperCase()?.trim();
+    final rawGol = getVal(['golongan_darah', 'fs_gol_darah', 'FS_GOL_DARAH'])?.toString().toUpperCase().trim();
     if (rawGol != null && _listGolDarah.contains(rawGol)) {
       _selectedGolDarah = rawGol;
     } else {
@@ -187,11 +187,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     // Agama
-    final rawAgama = getVal(['agama', 'fs_kd_agama', 'FS_KD_AGAMA'])?.toString()?.trim();
+    final rawAgama = getVal(['agama', 'fs_kd_agama', 'FS_KD_AGAMA'])?.toString().trim();
     _selectedAgama = _resolveAgama(rawAgama);
 
     // Warga Negara
-    final rawWn = getVal(['warga_negara', 'fs_warga_negara', 'FS_WARGA_NEGARA'])?.toString()?.trim();
+    final rawWn = getVal(['warga_negara', 'fs_warga_negara', 'FS_WARGA_NEGARA'])?.toString().trim();
     if (rawWn == '2' || rawWn == 'WNA') {
       _selectedWargaNegara = 'WNA';
     } else {
@@ -199,15 +199,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     // Pendidikan Terakhir
-    final rawPendidikan = getVal(['pendidikan', 'fs_kd_pendidikan', 'FS_KD_PENDIDIKAN_DK'])?.toString()?.trim();
+    final rawPendidikan = getVal(['pendidikan', 'fs_kd_pendidikan', 'FS_KD_PENDIDIKAN_DK'])?.toString().trim();
     _selectedPendidikan = _resolvePendidikan(rawPendidikan);
 
     // Pekerjaan
-    final rawPekerjaan = getVal(['pekerjaan', 'fs_kd_pekerjaan', 'FS_KD_PEKERJAAN_DK'])?.toString()?.trim();
+    final rawPekerjaan = getVal(['pekerjaan', 'fs_kd_pekerjaan', 'FS_KD_PEKERJAAN_DK'])?.toString().trim();
     _selectedPekerjaan = _resolvePekerjaan(rawPekerjaan);
 
     // Status Perkawinan
-    final rawKawin = getVal(['status_kawin', 'fs_status_kawin', 'FS_KD_STATUS_KAWIN_DK'])?.toString()?.trim();
+    final rawKawin = getVal(['status_kawin', 'fs_status_kawin', 'FS_KD_STATUS_KAWIN_DK'])?.toString().trim();
     _selectedStatusKawin = _resolveStatusKawin(rawKawin);
 
     // Nama Ibu Kandung
