@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 
 import '../core/theme/app_colors.dart';
 
@@ -77,26 +78,44 @@ class _OtpScreenState extends State<OtpScreen>
     });
   }
 
-  void _handleResend() {
+  Future<void> _handleResend() async {
     if (!_canResend) return;
     setState(() {
       _otpController.clear();
       _otpCode = '';
       _hasError = false;
     });
-    _startCountdown();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Kode OTP baru dikirim ke $_email',
-          style: TextStyle(fontSize: 12),
+
+    try {
+      final res = await SimrsService.resendOtp(_email);
+      if (res['status'] == false) {
+        throw Exception(res['message']?.toString() ?? 'Gagal mengirim ulang kode OTP.');
+      }
+      if (!mounted) return;
+      _startCountdown();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Kode OTP baru berhasil dikirim ke $_email',
+            style: const TextStyle(fontSize: 12),
+          ),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
         ),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _handleVerify() async {
@@ -108,14 +127,45 @@ class _OtpScreenState extends State<OtpScreen>
       _isLoading = true;
       _hasError = false;
     });
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushNamed(
-      context,
-      '/reset-password',
-      arguments: {'email': _email, 'otp': _otpCode},
-    );
+
+    try {
+      final res = await SimrsService.verifyOtp(email: _email, otp: _otpCode);
+      if (!mounted) return;
+
+      if (res['status'] == false) {
+        throw Exception(res['message']?.toString() ?? 'Kode OTP tidak valid atau sudah kedaluwarsa.');
+      }
+
+      final resetToken = (res['reset_token'] ?? res['data']?['reset_token'])?.toString();
+      if (resetToken == null || resetToken.isEmpty) {
+        throw Exception('Token verifikasi tidak ditemukan dari server.');
+      }
+
+      Navigator.pushNamed(
+        context,
+        '/reset-password',
+        arguments: {
+          'email': _email,
+          'otp': _otpCode,
+          'reset_token': resetToken,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _hasError = true);
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

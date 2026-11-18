@@ -21,6 +21,8 @@ class RegisterStep3Akun extends StatelessWidget {
     required this.onPrev,
     required this.onSubmit,
     required this.onLoginTap,
+    this.existingMr,
+    this.existingNama,
   });
 
   final TextEditingController emailController;
@@ -36,6 +38,8 @@ class RegisterStep3Akun extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onSubmit;
   final VoidCallback onLoginTap;
+  final String? existingMr;
+  final String? existingNama;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +66,53 @@ class RegisterStep3Akun extends StatelessWidget {
             subtitle: 'Buat akun untuk login ke aplikasi PKU Gamping',
           ),
           const SizedBox(height: 12),
+
+          // ── Info Pasien Terdaftar SIMRS (Jika Pasien Lama) ──
+          if (existingMr != null && existingMr!.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.assignment_ind_rounded,
+                    color: Color(0xFF16A34A),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Tersambung ke SIMRS Pasien Lama',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'No. RM: $existingMr${existingNama != null && existingNama!.isNotEmpty ? ' • $existingNama' : ''}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF166534),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
 
           // ── Form Input Akun ──
           _buildCard(

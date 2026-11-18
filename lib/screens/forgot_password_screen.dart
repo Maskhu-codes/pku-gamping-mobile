@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'login_screen.dart' show buildAppBar;
 
@@ -40,17 +40,47 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     super.dispose();
   }
 
-  void _handleSendOtp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
+  Future<void> _handleSendOtp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final email = _emailController.text.trim();
+    setState(() => _isLoading = true);
+
+    try {
+      final res = await SimrsService.forgotPassword(email);
+
+      if (res['status'] == false) {
+        throw Exception(res['message']?.toString() ?? 'Gagal mengirim kode OTP.');
+      }
+
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kode OTP berhasil dikirim ke $email'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
       Navigator.pushNamed(
         context,
         '/otp',
-        arguments: {'email': _emailController.text.trim()},
+        arguments: {'email': email},
       );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

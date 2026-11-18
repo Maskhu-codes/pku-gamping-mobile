@@ -14,9 +14,10 @@ class ApiClient {
   // - emulatorUrl: Jika backend jalan di laptop dan dites via Android Emulator
   // - lanUrl     : Jika dites via HP fisik (sesuaikan IP laptop Anda)
   // - productionUrl: Jika backend sudah dideploy ke server online/staging
-  static const String emulatorUrl = 'http://10.0.2.2:8000/api/v1';
-  static const String lanUrl = 'http://192.168.1.100:8000/api/v1';
-  static const String productionUrl = 'https://simrs.pkugamping.com/api/v1';
+  static const String emulatorUrl = 'http://10.0.2.2/pkug-onlineapi-master/index.php/api';
+  static const String localUrl = 'http://localhost/pkug-onlineapi-master/index.php/api';
+  static const String lanUrl = 'http://192.168.1.100/pkug-onlineapi-master/index.php/api';
+  static const String productionUrl = 'https://simrs.pkugamping.com/api';
 
   /// URL aktif yang digunakan oleh aplikasi.
   /// Ubah baris ini saat ingin mengarahkan ke IP backend Anda.
@@ -110,6 +111,23 @@ class ApiClient {
           }
         }
       } else if (data is String && data.isNotEmpty) {
+        if (data.contains('<html') || data.contains('<!DOCTYPE') || data.contains('<div') || data.contains('<body')) {
+          final containerMatch = RegExp(r'<div id="container">([\s\S]*?)<\/div>', caseSensitive: false).firstMatch(data);
+          String rawHtml = containerMatch != null ? containerMatch.group(1)! : data;
+          String cleanText = rawHtml
+              .replaceAll(RegExp(r'<style[\s\S]*?<\/style>', caseSensitive: false), '')
+              .replaceAll(RegExp(r'<script[\s\S]*?<\/script>', caseSensitive: false), '')
+              .replaceAll(RegExp(r'<[^>]*>'), ' ')
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+          if (cleanText.isNotEmpty) {
+            if (cleanText.toLowerCase().contains('unable to connect to your database server')) {
+              return 'Database Error: Backend gagal terhubung ke basis data SIMRS (192.168.20.x). Pastikan jaringan RS / VPN aktif.';
+            }
+            return cleanText.length > 250 ? cleanText.substring(0, 250) : cleanText;
+          }
+          return 'Terjadi kesalahan basis data pada server backend SIMRS.';
+        }
         return data;
       }
     }

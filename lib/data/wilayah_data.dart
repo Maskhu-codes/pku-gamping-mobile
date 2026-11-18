@@ -776,6 +776,53 @@ class WilayahData {
       'Plaju',
       'Kalidoni',
       'Alang-Alang Lebar',
+      'Sematang Borang',
+      'Jakabaring',
+      'Lainnya',
+    ],
+    'Kota Pagaralam': [
+      'Pagar Alam Selatan',
+      'Pagar Alam Utara',
+      'Dempo Selatan',
+      'Dempo Tengah',
+      'Dempo Utara',
+      'Lainnya',
+    ],
+    'Kota Pagar Alam': [
+      'Pagar Alam Selatan',
+      'Pagar Alam Utara',
+      'Dempo Selatan',
+      'Dempo Tengah',
+      'Dempo Utara',
+      'Lainnya',
+    ],
+    'Pagar Alam': [
+      'Pagar Alam Selatan',
+      'Pagar Alam Utara',
+      'Dempo Selatan',
+      'Dempo Tengah',
+      'Dempo Utara',
+      'Lainnya',
+    ],
+    'Kota Prabumulih': [
+      'Prabumulih Barat',
+      'Prabumulih Timur',
+      'Prabumulih Selatan',
+      'Prabumulih Utara',
+      'Cambai',
+      'Rambang Kapak Tengah',
+      'Lainnya',
+    ],
+    'Kota Lubuk Linggau': [
+      'Lubuklinggau Barat I',
+      'Lubuklinggau Barat II',
+      'Lubuklinggau Timur I',
+      'Lubuklinggau Timur II',
+      'Lubuklinggau Selatan I',
+      'Lubuklinggau Selatan II',
+      'Lubuklinggau Utara I',
+      'Lubuklinggau Utara II',
+      'Lainnya',
     ],
   };
 
@@ -930,32 +977,436 @@ class WilayahData {
       'Palbapang',
       'Trirenggo',
       'Sabdodadi',
+      'Lainnya',
     ],
+    'Dlingo': ['Dlingo', 'Jatimulyo', 'Mangunan', 'Muncar', 'Temuwuh', 'Terong', 'Lainnya'],
+    'Imogiri': ['Girirejo', 'Imogiri', 'Karangtengah', 'Karangtalun', 'Kebonagung', 'Selopamioro', 'Sriharjo', 'Wukirsari', 'Lainnya'],
+    'Jetis': ['Canden', 'Patalan', 'Sumberagung', 'Trimulyo', 'Lainnya'],
+    'Bambanglipuro': ['Mulyodadi', 'Sidomulyo', 'Sumbermulyo', 'Lainnya'],
+    'Kretek': ['Donotirto', 'Parangtritis', 'Tirtohargo', 'Tirtomulyo', 'Tirtosari', 'Lainnya'],
+    'Sanden': ['Gadingharjo', 'Gadingsari', 'Murtigading', 'Srigading', 'Lainnya'],
+    'Srandakan': ['Poncosari', 'Trimurti', 'Lainnya'],
+    'Pundong': ['Panjangrejo', 'Seloharjo', 'Srihardono', 'Lainnya'],
+    'Pandak': ['Caturharjo', 'Gilangharjo', 'Triharjo', 'Wijirejo', 'Lainnya'],
+    'Pajangan': ['Guwosari', 'Sendangsari', 'Triwidadi', 'Lainnya'],
+    'Sedayu': ['Argodadi', 'Argomulyo', 'Argosari', 'Argorejo', 'Lainnya'],
+    'Piyungan': ['Srimartani', 'Srimulyo', 'Sitimulyo', 'Lainnya'],
+    'Pleret': ['Pleret', 'Segoroyoso', 'Wonokromo', 'Wonolelo', 'Bawuran', 'Lainnya'],
+
     // Kota Yogyakarta
-    'Mantrijeron': ['Gedongkiwo', 'Suryodiningratan', 'Mantrijeron'],
-    'Kraton': ['Patehan', 'Panembahan', 'Kadipaten'],
-    'Umbulharjo': ['Giwangan', 'Sorosutan', 'Pandeyan', 'Warungboto', 'Tahunan', 'Muja Muju', 'Semaki'],
-    'Kotagede': ['Rejowinangun', 'Purbayan', 'Prenggan'],
-    'Gondokusuman': ['Baciro', 'Demangan', 'Klitren', 'Kotabaru', 'Terban'],
-    'Tegalrejo': ['Tegalrejo', 'Bener', 'Kricak', 'Karangwaru'],
+    'Mantrijeron': ['Gedongkiwo', 'Suryodiningratan', 'Mantrijeron', 'Lainnya'],
+    'Kraton': ['Patehan', 'Panembahan', 'Kadipaten', 'Lainnya'],
+    'Umbulharjo': ['Giwangan', 'Sorosutan', 'Pandeyan', 'Warungboto', 'Tahunan', 'Muja Muju', 'Semaki', 'Lainnya'],
+    'Kotagede': ['Rejowinangun', 'Purbayan', 'Prenggan', 'Lainnya'],
+    'Gondokusuman': ['Baciro', 'Demangan', 'Klitren', 'Kotabaru', 'Terban', 'Lainnya'],
+    'Tegalrejo': ['Tegalrejo', 'Bener', 'Kricak', 'Karangwaru', 'Lainnya'],
+    'Danurejan': ['Bausasran', 'Suryatmajan', 'Tegal Panggung', 'Lainnya'],
+    'Gedongtengen': ['Pringgokusuman', 'Sosromenduran', 'Lainnya'],
+    'Gondomanan': ['Ngupasan', 'Prawirodirjan', 'Lainnya'],
+    'Ngampilan': ['Ngampilan', 'Notoprajan', 'Lainnya'],
+    'Pakualaman': ['Gunungketur', 'Purwokinanti', 'Lainnya'],
+    'Wirobrajan': ['Patangpuluhan', 'Wirobrajan', 'Pakuncen', 'Lainnya'],
+    'Mergangsan': ['Brontokusuman', 'Keparakan', 'Wirogunan', 'Lainnya'],
+
+    // Kab. Kulon Progo
+    'Wates': ['Bendungan', 'Giripeni', 'Karangwuni', 'Kulwaru', 'Ngestiharjo', 'Siganak', 'Triharjo', 'Wates', 'Lainnya'],
+    'Pengasih': ['Karangsari', 'Kedungsari', 'Margosari', 'Pengasih', 'Sendangsari', 'Sidomulyo', 'Tawangsari', 'Lainnya'],
+    'Sentolo': ['Banguncipto', 'Demangrejo', 'Kaliagung', 'Salamrejo', 'Sentolo', 'Srikayangan', 'Sukorejo', 'Tuksono', 'Lainnya'],
+    'Temon': ['Demen', 'Glagah', 'Jangkaran', 'Janten', 'Kalidengen', 'Kaligintung', 'Karangwuluh', 'Kebonrejo', 'Kedundang', 'Palihan', 'Plumbon', 'Sindutan', 'Temon Kulon', 'Temon Wetan', 'Lainnya'],
+    'Lendah': ['Bumirejo', 'Gulurejo', 'Jatirejo', 'Ngentakrejo', 'Sidorejo', 'Wahyuharjo', 'Lainnya'],
+    'Galur': ['Banaran', 'Brosot', 'Karangsewu', 'Kranggan', 'Nomporejo', 'Pandowan', 'Tirtorahayu', 'Lainnya'],
+    'Panjatan': ['Bojong', 'Bugel', 'Cerme', 'Depok', 'Garongan', 'Gotakan', 'Kanoman', 'Krembangan', 'Panjatan', 'Pleret', 'Tayuban', 'Lainnya'],
+    'Kokap': ['Hargomulyo', 'Hargorejo', 'Hargotirto', 'Hargowilis', 'Kalirejo', 'Lainnya'],
+    'Girimulyo': ['Giripurwo', 'Jatimulyo', 'Pendoworejo', 'Purwosari', 'Lainnya'],
+    'Nanggulan': ['Banyuroto', 'Donomulyo', 'Jatimulyo', 'Kembang', 'Tanjungharjo', 'Wijimulyo', 'Lainnya'],
+    'Kalibawang': ['Banjararum', 'Banjarasri', 'Banjarharjo', 'Banjaroyo', 'Lainnya'],
+    'Samigaluh': ['Banjarsari', 'Gerbosari', 'Kebonharjo', 'Ngargosari', 'Pagerharjo', 'Purwoharjo', 'Sidoharjo', 'Lainnya'],
+
+    // Kab. Gunungkidul
+    'Wonosari': ['Baleharjo', 'Duwet', 'Gari', 'Karangtengah', 'Karangrejek', 'Kepek', 'Mulo', 'Piyaman', 'Pulutan', 'Selang', 'Siraman', 'Wunung', 'Wonosari', 'Lainnya'],
+    'Playen': ['Banaran', 'Bandung', 'Banyusoco', 'Bleberan', 'Dengok', 'Gading', 'Getas', 'Logandeng', 'Ngawu', 'Ngleri', 'Ngunut', 'Plembutan', 'Playen', 'Lainnya'],
+    'Semanu': ['Candirejo', 'Dadapayu', 'Ngeposari', 'Pacarejo', 'Semanu', 'Lainnya'],
+    'Karangmojo': ['Bejiharjo', 'Bendungan', 'Gedangrejo', 'Jatiayu', 'Karangmojo', 'Kelor', 'Ngawis', 'Ngipak', 'Wiladeg', 'Lainnya'],
+    'Patuk': ['Bunder', 'Nglangang', 'Nglanggeran', 'Ngoro-oro', 'Patuk', 'Pengkok', 'Putat', 'Salam', 'Semoyo', 'Terbah', 'Lainnya'],
+    'Ponjong': ['Bedoyo', 'Genjahan', 'Gombang', 'Kenteng', 'Ponjong', 'Sawahan', 'Sidorejo', 'Tambakromo', 'Umbulrejo', 'Lainnya'],
+    'Nglipar': ['Katongan', 'Kedungpoh', 'Kedungkeris', 'Nglipar', 'Pengkol', 'Pilangrejo', 'Lainnya'],
+    'Paliyan': ['Giring', 'Grogol', 'Karangasem', 'Karangduwet', 'Mulusan', 'Pampang', 'Sodo', 'Lainnya'],
+    'Panggang': ['Girikarto', 'Girimulyo', 'Girisekar', 'Girisuko', 'Giriwungu', 'Lainnya'],
+    'Tepus': ['Giripanggung', 'Purwodadi', 'Sidoharjo', 'Sumberwungu', 'Tepus', 'Lainnya'],
+    'Rongkop': ['Bohol', 'Botodayo', 'Melikan', 'Petir', 'Pringombo', 'Pucanganom', 'Semugih', 'Lainnya'],
+    'Semin': ['Bendung', 'Bulurejo', 'Candirejo', 'Kalitekuk', 'Karangsari', 'Kemejing', 'Pundungsari', 'Rejosari', 'Semin', 'Sumberejo', 'Lainnya'],
+    'Ngawen': ['Beji', 'Jurangjero', 'Kampung', 'Sambirejo', 'Tancep', 'Watusigar', 'Lainnya'],
+    'Gedangsari': ['Hargomulyo', 'Mertelu', 'Ngalang', 'Sampang', 'Serut', 'Tegalrejo', 'Lainnya'],
+    'Saptosari': ['Jetis', 'Kanigoro', 'Kepek', 'Krambilsawit', 'Monggol', 'Ngloro', 'Planjan', 'Lainnya'],
+    'Girisubo': ['Balong', 'Jepitu', 'Karangawen', 'Jerukwudel', 'Nglindur', 'Songbanyu', 'Tileng', 'Lainnya'],
+    'Tanjungsari': ['Banjarejo', 'Hargosari', 'Kemadang', 'Kemiri', 'Ngestirejo', 'Lainnya'],
+    'Purwosari': ['Giriasih', 'Giricahyo', 'Girijati', 'Giripurwo', 'Giritirto', 'Lainnya'],
+
+    // Kota Pagar Alam
+    'Pagar Alam Selatan': [
+      'Besemah Serasan',
+      'Gunung Dempo',
+      'Nendagung',
+      'Sidorejo',
+      'Tanjung Payang',
+      'Tebat Giri Indah',
+      'Ulu Rurah',
+      'Lainnya',
+    ],
+    'Pagar Alam Utara': [
+      'Alun Dua',
+      'Bangun Jaya',
+      'Beringin Jaya',
+      'Curup Jare',
+      'Dempo Makmur',
+      'Kuripan Babas',
+      'Pagar Alam',
+      'Selibar',
+      'Sukorejo',
+      'Lainnya',
+    ],
+    'Dempo Selatan': [
+      'Candi Jaya',
+      'Kance Diwe',
+      'Lubuk Buntak',
+      'Penjalang',
+      'Prahu Dipo',
+      'Lainnya',
+    ],
+    'Dempo Tengah': [
+      'Candi Jaya',
+      'Jokoh',
+      'Karang Dalo',
+      'Padang Temu',
+      'Pelang Kenidai',
+      'Lainnya',
+    ],
+    'Dempo Utara': [
+      'Agung Lawangan',
+      'Bumi Agung',
+      'Burung Dinang',
+      'Jangkar Mas',
+      'Muara Siban',
+      'Pagar Wangi',
+      'Rebah Tinggi',
+      'Lainnya',
+    ],
+
+    // Kota Palembang
+    'Ilir Timur I': [
+      '16 Ilir',
+      '17 Ilir',
+      '18 Ilir',
+      '19 Ilir',
+      '20 Ilir D-I',
+      '20 Ilir D-II',
+      '20 Ilir D-III',
+      '20 Ilir D-IV',
+      'Kepandean',
+      'Sungai Pangeran',
+      'Lainnya',
+    ],
+    'Ilir Timur II': [
+      '1 Ilir',
+      '2 Ilir',
+      '3 Ilir',
+      '5 Ilir',
+      'Lawang Kidul',
+      'Duku',
+      'Kuto Batu',
+      'Lainnya',
+    ],
+    'Ilir Timur III': [
+      '8 Ilir',
+      '9 Ilir',
+      '10 Ilir',
+      '11 Ilir',
+      'Duku',
+      'Lainnya',
+    ],
+    'Ilir Barat I': [
+      'Bukit Lama',
+      'Bukit Baru',
+      'Demang Lebar Daun',
+      'Lorok Pakjo',
+      'Padang Selasa',
+      'Siring Agung',
+      'Lainnya',
+    ],
+    'Ilir Barat II': [
+      '27 Ilir',
+      '28 Ilir',
+      '29 Ilir',
+      '30 Ilir',
+      '32 Ilir',
+      '35 Ilir',
+      'Kemang Manis',
+      'Lainnya',
+    ],
+    'Seberang Ulu I': [
+      '1 Ulu',
+      '2 Ulu',
+      '3-4 Ulu',
+      '5 Ulu',
+      '7 Ulu',
+      'Lainnya',
+    ],
+    'Seberang Ulu II': [
+      '11 Ulu',
+      '12 Ulu',
+      '13 Ulu',
+      '14 Ulu',
+      '16 Ulu',
+      'Tangga Takat',
+      'Sentosa',
+      'Lainnya',
+    ],
+    'Sukarami': [
+      'Sukarami',
+      'Sukajaya',
+      'Kebun Bunga',
+      'Talang Betutu',
+      'Talang Jambe',
+      'Lainnya',
+    ],
+    'Sako': [
+      'Sako',
+      'Sako Baru',
+      'Sialang',
+      'Sukamaju',
+      'Lainnya',
+    ],
+    'Kemuning': [
+      'Ario Kemuning',
+      'Pipa Reja',
+      '20 Ilir II',
+      'Sekip Jaya',
+      'Talang Aman',
+      'Pahlawan',
+      'Lainnya',
+    ],
+    'Bukit Kecil': [
+      '19 Ilir',
+      '22 Ilir',
+      '23 Ilir',
+      '24 Ilir',
+      '26 Ilir',
+      'Talang Semut',
+      'Lainnya',
+    ],
+    'Gandus': [
+      'Gandus',
+      'Karang Anyar',
+      'Karang Jaya',
+      'Pulokerto',
+      '36 Ilir',
+      'Lainnya',
+    ],
+    'Kertapati': [
+      'Kertapati',
+      'Kemang Agung',
+      'Kemas Rindo',
+      'Ogan Baru',
+      'Karya Jaya',
+      'Lainnya',
+    ],
+    'Plaju': [
+      'Plaju Darat',
+      'Plaju Ilir',
+      'Plaju Ulu',
+      'Bagus Kuning',
+      'Komperta',
+      'Talang Putri',
+      'Lainnya',
+    ],
+    'Kalidoni': [
+      'Kalidoni',
+      'Bukit Sangkal',
+      'Sungai Selincah',
+      'Sungai Selayur',
+      'Sungai Lais',
+      'Lainnya',
+    ],
+    'Alang-Alang Lebar': [
+      'Alang-Alang Lebar',
+      'Talang Kelapa',
+      'Karya Baru',
+      'Srijaya',
+      'Lainnya',
+    ],
+    'Sematang Borang': [
+      'Karya Mulya',
+      'Lebung Gajah',
+      'Sri Mulya',
+      'Sukamulya',
+      'Lainnya',
+    ],
+    'Jakabaring': [
+      '8 Ulu',
+      '9-10 Ulu',
+      '15 Ulu',
+      'Silaberanti',
+      'Tuan Kentang',
+      'Lainnya',
+    ],
+
+    // Kota Prabumulih
+    'Prabumulih Barat': ['Gunung Kemala', 'Muntang Tapus', 'Patih Galung', 'Payuputat', 'Prabumulih', 'Lainnya'],
+    'Prabumulih Timur': ['Gunung Ibul', 'Gunung Ibul Barat', 'Karang Raja', 'Muara Dua', 'Prabujaya', 'Sukajadi', 'Lainnya'],
+    'Prabumulih Selatan': ['Majasari', 'Sukamerindu', 'Tanjung Raman', 'Lainnya'],
+    'Prabumulih Utara': ['Anak Petai', 'Mangga Besar', 'Pasar Prabumulih', 'Wonosari', 'Lainnya'],
+    'Cambai': ['Cambai', 'Sindur', 'Pangkul', 'Lainnya'],
+    'Rambang Kapak Tengah': ['Jungai', 'Karang Bindu', 'Karya Mulya', 'Rambang Senuling', 'Tanjung Rambang', 'Lainnya'],
+
+    // Kota Lubuk Linggau
+    'Lubuklinggau Barat I': ['Bandung Kiri', 'Bandung Ujung', 'Kayu Ara', 'Lubuk Aman', 'Pelita Jaya', 'Sukajadi', 'Tanjung Aman', 'Tanjung Indah', 'Watas Lubuk Durian', 'Lainnya'],
+    'Lubuklinggau Barat II': ['Keputraan', 'Lubuklinggau Ilir', 'Lubuklinggau Ulu', 'Pasar Permiri', 'Sidorejo', 'Tapak Lebar', 'Ulak Lebar', 'Lainnya'],
+    'Lubuklinggau Timur I': ['Air Kuti', 'Batu Urip', 'Majapahit', 'Nikan Jaya', 'Taba Jati Mekar', 'Taba Koji', 'Taba Lestari', 'Watervang', 'Lainnya'],
+    'Lubuklinggau Timur II': ['Cereme Taba', 'Dempo', 'Jawa Kanan', 'Jawa Kiri', 'Karya Bakti', 'Mesat Jaya', 'Mesat Seni', 'Wira Karya', 'Lainnya'],
+    'Lubuklinggau Selatan I': ['Air Kati', 'Jukung', 'Lubuk Binjai', 'Lubuk Kupang', 'Perumnas Rahmah', 'Rahmah', 'Lainnya'],
+    'Lubuklinggau Selatan II': ['Eka Marga', 'Karang Ketuan', 'Marga Mulya', 'Marga Rahayu', 'Moneng Sepati', 'Simpang Periuk', 'Siring Agung', 'Tanah Periuk', 'Lainnya'],
+    'Lubuklinggau Utara I': ['Belalau I', 'Belalau II', 'Durian Rampak', 'Marga Bakti', 'Petanang Ilir', 'Petanang Ulu', 'Sumber Agung', 'Taba Baru', 'Tanjung Raya', 'Lainnya'],
+    'Lubuklinggau Utara II': ['Batu Urip Taba', 'Jogoboyo', 'Kenanga', 'Megang', 'Pasar Satelit', 'Puncak Kemuning', 'Senalang', 'Ulak Surung', 'Lainnya'],
   };
 
-  /// Mendapatkan daftar kabupaten/kota berdasarkan provinsi
-  static List<String> getKabupatenByProvinsi(String? provinsi) {
-    if (provinsi == null) return [];
-    return kabupatenMap[provinsi] ?? ['Lainnya'];
+  static String _normalize(String input) {
+    return input
+        .toLowerCase()
+        .replaceAll('.', '')
+        .replaceAll('-', ' ')
+        .replaceAll('kabupaten', '')
+        .replaceAll('kab', '')
+        .replaceAll('kota', '')
+        .replaceAll('kecamatan', '')
+        .replaceAll('kec', '')
+        .replaceAll('kelurahan', '')
+        .replaceAll('desa', '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
-  /// Mendapatkan daftar kecamatan berdasarkan kabupaten/kota
+  /// Mendapatkan daftar kabupaten/kota berdasarkan provinsi (nama atau kode)
+  static List<String> getKabupatenByProvinsi(String? provinsi) {
+    if (provinsi == null || provinsi.trim().isEmpty) return [];
+
+    final clean = _normalize(provinsi);
+
+    // Cek D.I. Yogyakarta
+    if (clean == '34' ||
+        clean.contains('yogyakarta') ||
+        clean.contains('diy') ||
+        clean.contains('jogja')) {
+      return kabupatenMap['D.I. Yogyakarta'] ?? [];
+    }
+    if (clean == '33' || clean.contains('jawa tengah') || clean.contains('jateng')) {
+      return kabupatenMap['Jawa Tengah'] ?? [];
+    }
+    if (clean == '31' || clean.contains('jakarta') || clean.contains('dki')) {
+      return kabupatenMap['DKI Jakarta'] ?? [];
+    }
+    if (clean == '32' || clean.contains('jawa barat') || clean.contains('jabar')) {
+      return kabupatenMap['Jawa Barat'] ?? [];
+    }
+    if (clean == '35' || clean.contains('jawa timur') || clean.contains('jatim')) {
+      return kabupatenMap['Jawa Timur'] ?? [];
+    }
+    if (clean == '36' || clean.contains('banten')) {
+      return kabupatenMap['Banten'] ?? [];
+    }
+    if (clean == '51' || clean.contains('bali')) {
+      return kabupatenMap['Bali'] ?? [];
+    }
+    if (clean == '16' || clean.contains('sumatera selatan') || clean.contains('sumsel')) {
+      return kabupatenMap['Sumatera Selatan'] ?? [];
+    }
+
+    // Cek langsung ke map
+    if (kabupatenMap.containsKey(provinsi)) {
+      return kabupatenMap[provinsi]!;
+    }
+
+    // Cek case-insensitive
+    for (final entry in kabupatenMap.entries) {
+      final entryClean = _normalize(entry.key);
+      if (entryClean == clean || entryClean.contains(clean) || clean.contains(entryClean)) {
+        return entry.value;
+      }
+    }
+
+    return ['Lainnya'];
+  }
+
+  /// Mendapatkan daftar kecamatan berdasarkan kabupaten/kota (nama atau kode)
   static List<String> getKecamatanByKabupaten(String? kabupaten) {
-    if (kabupaten == null) return [];
-    return kecamatanMap[kabupaten] ?? ['Lainnya'];
+    if (kabupaten == null || kabupaten.trim().isEmpty) return [];
+
+    final clean = _normalize(kabupaten);
+
+    if (clean.contains('sleman') || clean == '3404') {
+      return kecamatanMap['Kab. Sleman'] ?? [];
+    }
+    if (clean.contains('bantul') || clean == '3402') {
+      return kecamatanMap['Kab. Bantul'] ?? [];
+    }
+    if (clean.contains('kulon') || clean.contains('progo') || clean == '3401') {
+      return kecamatanMap['Kab. Kulon Progo'] ?? [];
+    }
+    if (clean.contains('gunung') || clean.contains('kidul') || clean == '3403') {
+      return kecamatanMap['Kab. Gunungkidul'] ?? [];
+    }
+    if (clean.contains('yogyakarta') || clean == '3471') {
+      return kecamatanMap['Kota Yogyakarta'] ?? [];
+    }
+    if (clean.contains('pagaralam') || clean.contains('pagar alam') || clean == '1673') {
+      return kecamatanMap['Kota Pagaralam'] ?? [];
+    }
+    if (clean.contains('palembang') || clean == '1671') {
+      return kecamatanMap['Kota Palembang'] ?? [];
+    }
+    if (clean.contains('prabumulih') || clean == '1672') {
+      return kecamatanMap['Kota Prabumulih'] ?? [];
+    }
+    if (clean.contains('lubuk linggau') || clean.contains('lubuklinggau') || clean == '1674') {
+      return kecamatanMap['Kota Lubuk Linggau'] ?? [];
+    }
+
+    if (kecamatanMap.containsKey(kabupaten)) {
+      return kecamatanMap[kabupaten]!;
+    }
+
+    for (final entry in kecamatanMap.entries) {
+      final entryClean = _normalize(entry.key);
+      if (entryClean == clean || entryClean.contains(clean) || clean.contains(entryClean)) {
+        return entry.value;
+      }
+    }
+
+    // Jika bukan kabupaten di DIY, kembalikan ['Lainnya'] (JANGAN kembalikan Sleman!)
+    return ['Lainnya'];
   }
 
   /// Mendapatkan daftar kelurahan/desa berdasarkan kecamatan
   static List<String> getKelurahanByKecamatan(String? kecamatan) {
-    if (kecamatan == null) return [];
-    return kelurahanMap[kecamatan] ?? ['Lainnya'];
+    if (kecamatan == null || kecamatan.trim().isEmpty) return [];
+
+    final clean = _normalize(kecamatan);
+
+    if (clean.contains('gamping')) {
+      return kelurahanMap['Gamping'] ?? [];
+    }
+
+    if (kelurahanMap.containsKey(kecamatan)) {
+      return kelurahanMap[kecamatan]!;
+    }
+
+    for (final entry in kelurahanMap.entries) {
+      final entryClean = _normalize(entry.key);
+      if (entryClean == clean || entryClean.contains(clean) || clean.contains(entryClean)) {
+        return entry.value;
+      }
+    }
+
+    return ['Lainnya'];
   }
 }
 

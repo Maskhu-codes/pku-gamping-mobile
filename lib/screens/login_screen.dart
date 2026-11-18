@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
@@ -19,7 +20,8 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  final bool _isLoading = false;
+  bool _isLoading = false;
+  bool _didCheckArgs = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -42,6 +44,33 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didCheckArgs) {
+      _didCheckArgs = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        if (args['email'] != null) {
+          _emailController.text = args['email'].toString();
+        }
+        if (args['message'] != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(args['message'].toString()),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          });
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _animController.dispose();
     _emailController.dispose();
@@ -49,14 +78,46 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.home,
-      arguments: TopNotificationType.loginSuccess,
-    );
+    setState(() => _isLoading = true);
+
+    try {
+      final res = await SimrsService.login(
+        username: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Validasi respon dari backend: pastikan statusnya true
+      if (res['status'] == false) {
+        throw Exception(res['message']?.toString() ?? 'Email atau kata sandi salah.');
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.home,
+        arguments: TopNotificationType.loginSuccess,
+      );
+
+    }
+    catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+   }
+    finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

@@ -63,7 +63,10 @@ class AppRouter {
         );
 
       case AppRoutes.resetPassword:
-        return MaterialPageRoute(builder: (_) => const ResetPasswordScreen());
+        return MaterialPageRoute(
+          builder: (_) => const ResetPasswordScreen(),
+          settings: settings,
+        );
 
       case AppRoutes.home:
         final args = settings.arguments;

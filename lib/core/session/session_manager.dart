@@ -71,6 +71,28 @@ class SessionManager {
     }
   }
 
+  /// Ambil data SIMRS pasien (objek 'simrs' jika tersedia dari /auth/me)
+  static Map<String, dynamic>? get simrsData {
+    final data = patientData;
+    if (data == null) return null;
+    final simrs = data['simrs'];
+    if (simrs is Map<String, dynamic>) return simrs;
+    return null;
+  }
+
+  /// Ambil tanggal lahir pasien (dari SIMRS 'FD_TGL_LAHIR' atau fallback)
+  static String? get tanggalLahir {
+    return simrsData?['FD_TGL_LAHIR'] as String? ??
+        simrsData?['fd_tgl_lahir'] as String? ??
+        patientData?['fd_tgl_lahir'] as String? ??
+        patientData?['tanggal_lahir'] as String?;
+  }
+
+  /// Ambil waktu pembuatan akun (dari 'fd_created_at')
+  static String? get createdAt {
+    return patientData?['fd_created_at'] as String?;
+  }
+
   /// Simpan sesi baru setelah login / registrasi berhasil
   static Future<void> saveSession({
     required String token,
