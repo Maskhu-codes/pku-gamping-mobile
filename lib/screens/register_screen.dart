@@ -8,7 +8,6 @@ import 'package:pku_gamping_app/screens/register_widgets/register_step3_akun.dar
 import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/services/wilayah_service.dart';
-import 'package:pku_gamping_app/widgets/top_notification.dart';
 
 /// Screen Registrasi Akun Pasien Baru Terintegrasi SIMRS PKU Gamping.
 ///
@@ -829,7 +828,47 @@ class _RegisterScreenState extends State<RegisterScreen>
 
       if (!mounted) return;
 
-      // Pastikan session bersih agar pasien login manual dengan email & kata sandi yang baru didaftarkan
+      // Simpan data profil lengkap ke lokal per NIK agar sinkron di Edit Profile
+      final registeredProfile = {
+        'fs_nik': _nikController.text.trim(),
+        'nik': _nikController.text.trim(),
+        'nama': namaPasien,
+        'fs_nm_pasien': namaPasien,
+        'jenis_kelamin': _selectedJenisKelamin ?? 'Laki-laki',
+        'fs_jenis_kelamin': kdJenisKelamin,
+        'golongan_darah': _selectedGolDarah ?? 'O',
+        'fs_gol_darah': _selectedGolDarah ?? 'O',
+        'tempat_lahir': _selectedTempatLahir ?? 'Sleman',
+        'fs_temp_lahir': _selectedTempatLahir ?? 'Sleman',
+        'tanggal_lahir': tglLahirStr,
+        'fd_tgl_lahir': tglLahirStr,
+        'agama': _selectedAgama ?? 'Islam',
+        'fs_kd_agama': _mapAgamaToCode(_selectedAgama),
+        'warga_negara': _selectedWargaNegara ?? 'WNI',
+        'fs_warga_negara': (_selectedWargaNegara == 'WNA') ? '2' : '1',
+        'pendidikan': _selectedPendidikan ?? 'S1 / Sarjana',
+        'fs_kd_pendidikan': _mapPendidikanToCode(_selectedPendidikan),
+        'pekerjaan': _selectedPekerjaan ?? 'Karyawan Swasta',
+        'fs_kd_pekerjaan': _mapPekerjaanToCode(_selectedPekerjaan),
+        'status_kawin': _selectedStatusKawin ?? 'Belum Kawin',
+        'fs_status_kawin': _mapStatusKawinToCode(_selectedStatusKawin),
+        'nama_ibu': namaIbu,
+        'fs_nm_ibu_kandung': namaIbu,
+        'provinsi': _selectedProvinsi?.nama ?? 'D.I. Yogyakarta',
+        'kabupaten': _selectedKabupaten?.nama ?? 'Kab. Sleman',
+        'kecamatan': _selectedKecamatan?.nama ?? 'Gamping',
+        'kelurahan': _selectedKelurahan?.nama ?? 'Ambarketawang',
+        'kode_kelurahan': kdKelurahan,
+        'alamat': alamat,
+        'fs_alamat': alamat,
+        'nomor_hp': noHp,
+        'fs_no_hp': noHp,
+        'email': email,
+        'fs_email': email,
+      };
+      await SessionManager.saveProfileByNik(_nikController.text.trim(), registeredProfile);
+
+      // Pastikan session aktif dibersihkan agar pasien diarahkan login mandiri
       await SessionManager.clearSession();
 
       if (!mounted) return;

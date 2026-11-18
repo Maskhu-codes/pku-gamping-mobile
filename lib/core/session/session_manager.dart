@@ -20,6 +20,7 @@ class SessionManager {
   static const String _keyPatientData = 'pku_patient_data';
   static const String _keyProfilePhotoPath = 'pku_profile_photo_path';
   static const String _keyNotificationEnabled = 'pku_notification_enabled';
+  static const String _keyProfilePrefix = 'pku_profile_nik_';
 
   /// Notifier reaktif untuk foto profil pasien
   static final ValueNotifier<String?> profilePhotoNotifier =
@@ -113,6 +114,36 @@ class SessionManager {
     ]);
   }
 
+  /// Simpan profil lokal lengkap berdasarkan NIK (tersimpan persisten per NIK pasien)
+  static Future<void> saveProfileByNik(String nik, Map<String, dynamic> data) async {
+    if (nik.trim().isEmpty) return;
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    final cleanNik = nik.trim();
+    final current = getProfileByNik(cleanNik) ?? {};
+    final merged = {...current, ...data};
+    // Sanitasi data sensitif
+    merged.remove('password');
+    merged.remove('kata_sandi');
+    merged.remove('confirm_password');
+    merged.remove('pin');
+    await p.setString('$_keyProfilePrefix$cleanNik', jsonEncode(merged));
+  }
+
+  /// Ambil profil lokal lengkap berdasarkan NIK
+  static Map<String, dynamic>? getProfileByNik(String nik) {
+    if (nik.trim().isEmpty) return null;
+    final p = _prefs;
+    final cleanNik = nik.trim();
+    final jsonStr = p?.getString('$_keyProfilePrefix$cleanNik');
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      return jsonDecode(jsonStr) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Simpan data pasien lengkap ke session (dengan sanitasi kredensial keamanan)
   static Future<void> savePatientData(Map<String, dynamic> data) async {
     final p = _prefs ?? await SharedPreferences.getInstance();
@@ -123,7 +154,25 @@ class SessionManager {
       ..remove('kata_sandi')
       ..remove('confirm_password')
       ..remove('pin');
-    await p.setString(_keyPatientData, jsonEncode(safeData));
+
+    // Merge dengan data pasien yang sudah tersimpan sebelumnya agar field tidak hilang
+    final existingData = patientData ?? {};
+    final mergedData = {...existingData, ...safeData};
+
+    // Jika ada NIK, gabungkan juga dengan profil yang tersimpan untuk NIK ini
+    final currentNik = nik ?? mergedData['fs_nik']?.toString() ?? mergedData['nik']?.toString();
+    if (currentNik != null && currentNik.trim().isNotEmpty) {
+      final cachedProfile = getProfileByNik(currentNik.trim());
+      if (cachedProfile != null) {
+        cachedProfile.forEach((key, val) {
+          if (!mergedData.containsKey(key) || mergedData[key] == null || mergedData[key].toString().trim().isEmpty) {
+            mergedData[key] = val;
+          }
+        });
+      }
+    }
+
+    await p.setString(_keyPatientData, jsonEncode(mergedData));
   }
 
   /// Ambil path foto profil pasien

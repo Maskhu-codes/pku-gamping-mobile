@@ -82,6 +82,13 @@ class SimrsService {
         nik: nik,
       );
 
+      if (nik != null && nik.isNotEmpty) {
+        final cachedNikProfile = SessionManager.getProfileByNik(nik);
+        if (cachedNikProfile != null) {
+          userObj.addAll(cachedNikProfile);
+        }
+      }
+
       await SessionManager.savePatientData(userObj);
 
       // 5. Alur Pengiriman Balik Token ke Backend (/auth/me):
@@ -131,6 +138,13 @@ class SimrsService {
             nik: nik,
             username: userData['fs_email']?.toString() ?? SessionManager.username,
           );
+          if (nik != null && nik.isNotEmpty) {
+            final cachedNikProfile = SessionManager.getProfileByNik(nik);
+            if (cachedNikProfile != null) {
+              userData.addAll(cachedNikProfile);
+            }
+          }
+
           await SessionManager.savePatientData(userData);
         }
         return data;
@@ -267,6 +281,60 @@ class SimrsService {
     } finally {
       await SessionManager.clearSession();
     }
+  }
+
+  // ── Master Data Referensi SIMRS (Pekerjaan, Pendidikan, Status Kawin, Agama) ──
+
+  /// Ambil daftar master pekerjaan dari SIMRS (GET /master/pekerjaan)
+  static Future<List<Map<String, dynamic>>> getMasterPekerjaan() async {
+    try {
+      final res = await _dio.get('/master/pekerjaan');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterPekerjaan error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master pendidikan dari SIMRS (GET /master/pendidikan)
+  static Future<List<Map<String, dynamic>>> getMasterPendidikan() async {
+    try {
+      final res = await _dio.get('/master/pendidikan');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterPendidikan error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master status kawin dari SIMRS (GET /master/status_kawin)
+  static Future<List<Map<String, dynamic>>> getMasterStatusKawin() async {
+    try {
+      final res = await _dio.get('/master/status_kawin');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterStatusKawin error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master agama dari SIMRS (GET /master/agama)
+  static Future<List<Map<String, dynamic>>> getMasterAgama() async {
+    try {
+      final res = await _dio.get('/master/agama');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterAgama error: $e');
+    }
+    return [];
   }
 
   /// Kirim kode OTP Lupa Kata Sandi (/auth/forgotPassword)

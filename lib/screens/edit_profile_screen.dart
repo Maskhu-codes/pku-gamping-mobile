@@ -118,43 +118,344 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
 
-    final patientData = SessionManager.patientData;
+    final currentNik = SessionManager.nik ?? '';
+    final nikProfile = currentNik.isNotEmpty ? SessionManager.getProfileByNik(currentNik) : null;
+    final patientData = SessionManager.patientData ?? {};
+    final simrsData = SessionManager.simrsData ?? {};
 
-    // Data Read-Only identitas
-    _namaKtp = SessionManager.namaPasien;
-    _nik = SessionManager.nik ?? '3471040506920001';
-    _jenisKelamin = 'Laki-laki';
+    // Helper untuk mengambil nilai pertama yang valid dari cache NIK, patientData, atau SIMRS
+    dynamic getVal(List<String> keys) {
+      if (nikProfile != null) {
+        for (final k in keys) {
+          if (nikProfile[k] != null && nikProfile[k].toString().trim().isNotEmpty) {
+            return nikProfile[k];
+          }
+        }
+      }
+      for (final k in keys) {
+        if (patientData[k] != null && patientData[k].toString().trim().isNotEmpty) {
+          return patientData[k];
+        }
+      }
+      for (final k in keys) {
+        if (simrsData[k] != null && simrsData[k].toString().trim().isNotEmpty) {
+          return simrsData[k];
+        }
+      }
+      return null;
+    }
 
-    // Data Pasien editable
-    _selectedTempatLahir = patientData?['tempat_lahir'] as String? ?? 'Yogyakarta';
-    _selectedTanggalLahir = DateTime(1990, 5, 14);
-    _selectedGolDarah = patientData?['golongan_darah'] as String? ?? 'O';
-    _selectedAgama = patientData?['agama'] as String? ?? 'Islam';
-    _selectedWargaNegara = patientData?['warga_negara'] as String? ?? 'WNI';
-    _selectedPendidikan = patientData?['pendidikan'] as String? ?? 'S1 / Sarjana';
-    _selectedPekerjaan = patientData?['pekerjaan'] as String? ?? 'Karyawan Swasta';
-    _selectedStatusKawin = patientData?['status_kawin'] as String? ?? 'Kawin';
-    _namaIbuController = TextEditingController(
-      text: patientData?['nama_ibu'] as String? ?? 'Siti Aminah',
+    // ── 1. Data Read-Only Identitas ──
+    _nik = currentNik.isNotEmpty
+        ? currentNik
+        : (getVal(['fs_nik', 'nik', 'FS_KD_IDENTITAS'])?.toString() ?? '3471040506920001');
+
+    final rawNama = getVal(['nama', 'fs_nm_pasien', 'FS_NM_PASIEN'])?.toString();
+    _namaKtp = (rawNama != null && rawNama.isNotEmpty)
+        ? rawNama
+        : SessionManager.namaPasien;
+
+    final rawJk = getVal(['jenis_kelamin', 'fs_jenis_kelamin', 'FS_JNS_KELAMIN'])?.toString();
+    if (rawJk != null &&
+        (rawJk == '1' || rawJk.toUpperCase() == 'P' || rawJk.toLowerCase().contains('perempuan'))) {
+      _jenisKelamin = 'Perempuan';
+    } else {
+      _jenisKelamin = 'Laki-laki';
+    }
+
+    // ── 2. Data Pasien Editable ──
+    // Tempat Lahir
+    final rawTempat = getVal(['tempat_lahir', 'fs_temp_lahir', 'FS_TEMP_LAHIR'])?.toString();
+    _selectedTempatLahir = (rawTempat != null && rawTempat.isNotEmpty) ? rawTempat : 'Yogyakarta';
+
+    // Tanggal Lahir
+    DateTime? parsedDate;
+    final rawTgl = getVal(['tanggal_lahir', 'fd_tgl_lahir', 'FD_TGL_LAHIR'])?.toString() ?? SessionManager.tanggalLahir;
+    if (rawTgl != null && rawTgl.isNotEmpty) {
+      try {
+        parsedDate = DateTime.tryParse(rawTgl);
+      } catch (_) {}
+    }
+    _selectedTanggalLahir = parsedDate ?? DateTime(1995, 1, 1);
+
+    // Golongan Darah
+    final rawGol = getVal(['golongan_darah', 'fs_gol_darah', 'FS_GOL_DARAH'])?.toString()?.toUpperCase()?.trim();
+    if (rawGol != null && _listGolDarah.contains(rawGol)) {
+      _selectedGolDarah = rawGol;
+    } else {
+      _selectedGolDarah = 'O';
+    }
+
+    // Agama
+    final rawAgama = getVal(['agama', 'fs_kd_agama', 'FS_KD_AGAMA'])?.toString()?.trim();
+    _selectedAgama = _resolveAgama(rawAgama);
+
+    // Warga Negara
+    final rawWn = getVal(['warga_negara', 'fs_warga_negara', 'FS_WARGA_NEGARA'])?.toString()?.trim();
+    if (rawWn == '2' || rawWn == 'WNA') {
+      _selectedWargaNegara = 'WNA';
+    } else {
+      _selectedWargaNegara = 'WNI';
+    }
+
+    // Pendidikan Terakhir
+    final rawPendidikan = getVal(['pendidikan', 'fs_kd_pendidikan', 'FS_KD_PENDIDIKAN_DK'])?.toString()?.trim();
+    _selectedPendidikan = _resolvePendidikan(rawPendidikan);
+
+    // Pekerjaan
+    final rawPekerjaan = getVal(['pekerjaan', 'fs_kd_pekerjaan', 'FS_KD_PEKERJAAN_DK'])?.toString()?.trim();
+    _selectedPekerjaan = _resolvePekerjaan(rawPekerjaan);
+
+    // Status Perkawinan
+    final rawKawin = getVal(['status_kawin', 'fs_status_kawin', 'FS_KD_STATUS_KAWIN_DK'])?.toString()?.trim();
+    _selectedStatusKawin = _resolveStatusKawin(rawKawin);
+
+    // Nama Ibu Kandung
+    String rawIbu = '';
+    final foundIbu = getVal([
+      'nama_ibu',
+      'fs_nm_ibu_kandung',
+      'FS_NM_IBU_KANDUNG',
+      'fs_nm_ibu',
+      'FS_NM_IBU',
+      'nama_ibu_kandung',
+      'fs_ibu_kandung',
+      'FS_IBU_KANDUNG',
+      'fs_nama_ibu',
+      'FS_NAMA_IBU',
+      'ibu',
+      'nm_ibu',
+    ]);
+    if (foundIbu != null && foundIbu.toString().trim().isNotEmpty) {
+      rawIbu = foundIbu.toString().trim();
+    } else {
+      // Cari case-insensitive di seluruh patientData & simrsData jika key tidak persis sama
+      for (final map in [patientData, simrsData]) {
+        for (final entry in map.entries) {
+          final k = entry.key.toLowerCase();
+          if (k.contains('ibu') && entry.value != null && entry.value.toString().trim().isNotEmpty) {
+            rawIbu = entry.value.toString().trim();
+            break;
+          }
+        }
+        if (rawIbu.isNotEmpty) break;
+      }
+    }
+    _namaIbuController = TextEditingController(text: rawIbu);
+
+    // ── 3. Alamat ──
+    final rawProv = getVal(['provinsi'])?.toString();
+    final rawKab = getVal(['kabupaten'])?.toString();
+    final rawKec = getVal(['kecamatan'])?.toString();
+    final rawKel = getVal(['kelurahan'])?.toString();
+    final rawKdKel = getVal(['fs_kd_kelurahan', 'FS_KD_KELURAHAN'])?.toString();
+
+    final wilayahResolved = _resolveWilayah(
+      provinsi: rawProv,
+      kabupaten: rawKab,
+      kecamatan: rawKec,
+      kelurahan: rawKel,
+      kodeKelurahan: rawKdKel,
     );
 
-    // Alamat
-    _selectedProvinsi = patientData?['provinsi'] as String? ?? 'D.I. Yogyakarta';
-    _selectedKabupaten = patientData?['kabupaten'] as String? ?? 'Kab. Sleman';
-    _selectedKecamatan = patientData?['kecamatan'] as String? ?? 'Gamping';
-    _selectedKelurahan = patientData?['kelurahan'] as String? ?? 'Ambarketawang';
-    _alamatController = TextEditingController(
-      text: patientData?['alamat'] as String? ??
-          'Jl. Wates Km. 5, Ambarketawang, Gamping',
-    );
+    _selectedProvinsi = wilayahResolved['provinsi'];
+    _selectedKabupaten = wilayahResolved['kabupaten'];
+    _selectedKecamatan = wilayahResolved['kecamatan'];
+    _selectedKelurahan = wilayahResolved['kelurahan'];
 
-    // Kontak
-    _nomorHpController = TextEditingController(
-      text: patientData?['nomor_hp'] as String? ?? '081234567890',
-    );
-    _emailController = TextEditingController(
-      text: SessionManager.username ?? 'dahlan.muda@gmail.com',
-    );
+    final rawAlamat = getVal(['alamat', 'fs_alamat', 'FS_ALM_PASIEN'])?.toString() ?? '';
+    _alamatController = TextEditingController(text: rawAlamat);
+
+    // ── 4. Kontak ──
+    final rawHp = getVal(['nomor_hp', 'fs_no_hp', 'FS_TLP_PASIEN'])?.toString() ?? '';
+    _nomorHpController = TextEditingController(text: rawHp);
+
+    final rawEmail = SessionManager.username ?? getVal(['email', 'fs_email'])?.toString() ?? '';
+    _emailController = TextEditingController(text: rawEmail);
+  }
+
+  static String _resolveAgama(String? val) {
+    if (val == null || val.isEmpty) return 'Islam';
+    switch (val) {
+      case '1':
+        return 'Islam';
+      case '2':
+        return 'Kristen';
+      case '3':
+        return 'Katolik';
+      case '4':
+        return 'Hindu';
+      case '5':
+        return 'Buddha';
+      case '6':
+        return 'Konghucu';
+      default:
+        if (_listAgama.contains(val)) return val;
+        return 'Islam';
+    }
+  }
+
+  static String _resolvePendidikan(String? val) {
+    if (val == null || val.isEmpty) return 'S1 / Sarjana';
+    switch (val) {
+      case '0':
+        return 'Tidak / Belum Sekolah';
+      case '1':
+        return 'SD / Sederajat';
+      case '2':
+        return 'SMP / Sederajat';
+      case '3':
+        return 'SMA / SMK / Sederajat';
+      case '4':
+        return 'D1 / D2 / D3';
+      case '5':
+        return 'S1 / Sarjana';
+      case '6':
+        return 'S2 / Magister';
+      case '7':
+        return 'S3 / Doktoral';
+      default:
+        if (_listPendidikan.contains(val)) return val;
+        return 'S1 / Sarjana';
+    }
+  }
+
+  static String _resolvePekerjaan(String? val) {
+    if (val == null || val.isEmpty) return 'Karyawan Swasta';
+    switch (val) {
+      case '01':
+      case '1':
+        return 'PNS / TNI / POLRI';
+      case '02':
+      case '2':
+        return 'Karyawan Swasta';
+      case '03':
+      case '3':
+        return 'Wiraswasta';
+      case '04':
+      case '4':
+        return 'Petani / Peternak';
+      case '05':
+      case '5':
+        return 'Pelajar / Mahasiswa';
+      case '06':
+      case '6':
+        return 'Ibu Rumah Tangga';
+      case '07':
+      case '7':
+        return 'Pensiunan';
+      case '08':
+      case '8':
+        return 'Belum / Tidak Bekerja';
+      default:
+        if (_listPekerjaan.contains(val)) return val;
+        return 'Karyawan Swasta';
+    }
+  }
+
+  static String _resolveStatusKawin(String? val) {
+    if (val == null || val.isEmpty) return 'Belum Kawin';
+    switch (val) {
+      case '1':
+        return 'Kawin';
+      case '2':
+        return 'Belum Kawin';
+      case '3':
+        return 'Cerai Hidup';
+      case '4':
+        return 'Cerai Mati';
+      default:
+        if (_listStatusKawin.contains(val)) return val;
+        return 'Belum Kawin';
+    }
+  }
+
+  static Map<String, String> _resolveWilayah({
+    String? provinsi,
+    String? kabupaten,
+    String? kecamatan,
+    String? kelurahan,
+    String? kodeKelurahan,
+  }) {
+    // 1. Tentukan Provinsi
+    String p = (provinsi != null && WilayahData.provinsiList.contains(provinsi))
+        ? provinsi
+        : '';
+    if (p.isEmpty && kodeKelurahan != null && kodeKelurahan.length >= 2) {
+      final provCode = kodeKelurahan.substring(0, 2);
+      if (provCode == '34') p = 'D.I. Yogyakarta';
+      else if (provCode == '32') p = 'Jawa Barat';
+      else if (provCode == '33') p = 'Jawa Tengah';
+      else if (provCode == '31') p = 'DKI Jakarta';
+      else if (provCode == '35') p = 'Jawa Timur';
+      else if (provCode == '36') p = 'Banten';
+      else if (provCode == '51') p = 'Bali';
+      else if (provCode == '16') p = 'Sumatera Selatan';
+    }
+    if (p.isEmpty) {
+      p = 'D.I. Yogyakarta';
+    }
+
+    // 2. Tentukan Kabupaten yang valid di Provinsi tersebut
+    final kabList = WilayahData.getKabupatenByProvinsi(p);
+    String kab = '';
+    if (kabupaten != null && kabList.contains(kabupaten)) {
+      kab = kabupaten;
+    } else if (kodeKelurahan != null && kodeKelurahan.length >= 4) {
+      final kabCode = kodeKelurahan.substring(0, 4);
+      if (kabCode == '3404' && kabList.contains('Kab. Sleman')) kab = 'Kab. Sleman';
+      else if (kabCode == '3402' && kabList.contains('Kab. Bantul')) kab = 'Kab. Bantul';
+      else if (kabCode == '3471' && kabList.contains('Kota Yogyakarta')) kab = 'Kota Yogyakarta';
+      else if (kabCode == '3401' && kabList.contains('Kab. Kulon Progo')) kab = 'Kab. Kulon Progo';
+      else if (kabCode == '3403' && kabList.contains('Kab. Gunungkidul')) kab = 'Kab. Gunungkidul';
+      else if (kabCode == '3273' && kabList.contains('Kota Bandung')) kab = 'Kota Bandung';
+      else if (kabCode == '3204' && kabList.contains('Kab. Bandung')) kab = 'Kab. Bandung';
+      else if (kabCode == '3217' && kabList.contains('Kab. Bandung Barat')) kab = 'Kab. Bandung Barat';
+      else if (kabList.isNotEmpty) kab = kabList.first;
+    }
+    if (kab.isEmpty && kabList.isNotEmpty) {
+      kab = kabList.first;
+    }
+
+    // 3. Tentukan Kecamatan yang valid di Kabupaten tersebut
+    final kecList = WilayahData.getKecamatanByKabupaten(kab);
+    String kec = '';
+    if (kecamatan != null && kecList.contains(kecamatan)) {
+      kec = kecamatan;
+    } else if (kodeKelurahan != null && kodeKelurahan.length >= 6) {
+      final kecCode = kodeKelurahan.substring(0, 6);
+      if (kecCode == '340407' && kecList.contains('Gamping')) kec = 'Gamping';
+      else if (kecCode == '340402' && kecList.contains('Godean')) kec = 'Godean';
+      else if (kecCode == '340405' && kecList.contains('Mlati')) kec = 'Mlati';
+      else if (kecList.isNotEmpty) kec = kecList.first;
+    }
+    if (kec.isEmpty && kecList.isNotEmpty) {
+      kec = kecList.first;
+    }
+
+    // 4. Tentukan Kelurahan yang valid di Kecamatan tersebut
+    final kelList = WilayahData.getKelurahanByKecamatan(kec);
+    String kel = '';
+    if (kelurahan != null && kelList.contains(kelurahan)) {
+      kel = kelurahan;
+    } else if (kodeKelurahan != null && kodeKelurahan.length == 10) {
+      if (kodeKelurahan == '3404072001' && kelList.contains('Ambarketawang')) kel = 'Ambarketawang';
+      else if (kodeKelurahan == '3404072002' && kelList.contains('Balecatur')) kel = 'Balecatur';
+      else if (kodeKelurahan == '3404072003' && kelList.contains('Banyuraden')) kel = 'Banyuraden';
+      else if (kodeKelurahan == '3404072004' && kelList.contains('Nogotirto')) kel = 'Nogotirto';
+      else if (kodeKelurahan == '3404072005' && kelList.contains('Trihanggo')) kel = 'Trihanggo';
+      else if (kelList.isNotEmpty) kel = kelList.first;
+    }
+    if (kel.isEmpty && kelList.isNotEmpty) {
+      kel = kelList.first;
+    }
+
+    return {
+      'provinsi': p,
+      'kabupaten': kab,
+      'kecamatan': kec,
+      'kelurahan': kel,
+    };
   }
 
   @override
@@ -194,7 +495,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     updatedData['kelurahan'] = _selectedKelurahan;
     updatedData['alamat'] = _alamatController.text.trim();
     updatedData['nomor_hp'] = _nomorHpController.text.trim();
+    if (_selectedTanggalLahir != null) {
+      final y = _selectedTanggalLahir!.year.toString().padLeft(4, '0');
+      final m = _selectedTanggalLahir!.month.toString().padLeft(2, '0');
+      final d = _selectedTanggalLahir!.day.toString().padLeft(2, '0');
+      updatedData['tanggal_lahir'] = '$y-$m-$d';
+      updatedData['fd_tgl_lahir'] = '$y-$m-$d';
+    }
     await SessionManager.savePatientData(updatedData);
+    if (_nik.isNotEmpty) {
+      await SessionManager.saveProfileByNik(_nik, updatedData);
+    }
 
     if (!mounted) return;
 
@@ -868,9 +1179,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedProvinsi = val;
-                                    _selectedKabupaten = null;
-                                    _selectedKecamatan = null;
-                                    _selectedKelurahan = null;
+                                    final kabList = WilayahData.getKabupatenByProvinsi(val);
+                                    _selectedKabupaten = kabList.isNotEmpty ? kabList.first : null;
+                                    final kecList = WilayahData.getKecamatanByKabupaten(_selectedKabupaten);
+                                    _selectedKecamatan = kecList.isNotEmpty ? kecList.first : null;
+                                    final kelList = WilayahData.getKelurahanByKecamatan(_selectedKecamatan);
+                                    _selectedKelurahan = kelList.isNotEmpty ? kelList.first : null;
                                   });
                                 },
                               ),
@@ -884,15 +1198,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             children: [
                               _buildFieldLabel('Kabupaten / Kota'),
                               _buildDropdown(
-                                key: ValueKey('kab_$_selectedProvinsi'),
+                                key: ValueKey('kab_${_selectedProvinsi}_$_selectedKabupaten'),
                                 initialValue: _selectedKabupaten,
                                 items: kabupatenList,
                                 hint: 'Pilih Kab/Kota',
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedKabupaten = val;
-                                    _selectedKecamatan = null;
-                                    _selectedKelurahan = null;
+                                    final kecList = WilayahData.getKecamatanByKabupaten(val);
+                                    _selectedKecamatan = kecList.isNotEmpty ? kecList.first : null;
+                                    final kelList = WilayahData.getKelurahanByKecamatan(_selectedKecamatan);
+                                    _selectedKelurahan = kelList.isNotEmpty ? kelList.first : null;
                                   });
                                 },
                               ),
@@ -913,14 +1229,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             children: [
                               _buildFieldLabel('Kecamatan'),
                               _buildDropdown(
-                                key: ValueKey('kec_$_selectedKabupaten'),
+                                key: ValueKey('kec_${_selectedKabupaten}_$_selectedKecamatan'),
                                 initialValue: _selectedKecamatan,
                                 items: kecamatanList,
                                 hint: 'Pilih Kecamatan',
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedKecamatan = val;
-                                    _selectedKelurahan = null;
+                                    final kelList = WilayahData.getKelurahanByKecamatan(val);
+                                    _selectedKelurahan = kelList.isNotEmpty ? kelList.first : null;
                                   });
                                 },
                               ),
@@ -934,7 +1251,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             children: [
                               _buildFieldLabel('Kelurahan / Desa'),
                               _buildDropdown(
-                                key: ValueKey('kel_$_selectedKecamatan'),
+                                key: ValueKey('kel_${_selectedKecamatan}_$_selectedKelurahan'),
                                 initialValue: _selectedKelurahan,
                                 items: kelurahanList,
                                 hint: 'Pilih Kelurahan',

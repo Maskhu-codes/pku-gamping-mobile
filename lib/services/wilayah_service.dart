@@ -10,6 +10,13 @@ class WilayahItem {
 
   const WilayahItem({required this.kode, required this.nama});
 
+  Map<String, dynamic> toJson() => {'kode': kode, 'nama': nama};
+
+  factory WilayahItem.fromJson(Map<String, dynamic> json) => WilayahItem(
+        kode: json['kode']?.toString() ?? '',
+        nama: json['nama']?.toString() ?? '',
+      );
+
   @override
   String toString() => nama;
 
@@ -65,76 +72,160 @@ class WilayahService {
     return fallback;
   }
 
-  /// Ambil daftar kabupaten/kota berdasarkan kode provinsi
+  /// Ambil daftar kabupaten/kota berdasarkan provinsi (kode atau nama).
+  /// Memprioritaskan data master wilayah lengkap jika di database SIMRS hanya ada sebagian kota.
   static Future<List<WilayahItem>> getKabupaten(String kdPropinsi, [String? nmPropinsi]) async {
     if (kdPropinsi.isEmpty && (nmPropinsi == null || nmPropinsi.isEmpty)) return [];
 
+    final queryName = (nmPropinsi != null && nmPropinsi.trim().isNotEmpty) ? nmPropinsi.trim() : kdPropinsi.trim();
+    final localNames = WilayahData.getKabupatenByProvinsi(queryName);
+
+    List<WilayahItem> apiItems = [];
     try {
       final response = await _dio.get(
         '/wilayah/kabupaten',
         queryParameters: {'fs_kd_propinsi': kdPropinsi},
       );
-      final items = _parseList(response.data, 'FS_KD_KABUPATEN', 'FS_NM_KABUPATEN');
-      if (items.isNotEmpty) {
-        return items;
-      }
+      apiItems = _parseList(response.data, 'FS_KD_KABUPATEN', 'FS_NM_KABUPATEN');
     } catch (e) {
-      debugPrint('[WilayahService] getKabupaten error: $e');
+      debugPrint('[WilayahService] getKabupaten API error: $e');
     }
 
-    // Fallback data lokal jika API offline
-    final fallbackQuery = (nmPropinsi != null && nmPropinsi.isNotEmpty) ? nmPropinsi : kdPropinsi;
-    return WilayahData.getKabupatenByProvinsi(fallbackQuery)
-        .map((k) => WilayahItem(kode: k, nama: toTitleCase(k)))
-        .toList();
+    // Jika master data lokal lebih lengkap dari respon API database (seperti kasus Jawa Barat yang cuma 4 baris di SIMRS),
+    // gunakan master data lokal lengkap dan hubungkan kode SIMRS yang cocok.
+    if (localNames.length > apiItems.length) {
+      final result = <WilayahItem>[];
+      for (final name in localNames) {
+        final cleanName = name.toLowerCase().replaceAll('kab.', '').replaceAll('kab', '').replaceAll('kota', '').trim();
+        final matchingApi = apiItems.firstWhere(
+          (a) => a.nama.toLowerCase().contains(cleanName) || cleanName.contains(a.nama.toLowerCase()),
+          orElse: () => WilayahItem(kode: name, nama: toTitleCase(name)),
+        );
+        result.add(WilayahItem(
+          kode: matchingApi.kode != name ? matchingApi.kode : name,
+          nama: toTitleCase(name),
+        ));
+      }
+      return result;
+    }
+
+    if (apiItems.isEmpty) {
+      return localNames.map((k) => WilayahItem(kode: k, nama: toTitleCase(k))).toList();
+    }
+
+    final result = <WilayahItem>[...apiItems];
+    final seen = apiItems.map((e) => e.nama.toLowerCase().trim()).toSet();
+    for (final loc in localNames) {
+      final title = toTitleCase(loc);
+      if (!seen.contains(title.toLowerCase().trim())) {
+        result.add(WilayahItem(kode: loc, nama: title));
+        seen.add(title.toLowerCase().trim());
+      }
+    }
+    result.sort((a, b) => a.nama.compareTo(b.nama));
+    return result;
   }
 
-  /// Ambil daftar kecamatan berdasarkan kode kabupaten
+  /// Ambil daftar kecamatan berdasarkan kode kabupaten (lengkap dengan fallback)
   static Future<List<WilayahItem>> getKecamatan(String kdKabupaten, [String? nmKabupaten]) async {
     if (kdKabupaten.isEmpty && (nmKabupaten == null || nmKabupaten.isEmpty)) return [];
 
+    final queryName = (nmKabupaten != null && nmKabupaten.trim().isNotEmpty) ? nmKabupaten.trim() : kdKabupaten.trim();
+    final localNames = WilayahData.getKecamatanByKabupaten(queryName);
+
+    List<WilayahItem> apiItems = [];
     try {
       final response = await _dio.get(
         '/wilayah/kecamatan',
         queryParameters: {'fs_kd_kabupaten': kdKabupaten},
       );
-      final items = _parseList(response.data, 'FS_KD_KECAMATAN', 'FS_NM_KECAMATAN');
-      if (items.isNotEmpty) {
-        return items;
-      }
+      apiItems = _parseList(response.data, 'FS_KD_KECAMATAN', 'FS_NM_KECAMATAN');
     } catch (e) {
-      debugPrint('[WilayahService] getKecamatan error: $e');
+      debugPrint('[WilayahService] getKecamatan API error: $e');
     }
 
-    // Fallback data lokal jika API offline
-    final fallbackQuery = (nmKabupaten != null && nmKabupaten.isNotEmpty) ? nmKabupaten : kdKabupaten;
-    return WilayahData.getKecamatanByKabupaten(fallbackQuery)
-        .map((k) => WilayahItem(kode: k, nama: toTitleCase(k)))
-        .toList();
+    if (localNames.length > apiItems.length) {
+      final result = <WilayahItem>[];
+      for (final name in localNames) {
+        final cleanName = name.toLowerCase().trim();
+        final matchingApi = apiItems.firstWhere(
+          (a) => a.nama.toLowerCase().contains(cleanName) || cleanName.contains(a.nama.toLowerCase()),
+          orElse: () => WilayahItem(kode: name, nama: toTitleCase(name)),
+        );
+        result.add(WilayahItem(
+          kode: matchingApi.kode != name ? matchingApi.kode : name,
+          nama: toTitleCase(name),
+        ));
+      }
+      return result;
+    }
+
+    if (apiItems.isEmpty) {
+      return localNames.map((k) => WilayahItem(kode: k, nama: toTitleCase(k))).toList();
+    }
+
+    final result = <WilayahItem>[...apiItems];
+    final seen = apiItems.map((e) => e.nama.toLowerCase().trim()).toSet();
+    for (final loc in localNames) {
+      final title = toTitleCase(loc);
+      if (!seen.contains(title.toLowerCase().trim())) {
+        result.add(WilayahItem(kode: loc, nama: title));
+        seen.add(title.toLowerCase().trim());
+      }
+    }
+    result.sort((a, b) => a.nama.compareTo(b.nama));
+    return result;
   }
 
-  /// Ambil daftar kelurahan/desa berdasarkan kode kecamatan
+  /// Ambil daftar kelurahan/desa berdasarkan kode kecamatan (lengkap dengan fallback)
   static Future<List<WilayahItem>> getKelurahan(String kdKecamatan, [String? nmKecamatan]) async {
     if (kdKecamatan.isEmpty && (nmKecamatan == null || nmKecamatan.isEmpty)) return [];
 
+    final queryName = (nmKecamatan != null && nmKecamatan.trim().isNotEmpty) ? nmKecamatan.trim() : kdKecamatan.trim();
+    final localNames = WilayahData.getKelurahanByKecamatan(queryName);
+
+    List<WilayahItem> apiItems = [];
     try {
       final response = await _dio.get(
         '/wilayah/kelurahan',
         queryParameters: {'fs_kd_kecamatan': kdKecamatan},
       );
-      final items = _parseList(response.data, 'FS_KD_KELURAHAN', 'FS_NM_KELURAHAN');
-      if (items.isNotEmpty) {
-        return items;
-      }
+      apiItems = _parseList(response.data, 'FS_KD_KELURAHAN', 'FS_NM_KELURAHAN');
     } catch (e) {
-      debugPrint('[WilayahService] getKelurahan error: $e');
+      debugPrint('[WilayahService] getKelurahan API error: $e');
     }
 
-    // Fallback data lokal jika API offline
-    final fallbackQuery = (nmKecamatan != null && nmKecamatan.isNotEmpty) ? nmKecamatan : kdKecamatan;
-    return WilayahData.getKelurahanByKecamatan(fallbackQuery)
-        .map((k) => WilayahItem(kode: k, nama: toTitleCase(k)))
-        .toList();
+    if (localNames.length > apiItems.length) {
+      final result = <WilayahItem>[];
+      for (final name in localNames) {
+        final cleanName = name.toLowerCase().trim();
+        final matchingApi = apiItems.firstWhere(
+          (a) => a.nama.toLowerCase().contains(cleanName) || cleanName.contains(a.nama.toLowerCase()),
+          orElse: () => WilayahItem(kode: name, nama: toTitleCase(name)),
+        );
+        result.add(WilayahItem(
+          kode: matchingApi.kode != name ? matchingApi.kode : name,
+          nama: toTitleCase(name),
+        ));
+      }
+      return result;
+    }
+
+    if (apiItems.isEmpty) {
+      return localNames.map((k) => WilayahItem(kode: k, nama: toTitleCase(k))).toList();
+    }
+
+    final result = <WilayahItem>[...apiItems];
+    final seen = apiItems.map((e) => e.nama.toLowerCase().trim()).toSet();
+    for (final loc in localNames) {
+      final title = toTitleCase(loc);
+      if (!seen.contains(title.toLowerCase().trim())) {
+        result.add(WilayahItem(kode: loc, nama: title));
+        seen.add(title.toLowerCase().trim());
+      }
+    }
+    result.sort((a, b) => a.nama.compareTo(b.nama));
+    return result;
   }
 
   /// Ambil detail wilayah lengkap dari kode kelurahan

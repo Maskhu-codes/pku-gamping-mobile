@@ -48,7 +48,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
 
       case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return MaterialPageRoute(builder: (_) => const LoginScreen(),  settings: settings, );
 
       case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
