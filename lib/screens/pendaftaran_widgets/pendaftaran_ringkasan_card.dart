@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'pendaftaran_constants.dart';
 
 /// Kartu Ringkasan Pendaftaran yang menampilkan preview dinamis
-/// data pendaftaran sebelum dikonfirmasi oleh pasien.
+/// data pendaftaran sebelum dikonfirmasi oleh pasien mandiri.
 class PendaftaranRingkasanCard extends StatelessWidget {
   const PendaftaranRingkasanCard({
     super.key,
@@ -10,14 +10,18 @@ class PendaftaranRingkasanCard extends StatelessWidget {
     required this.poli,
     required this.dokter,
     required this.slot,
-    required this.jaminan,
+    this.jaminan,
+    this.noKartuBpjs,
+    this.noRujukanBpjs,
   });
 
   final PasienModel pasien;
   final PoliModel? poli;
   final DokterPendaftaranModel? dokter;
   final JadwalSlotModel? slot;
-  final JenisJaminan jaminan;
+  final JenisJaminan? jaminan;
+  final String? noKartuBpjs;
+  final String? noRujukanBpjs;
 
   @override
   Widget build(BuildContext context) {
@@ -81,34 +85,6 @@ class PendaftaranRingkasanCard extends StatelessWidget {
                 label: 'Jam',
                 value: slot?.jam ?? '-',
                 isPlaceholder: slot == null,
-              ),
-
-              const SizedBox(height: 14),
-              const Divider(height: 1, color: kPendaftaranDivider),
-              const SizedBox(height: 14),
-
-              // Baris Jenis Pasien / Jaminan (Warna Biru Kuat)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Jenis Pasien',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: kPendaftaranMuted,
-                      fontFamily: kPendaftaranFontFamily,
-                    ),
-                  ),
-                  Text(
-                    jaminan.label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: kPendaftaranPrimary,
-                      fontFamily: kPendaftaranFontFamily,
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

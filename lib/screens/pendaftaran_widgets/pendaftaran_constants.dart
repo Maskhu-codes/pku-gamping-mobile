@@ -12,19 +12,19 @@ const Color kPendaftaranPrimary = AppColors.primary;
 const Color kPendaftaranInk = AppColors.textPrimary;
 const Color kPendaftaranMuted = AppColors.textMuted;
 const Color kPendaftaranPageBg = AppColors.pageBackground;
-const Color kPendaftaranCardBorder = Color(0xFFE2E8F0);
+const Color kPendaftaranCardBorder = AppColors.cardBorder;
 const Color kPendaftaranDivider = Color(0xFFEDF2F7);
 
 // Accent colors
-const Color kPendaftaranSelectedBadge = Color(0xFF0A3A8A);
-const Color kPendaftaranSlotAvailableBg = Color(0xFFEBF3FF);
+const Color kPendaftaranSelectedBadge = AppColors.primaryDark;
+const Color kPendaftaranSlotAvailableBg = AppColors.primarySoft;
 const Color kPendaftaranSlotAvailableText = AppColors.primary;
 const Color kPendaftaranSlotFullBg = Color(0xFFFEE2E2);
 const Color kPendaftaranSlotFullText = Color(0xFFDC2626);
 
-// Warning/Info banner BPJS
-const Color kPendaftaranBannerBg = Color(0xFFFEF9EE);
-const Color kPendaftaranBannerBorder = Color(0xFFFDE68A);
-const Color kPendaftaranBannerText = Color(0xFF78350F);
+// Warning/Info banner (warm gold accent)
+const Color kPendaftaranBannerBg = AppColors.goldSoft;
+const Color kPendaftaranBannerBorder = AppColors.goldBorder;
+const Color kPendaftaranBannerText = AppColors.goldText;
 
 const String kPendaftaranFontFamily = 'Plus Jakarta Sans';

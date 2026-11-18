@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'jadwal_constants.dart';
 
 /// Horizontal scrollable date strip — menampilkan 7 hari ke depan.
@@ -25,7 +26,7 @@ class JadwalDateStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final dates = _dates;
     return SizedBox(
-      height: 72,
+      height: 78,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -70,13 +71,14 @@ class _DateChip extends StatelessWidget {
         : DateFormat('EEEE', 'id_ID').format(date);
     final dateLabel = DateFormat('d MMM', 'id_ID').format(date);
 
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
+      pressedScale: 0.96,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        width: 68,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        width: 70,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? kPrimaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
@@ -84,9 +86,11 @@ class _DateChip extends StatelessWidget {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               dayName,
+              maxLines: 1,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -98,6 +102,8 @@ class _DateChip extends StatelessWidget {
             const SizedBox(height: 3),
             Text(
               dateLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,

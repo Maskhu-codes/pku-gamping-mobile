@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'jadwal_constants.dart';
 
 /// Kartu tunggal berisi informasi seorang dokter beserta jadwalnya.
@@ -18,9 +19,9 @@ class JadwalDokterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      pressedScale: 0.985,
       child: Column(
         children: [
           Padding(
@@ -78,7 +79,11 @@ class JadwalDokterCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${dokter.jamMulai}–${dokter.jamSelesai} WIB',
+                            dokter.jamSelesai.trim().isNotEmpty
+                                ? '${dokter.jamMulai}–${dokter.jamSelesai} WIB'
+                                : (dokter.jamMulai.contains('WIB')
+                                    ? dokter.jamMulai
+                                    : '${dokter.jamMulai} WIB'),
                             style: const TextStyle(
                               fontSize: 12,
                               color: kMuted,

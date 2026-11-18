@@ -1,19 +1,130 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
-import 'package:pku_gamping_app/models/riwayat_pemeriksaan_model.dart';
 import 'package:pku_gamping_app/screens/riwayat_pemeriksaan_widgets/riwayat_empty_state.dart';
+import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
 
-/// Halaman Riwayat Pemeriksaan Pasien RS PKU Muhammadiyah Gamping
-/// Terpadu: Mendukung status kosong (empty state) maupun daftar rekam medis.
-class RiwayatPemeriksaanScreen extends StatelessWidget {
+/// Halaman Riwayat Pemeriksaan Pasien RS PKU Muhammadiyah Gamping.
+///
+/// Terhubung langsung ke SIMRS via `GET /riwayat/list?fs_mr=X&page=N`
+/// dengan dukungan lazy loading (infinite scroll pagination 10 item/halaman)
+/// serta status kosong (*empty state*).
+class RiwayatPemeriksaanScreen extends StatefulWidget {
   const RiwayatPemeriksaanScreen({
     super.key,
     this.riwayat = const [],
     this.onRiwayatTap,
+    this.pageSize = 10,
   });
 
   final List<RiwayatPemeriksaan> riwayat;
   final ValueChanged<RiwayatPemeriksaan>? onRiwayatTap;
+  final int pageSize;
+
+  @override
+  State<RiwayatPemeriksaanScreen> createState() =>
+      _RiwayatPemeriksaanScreenState();
+}
+
+class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
+  late final ScrollController _scrollController;
+  final List<RiwayatPemeriksaan> _items = [];
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasNext = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+
+    if (widget.riwayat.isNotEmpty) {
+      _items.addAll(widget.riwayat);
+      _hasNext = widget.riwayat.length >= widget.pageSize;
+    } else {
+      _loadFirstPage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_hasNext || _isLoadingMore || _isLoading) return;
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      _loadNextPage();
+    }
+  }
+
+  Future<void> _loadFirstPage() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final result =
+          await PemeriksaanPenunjangService.getRiwayatPemeriksaanPaged(page: 1);
+      if (mounted) {
+        setState(() {
+          _items
+            ..clear()
+            ..addAll(result.items);
+          _currentPage = 1;
+          _hasNext = result.hasNext;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loadNextPage() async {
+    if (_isLoadingMore || !_hasNext) return;
+
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final nextPage = _currentPage + 1;
+      final result =
+          await PemeriksaanPenunjangService.getRiwayatPemeriksaanPaged(
+        page: nextPage,
+      );
+
+      if (mounted) {
+        setState(() {
+          _items.addAll(result.items);
+          _currentPage = nextPage;
+          _hasNext = result.hasNext;
+        });
+      }
+    } catch (e) {
+      debugPrint('[RiwayatPemeriksaanScreen] Gagal memuat halaman berikutnya: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMore = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,38 +175,120 @@ class RiwayatPemeriksaanScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: riwayat.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: RiwayatEmptyState(),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-                      itemCount: riwayat.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final item = riwayat[index];
-                        return _RiwayatHistoryCard(
-                          item: item,
-                          onTap: onRiwayatTap == null
-                              ? null
-                              : () => onRiwayatTap!(item),
-                        );
-                      },
-                    ),
+              child: _buildBody(),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildBody() {
+    if (_isLoading && _items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 12),
+            Text(
+              'Memuat riwayat pemeriksaan...',
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null && _items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: Color(0xFFDC2626),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4B5563),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _loadFirstPage,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_items.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadFirstPage,
+        child: const SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+            child: RiwayatEmptyState(),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadFirstPage,
+      child: ListView.separated(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+        itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+        separatorBuilder: (context, index) => const SizedBox(height: 14),
+        itemBuilder: (context, index) {
+          if (index == _items.length) {
+            return const Center(
+              key: Key('riwayat_loading_more'),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              ),
+            );
+          }
+
+          final item = _items[index];
+          return _RiwayatHistoryCard(
+            key: Key('riwayat_card_$index'),
+            item: item,
+            onTap: widget.onRiwayatTap == null
+                ? null
+                : () => widget.onRiwayatTap!(item),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _RiwayatHistoryCard extends StatelessWidget {
-  const _RiwayatHistoryCard({required this.item, this.onTap});
+  const _RiwayatHistoryCard({super.key, required this.item, this.onTap});
 
   final RiwayatPemeriksaan item;
   final VoidCallback? onTap;
@@ -123,7 +316,7 @@ class _RiwayatHistoryCard extends StatelessWidget {
                         const Icon(
                           Icons.calendar_today_outlined,
                           color: AppColors.primary,
-                          size: 17,
+                          size: 16,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -131,19 +324,38 @@ class _RiwayatHistoryCard extends StatelessWidget {
                             item.tanggal,
                             style: const TextStyle(
                               color: AppColors.primary,
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
+                        if (item.kdReg.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              item.kdReg,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF475569),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
                       item.namaPemeriksaan,
                       style: const TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -157,13 +369,20 @@ class _RiwayatHistoryCard extends StatelessWidget {
                       icon: Icons.person_outline,
                       label: item.dokter,
                     ),
+                    if (item.terapi.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      _RiwayatHistoryDetail(
+                        icon: Icons.medication_outlined,
+                        label: item.terapi,
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: const BoxDecoration(
                   color: Color(0xFFF1F3F5),
                   shape: BoxShape.circle,
@@ -171,7 +390,7 @@ class _RiwayatHistoryCard extends StatelessWidget {
                 child: const Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.textMuted,
-                  size: 24,
+                  size: 22,
                 ),
               ),
             ],
@@ -192,14 +411,14 @@ class _RiwayatHistoryDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.textMuted, size: 17),
+        Icon(icon, color: AppColors.textMuted, size: 16),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
         ),
       ],

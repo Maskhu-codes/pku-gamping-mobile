@@ -5,7 +5,9 @@ import 'package:pku_gamping_app/screens/register_widgets/register_header_stepper
 import 'package:pku_gamping_app/screens/register_widgets/register_step1_nik.dart';
 import 'package:pku_gamping_app/screens/register_widgets/register_step2_pasien.dart';
 import 'package:pku_gamping_app/screens/register_widgets/register_step3_akun.dart';
+import 'package:pku_gamping_app/services/master_service.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
+import 'package:pku_gamping_app/services/wilayah_service.dart';
 
 /// Screen Registrasi Akun Pasien Baru Terintegrasi SIMRS PKU Gamping.
 ///
@@ -50,6 +52,24 @@ class _RegisterScreenState extends State<RegisterScreen>
   String? _selectedStatusKawin;
   final _namaIbuController = TextEditingController();
 
+  // Master Data dari SIMRS
+  List<Map<String, dynamic>> _masterAgama = [];
+  List<Map<String, dynamic>> _masterPekerjaan = [];
+  List<Map<String, dynamic>> _masterPendidikan = [];
+  List<Map<String, dynamic>> _masterStatusKawin = [];
+
+  // Wilayah Data dari SIMRS (Cascading)
+  List<Map<String, dynamic>> _provinsiList = [];
+  List<Map<String, dynamic>> _kabupatenList = [];
+  List<Map<String, dynamic>> _kecamatanList = [];
+  List<Map<String, dynamic>> _kelurahanList = [];
+  bool _isLoadingKabupaten = false;
+  bool _isLoadingKecamatan = false;
+  bool _isLoadingKelurahan = false;
+
+  String? _verifiedFsMr;
+  bool _isPasienLama = false;
+
   // Alamat
   String? _selectedProvinsi;
   String? _selectedKabupaten;
@@ -67,7 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _obscurePass = true;
   bool _obscureConfirm = true;
 
-  final bool _isLoading = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -84,6 +104,29 @@ class _RegisterScreenState extends State<RegisterScreen>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _animController.forward();
+    _loadMasterData();
+  }
+
+  Future<void> _loadMasterData() async {
+    try {
+      final results = await Future.wait([
+        MasterService.getAgama(),
+        MasterService.getPekerjaan(),
+        MasterService.getPendidikan(),
+        MasterService.getStatusKawin(),
+        WilayahService.getProvinsi(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _masterAgama = results[0];
+        _masterPekerjaan = results[1];
+        _masterPendidikan = results[2];
+        _masterStatusKawin = results[3];
+        _provinsiList = results[4];
+      });
+    } catch (e) {
+      debugPrint('[RegisterScreen] Gagal memuat data master/wilayah: $e');
+    }
   }
 
   @override
@@ -148,38 +191,81 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     setState(() => _isNikChecking = true);
 
-    // Cek apakah NIK sudah terdaftar
-    final isAlreadyRegistered = await SimrsService.isNikAlreadyRegistered(nik);
+    try {
+      final res = await SimrsService.cekNik(nik);
+      if (!mounted) return;
 
-    if (!mounted) return;
+      final isAlreadyRegistered = res['isAlreadyRegistered'] == true;
+      final foundInSimrs = res['found'] == true;
 
-    setState(() {
-      _isNikChecking = false;
-      _nikHasBeenChecked = true;
-      _isNikAlreadyRegistered = isAlreadyRegistered;
-      _isNikVerified = !isAlreadyRegistered;
-    });
+      setState(() {
+        _isNikChecking = false;
+        _nikHasBeenChecked = true;
+        _isNikAlreadyRegistered = isAlreadyRegistered;
+        _isNikVerified = !isAlreadyRegistered;
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        if (foundInSimrs) {
+          _isPasienLama = true;
+          _verifiedFsMr = res['fs_mr'] as String?;
+          final nama = res['fs_nm_pasien'] as String?;
+          if (nama != null && nama.isNotEmpty) {
+            _namaController.text = nama;
+          }
+          final tglStr = res['fd_tgl_lahir'] as String?;
+          if (tglStr != null && tglStr.isNotEmpty) {
+            try {
+              _selectedTanggalLahir = DateTime.parse(tglStr);
+            } catch (_) {}
+          }
+        } else {
+          _isPasienLama = false;
+          _verifiedFsMr = null;
+        }
+      });
 
-    if (isAlreadyRegistered) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      if (isAlreadyRegistered) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              res['message']?.toString() ??
+                  'NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.',
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else if (foundInSimrs) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Data pasien ditemukan di SIMRS: ${_namaController.text}. Data otomatis terisi.',
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'NIK valid (pasien baru). Silakan lanjutkan pendaftaran.',
+            ),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isNikChecking = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'NIK sudah terdaftar! Gunakan NIK yang belum terdaftar.',
+            e.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''),
           ),
           backgroundColor: AppColors.error,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'NIK valid dan belum terdaftar. Silakan lanjutkan pendaftaran.',
-          ),
-          backgroundColor: AppColors.success,
-          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -244,6 +330,88 @@ class _RegisterScreenState extends State<RegisterScreen>
     _goToPage(1);
   }
 
+  Future<void> _handleProvinsiChanged(String? kdPropinsi) async {
+    setState(() {
+      _selectedProvinsi = kdPropinsi;
+      _selectedKabupaten = null;
+      _selectedKecamatan = null;
+      _selectedKelurahan = null;
+      _kabupatenList = [];
+      _kecamatanList = [];
+      _kelurahanList = [];
+    });
+
+    if (kdPropinsi == null || kdPropinsi.isEmpty) return;
+
+    setState(() => _isLoadingKabupaten = true);
+    try {
+      final list = await WilayahService.getKabupaten(kdPropinsi);
+      if (!mounted) return;
+      setState(() {
+        _kabupatenList = list;
+        _isLoadingKabupaten = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingKabupaten = false);
+      debugPrint('[RegisterScreen] Gagal memuat kabupaten: $e');
+    }
+  }
+
+  Future<void> _handleKabupatenChanged(String? kdKabupaten) async {
+    setState(() {
+      _selectedKabupaten = kdKabupaten;
+      _selectedKecamatan = null;
+      _selectedKelurahan = null;
+      _kecamatanList = [];
+      _kelurahanList = [];
+    });
+
+    if (kdKabupaten == null || kdKabupaten.isEmpty) return;
+
+    setState(() => _isLoadingKecamatan = true);
+    try {
+      final list = await WilayahService.getKecamatan(kdKabupaten);
+      if (!mounted) return;
+      setState(() {
+        _kecamatanList = list;
+        _isLoadingKecamatan = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingKecamatan = false);
+      debugPrint('[RegisterScreen] Gagal memuat kecamatan: $e');
+    }
+  }
+
+  Future<void> _handleKecamatanChanged(String? kdKecamatan) async {
+    setState(() {
+      _selectedKecamatan = kdKecamatan;
+      _selectedKelurahan = null;
+      _kelurahanList = [];
+    });
+
+    if (kdKecamatan == null || kdKecamatan.isEmpty) return;
+
+    setState(() => _isLoadingKelurahan = true);
+    try {
+      final list = await WilayahService.getKelurahan(kdKecamatan);
+      if (!mounted) return;
+      setState(() {
+        _kelurahanList = list;
+        _isLoadingKelurahan = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingKelurahan = false);
+      debugPrint('[RegisterScreen] Gagal memuat kelurahan: $e');
+    }
+  }
+
+  void _handleKelurahanChanged(String? kdKelurahan) {
+    setState(() => _selectedKelurahan = kdKelurahan);
+  }
+
   void _handleStep2Submit() {
     if (_namaController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -286,7 +454,24 @@ class _RegisterScreenState extends State<RegisterScreen>
     _goToPage(2);
   }
 
-  void _handleDaftar() {
+  String? _findMasterCode(
+    List<Map<String, dynamic>> list,
+    String nameKey,
+    String codeKey,
+    String? selectedName,
+  ) {
+    if (selectedName == null || selectedName.isEmpty) return null;
+    final item = list.firstWhere(
+      (e) =>
+          (e[nameKey] ?? '').toString().toUpperCase() ==
+              selectedName.toUpperCase() ||
+          (e[codeKey] ?? '').toString() == selectedName,
+      orElse: () => {},
+    );
+    return item[codeKey]?.toString();
+  }
+
+  void _handleDaftar() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
@@ -341,14 +526,89 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pendaftaran berhasil! Silakan masuk ke akun Anda.'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    setState(() => _isLoading = true);
 
-    _goToLogin();
+    try {
+      final payload = <String, dynamic>{
+        'fs_email': email,
+        'fs_password': password,
+        'fs_nik': _nikController.text.trim(),
+        if (_isPasienLama && _verifiedFsMr != null) 'fs_mr': _verifiedFsMr,
+        'fs_nm_pasien': _namaController.text.trim(),
+        'fs_no_hp': _nomorHpController.text.trim(),
+        'fs_temp_lahir': _selectedTempatLahir ?? '',
+        'fd_tgl_lahir': _selectedTanggalLahir != null
+            ? '${_selectedTanggalLahir!.year}-${_selectedTanggalLahir!.month.toString().padLeft(2, '0')}-${_selectedTanggalLahir!.day.toString().padLeft(2, '0')}'
+            : '',
+        'fs_jenis_kelamin': _selectedJenisKelamin == 'Perempuan' ? '2' : '1',
+        'fs_gol_darah': _selectedGolDarah ?? 'O',
+        'fs_alamat': _alamatController.text.trim(),
+        'fs_kd_agama': _findMasterCode(
+              _masterAgama,
+              'FS_NM_AGAMA',
+              'FS_KD_AGAMA',
+              _selectedAgama,
+            ) ??
+            '1',
+        'fs_kd_pekerjaan': _findMasterCode(
+              _masterPekerjaan,
+              'FS_NM_PEKERJAAN_DK',
+              'FS_KD_PEKERJAAN_DK',
+              _selectedPekerjaan,
+            ) ??
+            '01',
+        'fs_kd_pendidikan': _findMasterCode(
+              _masterPendidikan,
+              'FS_NM_PENDIDIKAN_DK',
+              'FS_KD_PENDIDIKAN_DK',
+              _selectedPendidikan,
+            ) ??
+            '01',
+        'fs_status_kawin': _findMasterCode(
+              _masterStatusKawin,
+              'FS_NM_STATUS_KAWIN_DK',
+              'FS_KD_STATUS_KAWIN_DK',
+              _selectedStatusKawin,
+            ) ??
+            '1',
+        'fs_kd_suku': '004',
+        'fs_nm_ibu_kandung': _namaIbuController.text.trim(),
+        'fs_warga_negara': _selectedWargaNegara ?? 'WNI',
+        if (_selectedKelurahan != null) 'fs_kd_kelurahan': _selectedKelurahan,
+      };
+
+      final response = await SimrsService.registerPasien(payload);
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      final msg = response['message']?.toString() ??
+          'Pendaftaran berhasil! Akun Anda siap digunakan.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.success,
+        ),
+      );
+
+      // Setelah registrasi berhasil dan token tersimpan, langsung masuk ke beranda
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -405,6 +665,32 @@ class _RegisterScreenState extends State<RegisterScreen>
                       selectedPekerjaan: _selectedPekerjaan,
                       selectedPendidikan: _selectedPendidikan,
                       selectedStatusKawin: _selectedStatusKawin,
+                      agamaItems: _masterAgama
+                          .map((e) => (e['FS_NM_AGAMA'] ?? '').toString())
+                          .where((s) => s.isNotEmpty)
+                          .toList(),
+                      pekerjaanItems: _masterPekerjaan
+                          .map((e) =>
+                              (e['FS_NM_PEKERJAAN_DK'] ?? '').toString())
+                          .where((s) => s.isNotEmpty)
+                          .toList(),
+                      pendidikanItems: _masterPendidikan
+                          .map((e) =>
+                              (e['FS_NM_PENDIDIKAN_DK'] ?? '').toString())
+                          .where((s) => s.isNotEmpty)
+                          .toList(),
+                      statusKawinItems: _masterStatusKawin
+                          .map((e) =>
+                              (e['FS_NM_STATUS_KAWIN_DK'] ?? '').toString())
+                          .where((s) => s.isNotEmpty)
+                          .toList(),
+                      provinsiItems: _provinsiList,
+                      kabupatenItems: _kabupatenList,
+                      kecamatanItems: _kecamatanList,
+                      kelurahanItems: _kelurahanList,
+                      isLoadingKabupaten: _isLoadingKabupaten,
+                      isLoadingKecamatan: _isLoadingKecamatan,
+                      isLoadingKelurahan: _isLoadingKelurahan,
                       namaIbuController: _namaIbuController,
                       selectedProvinsi: _selectedProvinsi,
                       selectedKabupaten: _selectedKabupaten,
@@ -429,29 +715,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                           setState(() => _selectedPendidikan = v),
                       onStatusKawinChanged: (v) =>
                           setState(() => _selectedStatusKawin = v),
-                      onProvinsiChanged: (v) {
-                        setState(() {
-                          _selectedProvinsi = v;
-                          _selectedKabupaten = null;
-                          _selectedKecamatan = null;
-                          _selectedKelurahan = null;
-                        });
-                      },
-                      onKabupatenChanged: (v) {
-                        setState(() {
-                          _selectedKabupaten = v;
-                          _selectedKecamatan = null;
-                          _selectedKelurahan = null;
-                        });
-                      },
-                      onKecamatanChanged: (v) {
-                        setState(() {
-                          _selectedKecamatan = v;
-                          _selectedKelurahan = null;
-                        });
-                      },
-                      onKelurahanChanged: (v) =>
-                          setState(() => _selectedKelurahan = v),
+                      onProvinsiChanged: _handleProvinsiChanged,
+                      onKabupatenChanged: _handleKabupatenChanged,
+                      onKecamatanChanged: _handleKecamatanChanged,
+                      onKelurahanChanged: _handleKelurahanChanged,
                       onPrev: () => _goToPage(0),
                       onLanjut: _handleStep2Submit,
                     ),

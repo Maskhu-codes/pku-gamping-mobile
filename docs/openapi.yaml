@@ -1,0 +1,1232 @@
+openapi: 3.0.3
+info:
+  title: API SIMRS RS PKU Muhammadiyah Gamping
+  description: |
+    # Dokumentasi REST API SIMRS RS PKU Muhammadiyah Gamping (Online API)
+    
+    Spesifikasi API resmi untuk aplikasi mobile pasien (**SIGAP Mobile**) dan layanan pendaftaran online RS PKU Muhammadiyah Gamping.
+    Dokumentasi ini mencakup:
+    * **Fase 1 - 5**: Seluruh endpoint aktif SIMRS (Autentikasi, Wilayah, Master Data, Poliklinik, Dokter, Jadwal 45 Hari, Booking, BPJS, Antrean Poli & Farmasi, Riwayat Kunjungan, Laboratorium + Rincian Parameter, dan Radiologi).
+    * **Fase 6**: Endpoint usulan baru untuk OTP Verifikasi, Reset Password, dan Firebase Cloud Messaging (FCM).
+  version: 2.0.0
+  contact:
+    name: Tim IT & SIMRS RS PKU Muhammadiyah Gamping
+    email: it@pkugamping.com
+    url: https://pkugamping.com
+
+servers:
+  - url: http://localhost/pkug-onlineapi/index.php/api
+    description: Server Lokal Development (Apache / XAMPP)
+  - url: http://192.168.1.10/pkug-onlineapi/index.php/api
+    description: Server LAN Staging RS
+  - url: https://simrs.pkugamping.com/api
+    description: Server Produksi (Production)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Masukkan token JWT yang diperoleh dari endpoint `/auth/login` atau `/auth/register`.
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operasi berhasil
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Pesan deskripsi kesalahan
+
+    LoginRequest:
+      type: object
+      required:
+        - fs_email
+        - fs_password
+      properties:
+        fs_email:
+          type: string
+          format: email
+          description: Email akun pasien yang terdaftar
+          example: "pasien@gmail.com"
+        fs_password:
+          type: string
+          format: password
+          description: Kata sandi akun pasien
+          example: "Password123!"
+
+    LoginResponseData:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Bearer Token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        fs_id:
+          type: string
+          example: "uuid-usr-9921"
+        fs_mr:
+          type: string
+          example: "347104100407039"
+        fs_email:
+          type: string
+          example: "pasien@gmail.com"
+        fs_nik:
+          type: string
+          example: "347104100407039"
+        fs_nm_pasien:
+          type: string
+          example: "Dahlan Muda"
+        simrs:
+          $ref: '#/components/schemas/SimrsPatientData'
+
+    SimrsPatientData:
+      type: object
+      properties:
+        FS_MR:
+          type: string
+          example: "01-88-24-90"
+        FS_NM_PASIEN:
+          type: string
+          example: "Dahlan Muda"
+        FD_TGL_LAHIR:
+          type: string
+          format: date
+          example: "1998-10-27"
+        FS_TLP_PASIEN:
+          type: string
+          example: "081234567890"
+        FS_KD_IDENTITAS:
+          type: string
+          example: "347104100407039"
+        FS_ALM_PASIEN:
+          type: string
+          example: "Jl. Wates Km 5.5 Gamping Sleman"
+
+    RegisterRequest:
+      type: object
+      required:
+        - fs_nik
+        - password
+        - fs_nm_pasien
+        - fd_tgl_lahir
+        - fs_jns_kelamin
+        - fs_alm_pasien
+        - fs_kd_propinsi
+        - fs_kd_kabupaten
+        - fs_kd_kecamatan
+        - fs_kd_kelurahan
+        - fs_kd_agama
+        - fs_kd_pekerjaan
+        - fs_kd_pendidikan
+        - fs_kd_status_kawin
+      properties:
+        fs_nik:
+          type: string
+          example: "347104100407039"
+        password:
+          type: string
+          example: "Rahasia123!"
+        fs_email:
+          type: string
+          format: email
+          example: "pasien@example.com"
+        fs_no_hp:
+          type: string
+          example: "081234567890"
+        fs_nm_pasien:
+          type: string
+          example: "Budi Santoso"
+        fd_tgl_lahir:
+          type: string
+          format: date
+          example: "1995-05-15"
+        fs_jns_kelamin:
+          type: string
+          enum: ["1", "2"]
+          description: 1 = Laki-laki, 2 = Perempuan
+          example: "1"
+        fs_alm_pasien:
+          type: string
+          example: "Jl. Kaliurang KM 9"
+        fs_rt:
+          type: string
+          example: "02"
+        fs_rw:
+          type: string
+          example: "05"
+        fs_kd_propinsi:
+          type: string
+          example: "34"
+        fs_kd_kabupaten:
+          type: string
+          example: "3404"
+        fs_kd_kecamatan:
+          type: string
+          example: "3404010"
+        fs_kd_kelurahan:
+          type: string
+          example: "3404010001"
+        fs_kd_agama:
+          type: string
+          example: "1"
+        fs_kd_pekerjaan:
+          type: string
+          example: "01"
+        fs_kd_pendidikan:
+          type: string
+          example: "04"
+        fs_kd_status_kawin:
+          type: string
+          example: "1"
+
+    BookingSimpanRequest:
+      type: object
+      required:
+        - fs_mr
+        - fd_tgl_lahir
+        - fs_kd_layanan
+        - fs_kd_petugas_medis
+        - fd_tgl_antrian
+      properties:
+        fs_mr:
+          type: string
+          description: Nomor Rekam Medis pasien
+          example: "01-88-24-90"
+        fd_tgl_lahir:
+          type: string
+          format: date
+          example: "1998-10-27"
+        fs_kd_layanan:
+          type: string
+          description: Kode Poliklinik
+          example: "P003"
+        fs_kd_petugas_medis:
+          type: string
+          description: Kode Petugas Medis / Dokter Spesialis
+          example: "D012"
+        fn_hari:
+          type: string
+          description: Kode Hari (1=Ahad .. 7=Sabtu)
+          example: "2"
+        fd_tgl_antrian:
+          type: string
+          format: date
+          example: "2026-11-20"
+        fs_kd_sesion_poli:
+          type: string
+          example: "1"
+        fs_jam_mulai:
+          type: string
+          example: "08:00"
+
+    BookingSimpanResponseData:
+      type: object
+      properties:
+        no_booking:
+          type: string
+          example: "BO0012345A"
+        no_antrian:
+          type: string
+          example: "AN0012345A"
+        no_urut:
+          type: integer
+          example: 14
+
+    BpjsRegistrasiRequest:
+      type: object
+      required:
+        - fs_kd_trs
+        - fs_mr
+        - fs_no_hp
+      properties:
+        fs_kd_trs:
+          type: string
+          description: Nomor transaksi booking hasil simpan_post
+          example: "BO0012345A"
+        fs_mr:
+          type: string
+          example: "01-88-24-90"
+        fs_no_hp:
+          type: string
+          example: "081234567890"
+        fs_kd_identitas:
+          type: string
+          description: Nomor Kartu BPJS Kesehatan
+          example: "0001234567891"
+        fs_kd_reff:
+          type: string
+          description: Nomor Rujukan Faskes 1 / Surat Kontrol
+          example: "0112R0011124B000123"
+
+paths:
+  # ==========================================
+  # TAG: AUTHENTICATION
+  # ==========================================
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login Pasien
+      description: Autentikasi pasien menggunakan NIK/MR dan Password untuk mendapatkan JWT Bearer Token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/LoginResponseData'
+        '401':
+          description: Kredensial tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/cekNik:
+    post:
+      tags:
+        - Auth
+      summary: Pengecekan NIK di SIMRS
+      description: Memeriksa apakah NIK sudah terdaftar sebagai akun mobile atau sudah ada di master rekam medis SIMRS (`TC_MR`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fs_nik
+              properties:
+                fs_nik:
+                  type: string
+                  example: "347104100407039"
+      responses:
+        '200':
+          description: Hasil pemeriksaan NIK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  found:
+                    type: boolean
+                    example: true
+                  fs_mr:
+                    type: string
+                    example: "01-88-24-90"
+                  fs_nm_pasien:
+                    type: string
+                    example: "Dahlan Muda"
+                  fd_tgl_lahir:
+                    type: string
+                    example: "1998-10-27"
+        '409':
+          description: NIK sudah terdaftar sebagai akun mobile
+
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Registrasi Akun Pasien Baru
+      description: Mendaftarkan akun pasien baru dan otomatis menerbitkan rekam medis di SIMRS jika belum memiliki RM.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registrasi berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Registrasi berhasil
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  fs_mr:
+                    type: string
+                    example: "01-88-24-90"
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Ambil Profil Pasien Login
+      description: Mengambil data akun dan profil rekam medis SIMRS pasien yang sedang login berdasarkan Bearer Token.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profil berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/LoginResponseData'
+        '401':
+          description: Token tidak valid atau kedaluwarsa
+
+  /auth/send-otp:
+    post:
+      tags:
+        - Auth (Fase 6 - Baru)
+      summary: Kirim Kode OTP Verifikasi
+      description: Mengirimkan 6 digit kode OTP verifikasi via WhatsApp, SMS, atau Email resmi RS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - destination
+                - type
+                - purpose
+              properties:
+                destination:
+                  type: string
+                  example: "081234567890"
+                type:
+                  type: string
+                  enum: [whatsapp, sms, email]
+                  example: whatsapp
+                purpose:
+                  type: string
+                  enum: [register, reset_password]
+                  example: register
+      responses:
+        '200':
+          description: OTP berhasil dikirim
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Kode OTP berhasil dikirim
+                  data:
+                    type: object
+                    properties:
+                      otp_ref:
+                        type: string
+                        example: "REF-78A9B2"
+                      expires_in:
+                        type: integer
+                        example: 300
+
+  /auth/verify-otp:
+    post:
+      tags:
+        - Auth (Fase 6 - Baru)
+      summary: Validasi Kode OTP
+      description: Memverifikasi kode OTP yang diinputkan pengguna berdasarkan referensi transaksi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - otp_ref
+                - otp_code
+              properties:
+                otp_ref:
+                  type: string
+                  example: "REF-78A9B2"
+                otp_code:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: OTP valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Verifikasi OTP berhasil
+                  data:
+                    type: object
+                    properties:
+                      verification_token:
+                        type: string
+                        example: "VT-VALID-998822"
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth (Fase 6 - Baru)
+      summary: Permintaan Lupa Password
+      description: Memicu proses reset password dengan validasi NIK atau Email terdaftar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fs_nik:
+                  type: string
+                  example: "347104100407039"
+                fs_email:
+                  type: string
+                  example: "pasien@gmail.com"
+      responses:
+        '200':
+          description: Instruksi reset password / OTP dikirim
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Auth (Fase 6 - Baru)
+      summary: Perbarui Password Akun
+      description: Menyimpan kata sandi baru pasien menggunakan token verifikasi hasil OTP.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - verification_token
+                - new_password
+                - confirm_password
+              properties:
+                verification_token:
+                  type: string
+                  example: "VT-VALID-998822"
+                new_password:
+                  type: string
+                  format: password
+                  example: "PasswordBaru123!"
+                confirm_password:
+                  type: string
+                  format: password
+                  example: "PasswordBaru123!"
+      responses:
+        '200':
+          description: Password berhasil diperbarui
+
+  # ==========================================
+  # TAG: MASTER & WILAYAH
+  # ==========================================
+  /wilayah/provinsi:
+    get:
+      tags:
+        - Wilayah
+      summary: Daftar Provinsi
+      description: Mengambil seluruh master data provinsi di Indonesia dari SIMRS.
+      responses:
+        '200':
+          description: Daftar provinsi berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        FS_KD_PROPINSI:
+                          type: string
+                          example: "34"
+                        FS_NM_PROPINSI:
+                          type: string
+                          example: "DI YOGYAKARTA"
+
+  /wilayah/kabupaten:
+    get:
+      tags:
+        - Wilayah
+      summary: Daftar Kabupaten/Kota
+      parameters:
+        - name: fs_kd_propinsi
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "34"
+      responses:
+        '200':
+          description: Daftar kabupaten berdasarkan provinsi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        FS_KD_KABUPATEN:
+                          type: string
+                          example: "3404"
+                        FS_NM_KABUPATEN:
+                          type: string
+                          example: "SLEMAN"
+
+  /wilayah/kecamatan:
+    get:
+      tags:
+        - Wilayah
+      summary: Daftar Kecamatan
+      parameters:
+        - name: fs_kd_kabupaten
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "3404"
+      responses:
+        '200':
+          description: Daftar kecamatan berdasarkan kabupaten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        FS_KD_KECAMATAN:
+                          type: string
+                          example: "3404010"
+                        FS_NM_KECAMATAN:
+                          type: string
+                          example: "GAMPING"
+
+  /wilayah/kelurahan:
+    get:
+      tags:
+        - Wilayah
+      summary: Daftar Kelurahan/Desa
+      parameters:
+        - name: fs_kd_kecamatan
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "3404010"
+      responses:
+        '200':
+          description: Daftar kelurahan berdasarkan kecamatan
+
+  /master/agama:
+    get:
+      tags:
+        - Master
+      summary: Master Data Agama
+      responses:
+        '200':
+          description: Data referensi agama dari SIMRS
+
+  /master/pekerjaan:
+    get:
+      tags:
+        - Master
+      summary: Master Data Pekerjaan
+      responses:
+        '200':
+          description: Data referensi pekerjaan dari SIMRS
+
+  /master/pendidikan:
+    get:
+      tags:
+        - Master
+      summary: Master Data Pendidikan
+      responses:
+        '200':
+          description: Data referensi tingkat pendidikan dari SIMRS
+
+  /master/status_kawin:
+    get:
+      tags:
+        - Master
+      summary: Master Data Status Pernikahan
+      responses:
+        '200':
+          description: Data status pernikahan dari SIMRS
+
+  # ==========================================
+  # TAG: PENDAFTARAN & JADWAL
+  # ==========================================
+  /layanan/list:
+    get:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Daftar Poliklinik Aktif
+      description: Mengambil seluruh poliklinik rawat jalan aktif di RS PKU Gamping.
+      responses:
+        '200':
+          description: Daftar poliklinik
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fs_kd_layanan:
+                          type: string
+                          example: "P003"
+                        fs_nm_layanan:
+                          type: string
+                          example: "ANAK"
+
+  /dokter/list:
+    get:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Daftar Dokter Spesialis per Poliklinik
+      parameters:
+        - name: fs_kd_layanan
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "P003"
+      responses:
+        '200':
+          description: Daftar dokter spesialis pada poli terkait
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fs_kd_peg:
+                          type: string
+                          example: "D012"
+                        fs_nm_peg:
+                          type: string
+                          example: "dr. Sp.A"
+                        fs_kd_layanan:
+                          type: string
+                          example: "P003"
+                        fs_nm_layanan:
+                          type: string
+                          example: "ANAK"
+
+  /jadwal/list:
+    get:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Jadwal Praktek Dokter 45 Hari ke Depan
+      description: Menampilkan ketersediaan jadwal dokter 45 hari ke depan lengkap dengan status kuota (`can_book`, `is_full`, `is_closed`, `terdaftar`).
+      parameters:
+        - name: fs_kd_layanan
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "P003"
+        - name: fs_kd_petugas_medis
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "D012"
+      responses:
+        '200':
+          description: Daftar tanggal jadwal praktek
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fd_tgl:
+                          type: string
+                          format: date
+                          example: "2026-11-20"
+                        fn_hari:
+                          type: string
+                          example: "6"
+                        fs_jam_mulai:
+                          type: string
+                          example: "08:00"
+                        can_book:
+                          type: boolean
+                          example: true
+                        is_full:
+                          type: boolean
+                          example: false
+                        is_closed:
+                          type: boolean
+                          example: false
+                        terdaftar:
+                          type: integer
+                          example: 5
+
+  /booking/simpan:
+    post:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Simpan Transaksi Booking Rawat Jalan
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingSimpanRequest'
+      responses:
+        '200':
+          description: Booking berhasil disimpan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Booking berhasil
+                  data:
+                    $ref: '#/components/schemas/BookingSimpanResponseData'
+
+  /booking/aktif:
+    get:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Ambil Booking Aktif Pasien
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pendaftaran booking yang masih aktif untuk hari ini ke depan
+        '404':
+          description: Tidak ada pendaftaran aktif
+
+  /bpjs/registrasi:
+    post:
+      tags:
+        - BPJS
+      summary: Pendaftaran BPJS Kesehatan untuk Booking
+      description: Menautkan nomor kartu BPJS dan nomor rujukan faskes ke nomor transaksi booking SIMRS.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BpjsRegistrasiRequest'
+      responses:
+        '200':
+          description: Data BPJS berhasil ditautkan ke transaksi booking
+
+  # ==========================================
+  # TAG: ANTREAN REAL-TIME
+  # ==========================================
+  /antrean/status:
+    get:
+      tags:
+        - Antrean Real-time
+      summary: Status Antrean Poliklinik & Pasien
+      description: Memantau nomor urut antrean yang sedang dilayani di poli serta status tahapan pasien saat ini (0-3).
+      parameters:
+        - name: fs_kd_layanan
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "P003"
+        - name: fs_kd_petugas_medis
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "D012"
+        - name: fs_kd_antrian
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "AN0012345A"
+        - name: tanggal
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-11-13"
+      responses:
+        '200':
+          description: Data status antrean real-time
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      sedang_dilayani:
+                        type: string
+                        example: "12"
+                      status_pasien:
+                        type: integer
+                        description: 0 = Booking, 1 = Registrasi/Triage, 2 = Menunggu Dokter, 3 = Poli Selesai/Farmasi
+                        example: 2
+
+  /farmasi/antrean:
+    get:
+      tags:
+        - Antrean Real-time
+      summary: Nomor Antrean Apotek Farmasi Real-time
+      description: Mengambil daftar nomor antrean apotek farmasi untuk obat racik (antrean B & D) dan non-racik (antrean A & C).
+      responses:
+        '200':
+          description: Daftar nomor antrean apotek
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      racik:
+                        type: array
+                        items:
+                          type: string
+                        example: ["B-101", "B-102", "D-055"]
+                      non_racik:
+                        type: array
+                        items:
+                          type: string
+                        example: ["A-012", "A-013", "C-008"]
+
+  # ==========================================
+  # TAG: PENUNJANG & REKAM MEDIS
+  # ==========================================
+  /riwayat/list:
+    get:
+      tags:
+        - Penunjang & Rekam Medis
+      summary: Riwayat Kunjungan Rawat Jalan Pasien
+      description: Menampilkan daftar riwayat kunjungan rawat jalan pasien dengan scroll paginasi (10 item/halaman).
+      parameters:
+        - name: fs_mr
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "01-88-24-90"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Riwayat kunjungan berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  current_page:
+                    type: integer
+                    example: 1
+                  total_pages:
+                    type: integer
+                    example: 3
+                  total_items:
+                    type: integer
+                    example: 25
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        FS_KD_REG:
+                          type: string
+                          example: "RG20261110-001"
+                        FD_TGL_MASUK:
+                          type: string
+                          format: date
+                          example: "2026-11-10"
+                        poli:
+                          type: string
+                          example: "PENYAKIT DALAM"
+                        dokter:
+                          type: string
+                          example: "dr. Sp.PD"
+                        FS_TERAPI:
+                          type: string
+                          example: "Paracetamol 500mg, Amoxicillin 500mg"
+
+  /penunjang/laboratorium:
+    get:
+      tags:
+        - Penunjang & Rekam Medis
+      summary: Daftar Riwayat Pemeriksaan Laboratorium Pasien
+      parameters:
+        - name: fs_mr
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "01-88-24-90"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Daftar transaksi laboratorium
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        FS_KD_TRS:
+                          type: string
+                          example: "TRS-LAB-20261113-001"
+                        FD_TGL_TRS:
+                          type: string
+                          format: date
+                          example: "2026-11-13"
+                        FS_JAM_TRS:
+                          type: string
+                          example: "09:30:00"
+
+  /penunjang/laboratorium_detail:
+    get:
+      tags:
+        - Penunjang & Rekam Medis
+      summary: Rincian 5 Parameter Pemeriksaan Laboratorium
+      description: Menampilkan rincian parameter hasil laboratorium (nama, hasil, satuan, nilai rujukan, dan flag H/L/N).
+      parameters:
+        - name: fs_kd_trs
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "TRS-LAB-20261113-001"
+      responses:
+        '200':
+          description: Detail parameter laboratorium
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pemeriksaan:
+                          type: string
+                          example: "Hemoglobin"
+                        hasil:
+                          type: string
+                          example: "14.2"
+                        satuan:
+                          type: string
+                          example: "g/dL"
+                        nilai_rujukan:
+                          type: string
+                          example: "13.2 - 17.3"
+                        flag:
+                          type: string
+                          enum: [H, L, N]
+                          example: "N"
+
+  /penunjang/radiologi:
+    get:
+      tags:
+        - Penunjang & Rekam Medis
+      summary: Daftar Pemeriksaan Radiologi Pasien
+      parameters:
+        - name: fs_mr
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "01-88-24-90"
+      responses:
+        '200':
+          description: Daftar pemeriksaan radiologi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fs_kd_trs:
+                          type: string
+                          example: "RAD-001"
+                        fd_tgl_trs:
+                          type: string
+                          format: date
+                          example: "2026-11-08"
+                        FS_NM_TARIF:
+                          type: string
+                          example: "RONTGEN THORAX AP/PA"
+                        fs_keterangan:
+                          type: string
+                          example: "Cor dan pulmo dalam batas normal"
+                        urllink1:
+                          type: string
+                          example: "https://pacs.pkugamping.com/view?id=RAD001"
+
+  # ==========================================
+  # TAG: NOTIFIKASI
+  # ==========================================
+  /user/fcm-token:
+    post:
+      tags:
+        - Notifikasi (Fase 6 - Baru)
+      summary: Daftarkan Device Token FCM Pasien
+      description: Menautkan token perangkat Firebase Cloud Messaging dengan Rekam Medis pasien untuk push notification antrean & hasil penunjang.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fs_mr
+                - fcm_token
+                - device_type
+              properties:
+                fs_mr:
+                  type: string
+                  example: "01-88-24-90"
+                fcm_token:
+                  type: string
+                  example: "dG9rZW5fZmNtX2RldmljZV9leGFtcGxl..."
+                device_type:
+                  type: string
+                  enum: [android, ios]
+                  example: "android"
+      responses:
+        '200':
+          description: Token FCM berhasil didaftarkan
+

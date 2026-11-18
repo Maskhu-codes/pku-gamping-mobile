@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  final bool _isLoading = false;
+  bool _isLoading = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -49,14 +50,67 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isLoading) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.home,
-      arguments: TopNotificationType.loginSuccess,
-    );
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      await SimrsService.login(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.home,
+        arguments: TopNotificationType.loginSuccess,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final errorText =
+          e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+               const Icon(Icons.error_outline_rounded,
+                  color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  errorText,
+                  style: const TextStyle(fontSize: 13, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -104,16 +158,16 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Email
+                        // Alamat Email
                         AppTextField(
-                          label: 'Nama Email',
+                          label: 'Alamat Email',
                           controller: _emailController,
                           hint: 'nama@gmail.com',
                           prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                           fillColor: AppColors.background,
                           validator: (v) {
-                            if (v == null || v.isEmpty) {
+                            if (v == null || v.trim().isEmpty) {
                               return 'Email wajib diisi';
                             }
                             if (!v.contains('@')) {
@@ -167,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen>
                         _primaryButton(
                           label: 'Masuk',
                           isLoading: _isLoading,
-                          onTap: _handleLogin,
+                          onTap: _isLoading ? null : _handleLogin,
                         ),
                         const SizedBox(height: 24),
 

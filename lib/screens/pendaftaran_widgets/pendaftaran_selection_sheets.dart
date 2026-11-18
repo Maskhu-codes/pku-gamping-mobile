@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'pendaftaran_constants.dart';
 
 /// Modal Bottom Sheet yang dapat di-scroll untuk memilih Poli.
@@ -35,7 +36,9 @@ class PoliSelectionSheet extends StatefulWidget {
 class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
-  List<PoliModel> _listPoli = PendaftaranDummyData.listPoli;
+  List<PoliModel> _listPoli = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -44,12 +47,26 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
   }
 
   Future<void> _loadPoliFromService() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       final list = await PendaftaranService.getListPoli();
-      if (mounted && list.isNotEmpty) {
-        setState(() => _listPoli = list);
+      if (mounted) {
+        setState(() {
+          _listPoli = list;
+          _isLoading = false;
+        });
       }
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
   }
 
   @override
@@ -110,9 +127,11 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      query.isEmpty
-                          ? '${allPoli.length} Poliklinik Tersedia'
-                          : '${filteredList.length} dari ${allPoli.length} Poliklinik',
+                      _isLoading
+                          ? 'Memuat data poliklinik...'
+                          : query.isEmpty
+                              ? '${allPoli.length} Poliklinik Tersedia'
+                              : '${filteredList.length} dari ${allPoli.length} Poliklinik',
                       style: const TextStyle(
                         fontSize: 12,
                         color: kPendaftaranMuted,
@@ -179,17 +198,53 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
 
           // List Poli
           Expanded(
-            child: filteredList.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Poli tidak ditemukan',
-                      style: TextStyle(
-                        color: kPendaftaranMuted,
-                        fontFamily: kPendaftaranFontFamily,
-                      ),
-                    ),
-                  )
-                : ListView.separated(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _isLoading
+                  ? const SelectionSheetListSkeleton(
+                      key: ValueKey('poli_sheet_loading'),
+                      itemCount: 6,
+                    )
+                  : _errorMessage != null && _listPoli.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  color: Colors.red, size: 36),
+                              const SizedBox(height: 8),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: kPendaftaranMuted,
+                                  fontFamily: kPendaftaranFontFamily,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: _loadPoliFromService,
+                                child: const Text('Coba Lagi'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : filteredList.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Poli tidak ditemukan',
+                              style: TextStyle(
+                                color: kPendaftaranMuted,
+                                fontFamily: kPendaftaranFontFamily,
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 10,
@@ -282,6 +337,7 @@ class _PoliSelectionSheetState extends State<PoliSelectionSheet> {
                       );
                     },
                   ),
+            ),
           ),
         ],
       ),
@@ -328,6 +384,40 @@ class DokterSelectionSheet extends StatefulWidget {
 class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  List<DokterPendaftaranModel> _listDokter = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDokterFromService();
+  }
+
+  Future<void> _loadDokterFromService() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final list = await PendaftaranService.getListDokter(
+        poliId: widget.selectedPoli.id,
+      );
+      if (mounted) {
+        setState(() {
+          _listDokter = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -337,13 +427,12 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter dokter yang bertugas di poli terpilih (didukung dokter spesialis representatif)
-    final doktersInPoli =
-        PendaftaranDummyData.getDokterByPoliId(widget.selectedPoli.id);
-
-    final filteredList = doktersInPoli.where((d) {
-      return d.nama.toLowerCase().contains(_query.toLowerCase()) ||
-          d.spesialisasi.toLowerCase().contains(_query.toLowerCase());
+    final allDokter = _listDokter;
+    final query = _query.trim().toLowerCase();
+    final filteredList = allDokter.where((d) {
+      if (query.isEmpty) return true;
+      return d.nama.toLowerCase().contains(query) ||
+          d.spesialisasi.toLowerCase().contains(query);
     }).toList();
 
     return Container(
@@ -388,7 +477,11 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.selectedPoli.nama,
+                      _isLoading
+                          ? 'Memuat data dokter...'
+                          : query.isEmpty
+                              ? '${widget.selectedPoli.nama} (${allDokter.length} Dokter)'
+                              : '${filteredList.length} dari ${allDokter.length} Dokter',
                       style: const TextStyle(
                         fontSize: 12,
                         color: kPendaftaranPrimary,
@@ -456,21 +549,58 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
 
           // List Dokter
           Expanded(
-            child: filteredList.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'Belum ada dokter yang terdaftar pada poli ini.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: kPendaftaranMuted,
-                          fontFamily: kPendaftaranFontFamily,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _isLoading
+                  ? const SelectionSheetListSkeleton(
+                      key: ValueKey('dokter_sheet_loading'),
+                      itemCount: 5,
+                      circleLeading: true,
+                    )
+                  : _errorMessage != null && _listDokter.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  color: Colors.red, size: 36),
+                              const SizedBox(height: 8),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: kPendaftaranMuted,
+                                  fontFamily: kPendaftaranFontFamily,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: _loadDokterFromService,
+                                child: const Text('Coba Lagi'),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                  )
-                : ListView.separated(
+                      )
+                    : filteredList.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'Belum ada dokter yang terdaftar pada poli ini.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: kPendaftaranMuted,
+                                  fontFamily: kPendaftaranFontFamily,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 10,
@@ -545,7 +675,9 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${dokter.jadwalSlots.length} jadwal tersedia',
+                                      dokter.jadwalSlots.isNotEmpty
+                                          ? '${dokter.jadwalSlots.length} jadwal tersedia'
+                                          : 'Jadwal praktik SIMRS',
                                       style: const TextStyle(
                                         fontSize: 10,
                                         color: Color(0xFF0F766E),
@@ -568,6 +700,7 @@ class _DokterSelectionSheetState extends State<DokterSelectionSheet> {
                       );
                     },
                   ),
+            ),
           ),
         ],
       ),

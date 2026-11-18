@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
 
-/// ─── Token Warna Beranda RS PKU Gamping ───
-const Color kHomePrimaryBlue = Color(0xFF0D4FC1);
+/// ─── Token Warna Beranda RS PKU Gamping (Tersinkron dengan AppColors) ───
+const Color kHomePrimaryBlue = AppColors.primary;
 const Color kHomeInk = Color(0xFF182238);
-const Color kHomeMuted = Color(0xFF91A3BE);
-const Color kHomePageBg = Color(0xFFF7F9FC);
-const Color kHomeCardBorder = Color(0xFFE1E6EE);
-const Color kHomeDivider = Color(0xFFF0F2F6);
+const Color kHomeMuted = AppColors.textMuted;
+const Color kHomePageBg = AppColors.pageBackground;
+const Color kHomeCardBorder = AppColors.cardBorder;
+const Color kHomeDivider = AppColors.divider;
 
 const String kHomeFontFamily = 'Plus Jakarta Sans';
 

@@ -16,10 +16,16 @@ class SessionManager {
   static const String _keyNamaPasien = 'pku_nama_pasien';
   static const String _keyNoRm = 'pku_no_rm';
   static const String _keyNik = 'pku_nik';
+  static const String _keyEmail = 'pku_email';
   static const String _keyUsername = 'pku_username';
   static const String _keyPatientData = 'pku_patient_data';
   static const String _keyProfilePhotoPath = 'pku_profile_photo_path';
   static const String _keyNotificationEnabled = 'pku_notification_enabled';
+  static const String _keyTglLahir = 'pku_tgl_lahir';
+  static const String _keyNoHp = 'pku_no_hp';
+  static const String _keyFsKdAntrian = 'pku_fs_kd_antrian';
+  static const String _keyNoBooking = 'pku_no_booking';
+  static const String _keyNoUrutAntrean = 'pku_no_urut_antrean';
 
   /// Notifier reaktif untuk foto profil pasien
   static final ValueNotifier<String?> profilePhotoNotifier =
@@ -44,21 +50,50 @@ class SessionManager {
   /// Cek status login pengguna
   static bool get isLoggedIn => _prefs?.getBool(_keyIsLoggedIn) ?? false;
 
+  /// Memvalidasi apakah sesi aktif dan memiliki token yang valid
+  static bool hasValidSession() {
+    final t = token;
+    return isLoggedIn && t != null && t.trim().isNotEmpty;
+  }
+
   /// Ambil JWT / Auth token
   static String? get token => _prefs?.getString(_keyToken);
 
-  /// Ambil nama pasien (default: 'Dahlan Muda')
+  /// Ambil nomor rekam medis (fs_mr / noRm) yang bersih dari '-' dan spasi
+  static String get fsMr =>
+      (_prefs?.getString(_keyNoRm) ?? '').replaceAll('-', '').replaceAll(' ', '').trim();
+  static String get noRm => fsMr;
+
+  /// Ambil nama pasien (fs_nm_pasien)
+  static String get fsNmPasien => _prefs?.getString(_keyNamaPasien) ?? '';
   static String get namaPasien =>
       _prefs?.getString(_keyNamaPasien) ?? 'Dahlan Muda';
 
-  /// Ambil nomor rekam medis (default: '01-88-24-90')
-  static String get noRm => _prefs?.getString(_keyNoRm) ?? '01-88-24-90';
-
-  /// Ambil NIK pasien
+  /// Ambil NIK pasien (fs_nik)
+  static String? get fsNik => _prefs?.getString(_keyNik);
   static String? get nik => _prefs?.getString(_keyNik);
+
+  /// Ambil email pasien (fs_email)
+  static String? get fsEmail => _prefs?.getString(_keyEmail);
+  static String? get email => _prefs?.getString(_keyEmail);
 
   /// Ambil username
   static String? get username => _prefs?.getString(_keyUsername);
+
+  /// Ambil tanggal lahir pasien (`FD_TGL_LAHIR`, format YYYY-MM-DD)
+  static String? get fdTglLahir => _prefs?.getString(_keyTglLahir);
+
+  /// Ambil nomor HP / telepon pasien (`FS_TLP_PASIEN` / `FS_NO_HP`)
+  static String? get noHp => _prefs?.getString(_keyNoHp);
+
+  /// Ambil kode antrean aktif dari backend (`fs_kd_antrian` / `no_antrian`)
+  static String? get fsKdAntrian => _prefs?.getString(_keyFsKdAntrian);
+
+  /// Ambil nomor booking aktif dari backend (`no_booking`)
+  static String? get noBooking => _prefs?.getString(_keyNoBooking);
+
+  /// Ambil nomor urut antrean aktif (`fn_no_urut` / `no_urut`)
+  static String? get noUrutAntrean => _prefs?.getString(_keyNoUrutAntrean);
 
   /// Ambil data pasien lengkap
   static Map<String, dynamic>? get patientData {
@@ -74,19 +109,31 @@ class SessionManager {
   /// Simpan sesi baru setelah login / registrasi berhasil
   static Future<void> saveSession({
     required String token,
-    required String namaPasien,
-    required String noRm,
+    String? namaPasien,
+    String? fsNmPasien,
+    String? noRm,
+    String? fsMr,
     String? nik,
+    String? fsNik,
+    String? email,
+    String? fsEmail,
     String? username,
   }) async {
     final p = _prefs ?? await SharedPreferences.getInstance();
     _prefs = p;
+
+    final resolvedNama = fsNmPasien ?? namaPasien ?? '';
+    final resolvedMr = (fsMr ?? noRm ?? '').replaceAll('-', '').replaceAll(' ', '').trim();
+    final resolvedNik = fsNik ?? nik;
+    final resolvedEmail = fsEmail ?? email;
+
     await Future.wait([
       p.setString(_keyToken, token),
       p.setBool(_keyIsLoggedIn, true),
-      p.setString(_keyNamaPasien, namaPasien),
-      p.setString(_keyNoRm, noRm),
-      if (nik != null) p.setString(_keyNik, nik),
+      p.setString(_keyNamaPasien, resolvedNama),
+      p.setString(_keyNoRm, resolvedMr),
+      if (resolvedNik != null) p.setString(_keyNik, resolvedNik),
+      if (resolvedEmail != null) p.setString(_keyEmail, resolvedEmail),
       if (username != null) p.setString(_keyUsername, username),
     ]);
   }
@@ -101,7 +148,141 @@ class SessionManager {
       ..remove('kata_sandi')
       ..remove('confirm_password')
       ..remove('pin');
+    final simrsData = safeData['simrs'] is Map<String, dynamic>
+        ? safeData['simrs'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final rawTglLahir = (safeData['fd_tgl_lahir'] ??
+            safeData['FD_TGL_LAHIR'] ??
+            simrsData['FD_TGL_LAHIR'] ??
+            simrsData['fd_tgl_lahir'])
+        ?.toString()
+        .trim();
+    if (rawTglLahir != null && rawTglLahir.isNotEmpty) {
+      await p.setString(_keyTglLahir, rawTglLahir);
+    }
+    final rawNoHp = (safeData['fs_no_hp'] ??
+            safeData['FS_NO_HP'] ??
+            safeData['FS_TLP_PASIEN'] ??
+            safeData['no_hp'] ??
+            simrsData['FS_TLP_PASIEN'] ??
+            simrsData['FS_NO_HP'])
+        ?.toString()
+        .trim();
+    if (rawNoHp != null && rawNoHp.isNotEmpty) {
+      await p.setString(_keyNoHp, rawNoHp);
+    }
     await p.setString(_keyPatientData, jsonEncode(safeData));
+  }
+
+  /// Memperbarui identitas dan profil pasien dari data respons `GET /auth/me`.
+  static Future<void> updateFromMe(Map<String, dynamic> data) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+
+    final simrs = data['simrs'] is Map<String, dynamic>
+        ? data['simrs'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final nama = (simrs['FS_NM_PASIEN'] ??
+            simrs['fs_nm_pasien'] ??
+            data['fs_nm_pasien'] ??
+            data['nama'])
+        ?.toString()
+        .trim();
+    if (nama != null && nama.isNotEmpty) {
+      await p.setString(_keyNamaPasien, nama);
+    }
+
+    final mr = (simrs['FS_MR'] ??
+            simrs['fs_mr'] ??
+            data['fs_mr'] ??
+            data['no_rm'])
+        ?.toString()
+        .trim();
+    if (mr != null && mr.isNotEmpty) {
+      final cleanMr = mr.replaceAll('-', '').replaceAll(' ', '').trim();
+      await p.setString(_keyNoRm, cleanMr);
+    }
+
+    final nik = (data['fs_nik'] ??
+            simrs['FS_KD_IDENTITAS'] ??
+            simrs['fs_nik'] ??
+            data['nik'])
+        ?.toString()
+        .trim();
+    if (nik != null && nik.isNotEmpty) {
+      await p.setString(_keyNik, nik);
+    }
+
+    final email = (data['fs_email'] ?? data['email'])?.toString().trim();
+    if (email != null && email.isNotEmpty) {
+      await p.setString(_keyEmail, email);
+    }
+
+    final tglLahir = (simrs['FD_TGL_LAHIR'] ??
+            simrs['fd_tgl_lahir'] ??
+            data['fd_tgl_lahir'])
+        ?.toString()
+        .trim();
+    if (tglLahir != null && tglLahir.isNotEmpty) {
+      await p.setString(_keyTglLahir, tglLahir);
+    }
+
+    final noHp = (simrs['FS_TLP_PASIEN'] ??
+            simrs['FS_NO_HP'] ??
+            simrs['fs_no_hp'] ??
+            data['fs_no_hp'] ??
+            data['no_hp'])
+        ?.toString()
+        .trim();
+    if (noHp != null && noHp.isNotEmpty) {
+      await p.setString(_keyNoHp, noHp);
+    }
+
+    await savePatientData(data);
+  }
+
+  /// Simpan tanggal lahir pasien (`FD_TGL_LAHIR`, format YYYY-MM-DD)
+  static Future<void> setTglLahir(String? value) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isNotEmpty) {
+      await p.setString(_keyTglLahir, trimmed);
+    } else {
+      await p.remove(_keyTglLahir);
+    }
+  }
+
+  /// Simpan nomor HP pasien (`FS_TLP_PASIEN` / `FS_NO_HP`)
+  static Future<void> setNoHp(String? value) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isNotEmpty) {
+      await p.setString(_keyNoHp, trimmed);
+    } else {
+      await p.remove(_keyNoHp);
+    }
+  }
+
+  /// Simpan kode antrean aktif hasil booking (`fs_kd_antrian` / `no_antrian`)
+  static Future<void> setActiveBooking({
+    required String fsKdAntrian,
+    String? noBooking,
+    String? noUrut,
+  }) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    await Future.wait([
+      if (fsKdAntrian.trim().isNotEmpty)
+        p.setString(_keyFsKdAntrian, fsKdAntrian.trim()),
+      if (noBooking != null && noBooking.trim().isNotEmpty)
+        p.setString(_keyNoBooking, noBooking.trim()),
+      if (noUrut != null && noUrut.trim().isNotEmpty)
+        p.setString(_keyNoUrutAntrean, noUrut.trim()),
+    ]);
   }
 
   /// Ambil path foto profil pasien
@@ -141,9 +322,15 @@ class SessionManager {
       p.remove(_keyNamaPasien),
       p.remove(_keyNoRm),
       p.remove(_keyNik),
+      p.remove(_keyEmail),
       p.remove(_keyUsername),
       p.remove(_keyPatientData),
       p.remove(_keyProfilePhotoPath),
+      p.remove(_keyTglLahir),
+      p.remove(_keyNoHp),
+      p.remove(_keyFsKdAntrian),
+      p.remove(_keyNoBooking),
+      p.remove(_keyNoUrutAntrean),
     ]);
     profilePhotoNotifier.value = null;
   }

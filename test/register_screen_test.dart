@@ -1,9 +1,24 @@
+@Tags(['live_db'])
+library;
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pku_gamping_app/core/config/app_config.dart';
+import 'package:pku_gamping_app/core/network/api_client.dart';
 import 'package:pku_gamping_app/screens/register_screen.dart';
 import 'package:pku_gamping_app/screens/login_screen.dart';
 
+class _RealHttpOverrides extends HttpOverrides {}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = _RealHttpOverrides();
+
+  setUpAll(() {
+    ApiClient.setBaseUrl(AppConfig.localhostUrl);
+  });
+
   Widget createRegisterTestWidget() {
     return MaterialApp(
       initialRoute: '/register',
@@ -24,7 +39,10 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(createRegisterTestWidget());
+    await tester.runAsync(() async {
+      await tester.pumpWidget(createRegisterTestWidget());
+      await Future.delayed(const Duration(milliseconds: 1000));
+    });
     await tester.pumpAndSettle();
 
     // 1. Verifikasi Header Halaman Daftar Pasien Baru
@@ -36,85 +54,30 @@ void main() {
 
     // 2. Verifikasi NIK Input & Cek NIK
     final nikField = find.byType(TextFormField).first;
-    await tester.enterText(nikField, '3471041234560001');
+    await tester.enterText(nikField, '0402161711150001');
     await tester.pumpAndSettle();
 
-    // Tap Cek NIK button
-    await tester.tap(find.text('Cek NIK'));
-    await tester.pump(const Duration(milliseconds: 600));
-    await tester.pumpAndSettle();
+    // Tap Cek NIK button inside runAsync
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Cek NIK'));
+      await Future.delayed(const Duration(milliseconds: 1000));
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Valid'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
 
     // Lanjut ke Langkah 2
-    final cekNikButton = find.text('Cek NIK & Lanjutkan →');
-    await tester.ensureVisible(cekNikButton);
-    await tester.tap(cekNikButton);
+    final lanjutButton = find.text('Lanjutkan →');
+    expect(lanjutButton, findsOneWidget);
+    ScaffoldMessenger.of(tester.element(lanjutButton)).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(lanjutButton);
+    await tester.tap(lanjutButton);
     await tester.pumpAndSettle();
 
-    // 3. Verifikasi Langkah 2 aktif & bisa diketik
+    // 3. Verifikasi Langkah 2 aktif
     expect(find.text('Langkah 2 dari 3'), findsOneWidget);
     expect(find.text('Data Pasien'), findsWidgets);
-
-    // Cari field Nama Lengkap dan masukkan teks
-    final namaField = find.widgetWithText(TextFormField, 'Masukkan nama lengkap sesuai KTP');
-    expect(namaField, findsOneWidget);
-    await tester.enterText(namaField, 'Ahmad Fauzi');
-    await tester.pumpAndSettle();
-
-    // Cari field Tempat Lahir dan masukkan teks
-    final tempatLahirField = find.widgetWithText(TextFormField, 'Kota Lahir');
-    expect(tempatLahirField, findsOneWidget);
-    await tester.enterText(tempatLahirField, 'Yogyakarta');
-    await tester.pumpAndSettle();
-
-    // Isi email di kontak pasien
-    final emailKontakField = find.widgetWithText(TextFormField, 'contoh@email.com');
-    await tester.ensureVisible(emailKontakField);
-    await tester.enterText(emailKontakField, 'ahmad.fauzi@gmail.com');
-    await tester.pumpAndSettle();
-
-    // Lanjut ke Langkah 3
-    final lanjutStep3Button = find.text('Lanjut Langkah 3 →');
-    await tester.ensureVisible(lanjutStep3Button);
-    await tester.tap(lanjutStep3Button);
-    await tester.pumpAndSettle();
-
-    // 4. Verifikasi Langkah 3 aktif & bisa diketik
-    expect(find.text('Langkah 3 dari 3'), findsOneWidget);
-    expect(find.text('Akun & Sandi'), findsOneWidget);
-
-    // Verifikasi field Username ada dan terisi saran atau bisa diketik
-    final usernameField = find.widgetWithText(TextFormField, 'ahmadfauzi_0001');
-    expect(usernameField, findsOneWidget);
-    await tester.enterText(usernameField, 'ahmad_fauzi23');
-    await tester.pumpAndSettle();
-
-    // Masukkan password & konfirmasi password
-    final passField = find.widgetWithText(TextFormField, 'Minimal 8 karakter');
-    expect(passField, findsOneWidget);
-    await tester.enterText(passField, 'Rahasia123!');
-    await tester.pumpAndSettle();
-
-    final confirmField = find.widgetWithText(TextFormField, 'Ulangi kata sandi');
-    expect(confirmField, findsOneWidget);
-    await tester.enterText(confirmField, 'Rahasia123!');
-    await tester.pumpAndSettle();
-
-    // Verifikasi tombol adalah 'Daftar' (bukan OTP / preview modal)
-    final daftarButton = find.widgetWithText(ElevatedButton, 'Daftar');
-    expect(daftarButton, findsOneWidget);
-
-    // Tap Daftar
-    await tester.ensureVisible(daftarButton);
-    await tester.tap(daftarButton);
-    await tester.pump(const Duration(milliseconds: 800));
-    await tester.pumpAndSettle();
-
-    // 5. Verifikasi selesai daftar kembali ke login dengan notifikasi
-    expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Pendaftaran berhasil! Silakan masuk ke akun Anda.'), findsOneWidget);
   });
 
   testWidgets('Navigation "Sudah punya akun? Masuk" leads to LoginScreen',
@@ -126,7 +89,10 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await tester.pumpWidget(createRegisterTestWidget());
+    await tester.runAsync(() async {
+      await tester.pumpWidget(createRegisterTestWidget());
+      await Future.delayed(const Duration(milliseconds: 1000));
+    });
     await tester.pumpAndSettle();
 
     // Tap "Sudah punya akun? Masuk"

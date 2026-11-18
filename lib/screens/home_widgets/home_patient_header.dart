@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'home_constants.dart';
 
 /// Bagian salam pasien, avatar, nomor rekam medis, dan lengkungan biru beranda.
@@ -16,6 +17,14 @@ class HomePatientHeader extends StatelessWidget {
   final Widget queueCard;
   final String namaPasien;
   final String noRm;
+
+  String _dynamicGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 4 && hour < 11) return 'Selamat pagi,';
+    if (hour >= 11 && hour < 15) return 'Selamat siang,';
+    if (hour >= 15 && hour < 18) return 'Selamat sore,';
+    return 'Selamat malam,';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +66,12 @@ class HomePatientHeader extends StatelessWidget {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFB7B7B7),
+                            color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(
+                              color: AppColors.goldBorder.withValues(alpha: 0.75),
+                              width: 1.8,
+                            ),
                           ),
                           child: ClipOval(
                             child: hasPhoto
@@ -70,45 +82,55 @@ class HomePatientHeader extends StatelessWidget {
                                     fit: BoxFit.cover,
                                   )
                                 : const Icon(
-                                    Icons.person,
+                                    Icons.person_rounded,
                                     color: Colors.white,
-                                    size: 34,
+                                    size: 28,
                                   ),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(width: 11),
+                    const SizedBox(width: 12),
 
-                    // Teks Salam & Nama
+                    // Teks Salam, Nama & No. RM (hierarki jelas tanpa simbol menggantung)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Selamat pagi,',
+                          Text(
+                            _dynamicGreeting(),
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.84),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                               fontFamily: kHomeFontFamily,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             namaPasien,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 22,
+                              fontSize: 19,
                               height: 1.2,
                               fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
                               fontFamily: kHomeFontFamily,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            'No. RM: $noRm  •',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
+                            'No. RM $noRm',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                               fontFamily: kHomeFontFamily,
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                         ],

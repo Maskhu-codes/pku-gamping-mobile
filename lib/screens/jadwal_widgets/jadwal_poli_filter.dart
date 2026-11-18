@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'jadwal_constants.dart';
 
 /// Horizontal scrollable filter chips untuk memilih poli/spesialisasi.
@@ -10,15 +11,17 @@ class JadwalPoliFilter extends StatelessWidget {
     required this.poliList,
     required this.selectedPoli,
     required this.onPoliSelected,
+    this.includeAllOption = true,
   });
 
   final List<String> poliList;
   final String selectedPoli;
   final ValueChanged<String> onPoliSelected;
+  final bool includeAllOption;
 
   @override
   Widget build(BuildContext context) {
-    final items = ['Semua', ...poliList];
+    final items = includeAllOption ? ['Semua', ...poliList] : poliList;
 
     return SizedBox(
       height: 38,
@@ -31,8 +34,9 @@ class JadwalPoliFilter extends StatelessWidget {
           final poli = items[index];
           final isSelected = poli == selectedPoli;
 
-          return GestureDetector(
+          return PressableScale(
             onTap: () => onPoliSelected(poli),
+            pressedScale: 0.96,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,

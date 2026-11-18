@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_active_card.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_brand_header.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_doctor_card.dart';
-import 'package:pku_gamping_app/screens/queue_widgets/queue_room_directions_card.dart';
+import 'package:pku_gamping_app/screens/queue_widgets/queue_farmasi_card.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_service_value_card.dart';
+import 'package:pku_gamping_app/screens/queue_widgets/queue_status_stepper_card.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 import 'package:pku_gamping_app/widgets/app_empty_state.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 
 /// Layar Antrean Aktif Rawat Jalan.
 ///
@@ -20,9 +23,11 @@ class QueueScreen extends StatefulWidget {
   const QueueScreen({
     super.key,
     this.embedded = false,
+    this.pollingInterval = const Duration(seconds: 15),
   });
 
   final bool embedded;
+  final Duration pollingInterval;
 
   @override
   State<QueueScreen> createState() => _QueueScreenState();
@@ -31,6 +36,107 @@ class QueueScreen extends StatefulWidget {
 class _QueueScreenState extends State<QueueScreen> {
   bool _soundReminderEnabled = false;
   int _selectedIndex = 1;
+  bool _isLoading = false;
+  Timer? _statusPollingTimer;
+  DateTime? _lastSyncedAt;
+
+  String? get _lastUpdatedLabel {
+    final ts = _lastSyncedAt;
+    if (ts == null) return null;
+    final hh = ts.hour.toString().padLeft(2, '0');
+    final mm = ts.minute.toString().padLeft(2, '0');
+    return 'Diperbarui $hh:$mm WIB';
+  }
+
+  void _markSynced() {
+    if (!mounted) return;
+    final now = DateTime.now();
+    if (_lastSyncedAt == null ||
+        _lastSyncedAt!.minute != now.minute ||
+        _lastSyncedAt!.hour != now.hour) {
+      setState(() => _lastSyncedAt = now);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _muatBookingAktif();
+  }
+
+  @override
+  void dispose() {
+    _stopStatusPolling();
+    super.dispose();
+  }
+
+  Future<void> _muatBookingAktif() async {
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+    try {
+      await AntreanService.getBookingAktif();
+      await _pollAntreanFarmasi();
+      if (mounted) {
+        _startStatusPolling();
+      }
+    } catch (e) {
+      debugPrint('[QueueScreen] Gagal memuat booking aktif: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _startStatusPolling() {
+    _statusPollingTimer?.cancel();
+    _pollStatusAntrean();
+    _pollAntreanFarmasi();
+    _statusPollingTimer = Timer.periodic(
+      widget.pollingInterval,
+      (_) {
+        _pollStatusAntrean();
+        _pollAntreanFarmasi();
+      },
+    );
+  }
+
+  void _stopStatusPolling() {
+    _statusPollingTimer?.cancel();
+    _statusPollingTimer = null;
+  }
+
+  Future<void> _pollStatusAntrean() async {
+    final antrean = AntreanService.antreanAktif.value;
+    if (antrean == null) {
+      return;
+    }
+
+    final kdLayanan = antrean.fsKdLayanan;
+    final kdMedis = antrean.fsKdPetugasMedis;
+    if (kdLayanan.isEmpty || kdMedis.isEmpty) return;
+
+    final result = await AntreanService.getStatusAntrean(
+      fsKdLayanan: kdLayanan,
+      fsKdPetugasMedis: kdMedis,
+      fsKdAntrian: antrean.fsKdAntrian.isNotEmpty ? antrean.fsKdAntrian : null,
+      fsMr: antrean.noRm.isNotEmpty ? antrean.noRm : null,
+      tanggal: antrean.rawTanggal.isNotEmpty ? antrean.rawTanggal : null,
+    );
+    if (result != null) {
+      _markSynced();
+    }
+  }
+
+  Future<void> _pollAntreanFarmasi() async {
+    try {
+      await AntreanService.getAntreanFarmasi();
+      _markSynced();
+    } catch (e) {
+      debugPrint('[QueueScreen] Gagal polling antrean farmasi: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,12 +155,23 @@ class _QueueScreenState extends State<QueueScreen> {
 
               // ── Konten Utama Reaktif (Auto-update saat data antrean berubah) ──
               Expanded(
-                child: ValueListenableBuilder<AntreanAktifModel?>(
-                  valueListenable: AntreanService.antreanAktif,
-                  builder: (context, antrean, _) {
-                    if (antrean == null) {
-                      return _buildEmptyQueue(context);
-                    }
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: _isLoading && AntreanService.antreanAktif.value == null
+                      ? const QueueScreenSkeleton(
+                          key: ValueKey('queue_loading_skeleton'),
+                        )
+                      : RefreshIndicator(
+                          key: const ValueKey('queue_loaded_content'),
+                          onRefresh: _muatBookingAktif,
+                        child: ValueListenableBuilder<AntreanAktifModel?>(
+                          valueListenable: AntreanService.antreanAktif,
+                          builder: (context, antrean, _) {
+                            if (antrean == null) {
+                              return _buildEmptyQueue(context);
+                            }
 
                     return ScrollConfiguration(
                       behavior: ScrollConfiguration.of(context)
@@ -77,8 +194,11 @@ class _QueueScreenState extends State<QueueScreen> {
                             ActiveQueueCard(
                               nomorAntrean: antrean.nomorAntrean,
                               nomorDilayani: antrean.nomorSedangDilayani,
-                              sisaAntrean: antrean.sisaAntrean,
+                              sisaAntrean: antrean.sisaAntreanLive,
                               poli: antrean.poli,
+                              isUpcomingSchedule: antrean.isUpcomingSchedule,
+                              tanggalJadwal: antrean.tanggal,
+                              lastUpdatedLabel: _lastUpdatedLabel,
                               soundReminderEnabled: _soundReminderEnabled,
                               onSoundReminderChanged: (enabled) {
                                 setState(
@@ -93,9 +213,21 @@ class _QueueScreenState extends State<QueueScreen> {
                               },
                             ),
 
-                            // ── Petunjuk Lokasi Ruangan ──
-                            RoomDirectionsCard(
-                              gedungLokasi: antrean.gedungLokasi,
+                            // ── Stepper Visual Status Antrean Poli (0 - 3) ──
+                            QueueStatusStepperCard(
+                              currentStatus: antrean.statusPasien,
+                            ),
+
+                            // ── Antrean Farmasi (Apotek) Real-time ──
+                            ValueListenableBuilder<AntreanFarmasiModel?>(
+                              valueListenable: AntreanService.antreanFarmasi,
+                              builder: (context, farmasi, _) {
+                                return QueueFarmasiCard(
+                                  farmasi: farmasi,
+                                  onRefresh: _pollAntreanFarmasi,
+                                  lastUpdatedLabel: _lastUpdatedLabel,
+                                );
+                              },
                             ),
 
                             // ── Nilai Layanan SIGAP ──
@@ -105,6 +237,8 @@ class _QueueScreenState extends State<QueueScreen> {
                       ),
                     );
                   },
+                ),
+              ),
                 ),
               ),
 
@@ -145,7 +279,7 @@ class _QueueScreenState extends State<QueueScreen> {
       behavior:
           ScrollConfiguration.of(context).copyWith(overscroll: false),
       child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 28),
         child: Column(
           children: [
@@ -167,9 +301,9 @@ class _QueueScreenState extends State<QueueScreen> {
                 children: [
                   const AppEmptyState(
                     icon: Icons.calendar_today_outlined,
-                    title: 'Belum Ada Antrean Aktif',
+                    title: 'Belum ada booking',
                     message:
-                        'Anda belum mendaftar layanan dokter atau belum memiliki antrean aktif hari ini.',
+                        'Belum ada booking pendaftaran aktif. Silakan pilih layanan dokter dan buat antrean terlebih dahulu.',
                     circleSize: 64,
                     iconSize: 30,
                   ),
@@ -263,8 +397,16 @@ class _QueueScreenState extends State<QueueScreen> {
                 ],
               ),
             ),
-            const RoomDirectionsCard(
-              gedungLokasi: 'Gedung Rawat Jalan Terpadu',
+            // ── Antrean Farmasi (Apotek) Real-time ──
+            ValueListenableBuilder<AntreanFarmasiModel?>(
+              valueListenable: AntreanService.antreanFarmasi,
+              builder: (context, farmasi, _) {
+                return QueueFarmasiCard(
+                  farmasi: farmasi,
+                  onRefresh: _pollAntreanFarmasi,
+                  lastUpdatedLabel: _lastUpdatedLabel,
+                );
+              },
             ),
             const QueueServiceValueCard(),
           ],

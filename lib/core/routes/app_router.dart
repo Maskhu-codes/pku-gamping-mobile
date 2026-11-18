@@ -40,30 +40,59 @@ class AppRoutes {
   static const editProfile = '/edit-profile';
 }
 
-/// Router terpusat menggunakan onGenerateRoute bawaan Flutter
+/// Router terpusat menggunakan transisi seragam yang tenang & medis
 class AppRouter {
+  static PageRoute<T> _buildRoute<T>(
+    Widget page, {
+    RouteSettings? settings,
+  }) {
+    return PageRouteBuilder<T>(
+      settings: settings,
+      transitionDuration: const Duration(milliseconds: 220),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (_, _, _) => page,
+      transitionsBuilder: (context, animation, _, child) {
+        final reduceMotion =
+            MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+        if (reduceMotion) return child;
+
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        final slide = Tween<Offset>(
+          begin: const Offset(0, 0.03),
+          end: Offset.zero,
+        ).animate(curved);
+
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+    );
+  }
+
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
+        return _buildRoute(const SplashScreen(), settings: settings);
 
       case AppRoutes.login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return _buildRoute(const LoginScreen(), settings: settings);
 
       case AppRoutes.register:
-        return MaterialPageRoute(builder: (_) => const RegisterScreen());
+        return _buildRoute(const RegisterScreen(), settings: settings);
 
       case AppRoutes.forgotPassword:
-        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
+        return _buildRoute(const ForgotPasswordScreen(), settings: settings);
 
       case AppRoutes.otp:
-        return MaterialPageRoute(
-          builder: (_) => const OtpScreen(),
-          settings: settings,
-        );
+        return _buildRoute(const OtpScreen(), settings: settings);
 
       case AppRoutes.resetPassword:
-        return MaterialPageRoute(builder: (_) => const ResetPasswordScreen());
+        return _buildRoute(const ResetPasswordScreen(), settings: settings);
 
       case AppRoutes.home:
         final args = settings.arguments;
@@ -75,64 +104,71 @@ class AppRouter {
         } else if (args is TopNotificationType) {
           notif = args;
         }
-        return MaterialPageRoute(
-          builder: (_) => HomeScreen(
+        return _buildRoute(
+          HomeScreen(
             notification: notif,
             initialIndex: initialIndex,
           ),
+          settings: settings,
         );
 
       case AppRoutes.news:
-        return MaterialPageRoute(builder: (_) => const NewsScreen());
+        return _buildRoute(const NewsScreen(), settings: settings);
 
       case AppRoutes.pendaftaran:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => PendaftaranScreen(
+        return _buildRoute(
+          PendaftaranScreen(
             initialDokter: args?['initialDokter'] as DokterJadwal?,
             initialPoliNama: args?['initialPoliNama'] as String?,
           ),
+          settings: settings,
         );
 
       case AppRoutes.queueDetail:
-        return MaterialPageRoute(builder: (_) => const QueueDetailScreen());
+        return _buildRoute(const QueueDetailScreen(), settings: settings);
 
       case AppRoutes.pemeriksaanPenunjang:
-        return MaterialPageRoute(builder: (_) => const PemeriksaanPenunjangScreen());
+        return _buildRoute(
+          const PemeriksaanPenunjangScreen(),
+          settings: settings,
+        );
 
       case AppRoutes.hasilLab:
         final args = settings.arguments as List<LabResult>?;
-        return MaterialPageRoute(
-          builder: (_) => HasilLabScreen(results: args ?? const []),
+        return _buildRoute(
+          HasilLabScreen(results: args ?? const []),
+          settings: settings,
         );
 
       case AppRoutes.hasilRadiologi:
         final args = settings.arguments as List<RadiologyResult>?;
-        return MaterialPageRoute(
-          builder: (_) => HasilRadiologiScreen(results: args ?? const []),
+        return _buildRoute(
+          HasilRadiologiScreen(results: args ?? const []),
+          settings: settings,
         );
 
       case AppRoutes.riwayatPemeriksaan:
         final args = settings.arguments as List<RiwayatPemeriksaan>?;
-        return MaterialPageRoute(
-          builder: (_) => RiwayatPemeriksaanScreen(riwayat: args ?? const []),
+        return _buildRoute(
+          RiwayatPemeriksaanScreen(riwayat: args ?? const []),
+          settings: settings,
         );
 
       case AppRoutes.riwayatResep:
-        return MaterialPageRoute(
-          builder: (_) => const RiwayatResepScreen(),
-        );
+        return _buildRoute(const RiwayatResepScreen(), settings: settings);
 
       case AppRoutes.editProfile:
-        return MaterialPageRoute(
-          builder: (_) => const EditProfileScreen(),
-        );
+        return _buildRoute(const EditProfileScreen(), settings: settings);
 
       default:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(child: Text('Halaman tidak ditemukan: ${settings.name}')),
+        return _buildRoute(
+          Scaffold(
+            body: Center(
+              child: Text('Halaman tidak ditemukan: ${settings.name}'),
+            ),
           ),
+          settings: settings,
         );
     }
   }

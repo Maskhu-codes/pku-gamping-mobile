@@ -11,29 +11,60 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
     required this.selectedDokter,
     required this.onTapPoli,
     required this.onTapDokter,
+    this.isLoadingInitial = false,
   });
 
   final PoliModel? selectedPoli;
   final DokterPendaftaranModel? selectedDokter;
   final VoidCallback onTapPoli;
   final VoidCallback onTapDokter;
+  final bool isLoadingInitial;
 
   @override
   Widget build(BuildContext context) {
-    final isDokterEnabled = selectedPoli != null;
+    final isDokterEnabled = selectedPoli != null && !isLoadingInitial;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Header Section ──
-        const Text(
-          'Poli & Dokter',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: kPendaftaranInk,
-            fontFamily: kPendaftaranFontFamily,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Poli & Dokter',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: kPendaftaranInk,
+                fontFamily: kPendaftaranFontFamily,
+              ),
+            ),
+            if (isLoadingInitial)
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: kPendaftaranPrimary,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Memuat dari SIMRS...',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: kPendaftaranPrimary,
+                      fontFamily: kPendaftaranFontFamily,
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
         const SizedBox(height: 10),
 
@@ -51,11 +82,13 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
 
         // ── Selector Poli ──
         _buildSelectorButton(
-          onTap: onTapPoli,
+          onTap: isLoadingInitial ? null : onTapPoli,
           icon: Icons.favorite_border_rounded,
-          text: selectedPoli?.nama ?? 'PILIH POLI',
+          text: isLoadingInitial && selectedPoli == null
+              ? 'Memuat poliklinik...'
+              : (selectedPoli?.nama ?? 'PILIH POLI'),
           isSelected: selectedPoli != null,
-          isEnabled: true,
+          isEnabled: !isLoadingInitial,
         ),
         const SizedBox(height: 14),
 
@@ -72,7 +105,7 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
                 fontFamily: kPendaftaranFontFamily,
               ),
             ),
-            if (!isDokterEnabled)
+            if (!isDokterEnabled && !isLoadingInitial)
               const Text(
                 'Pilih poli terlebih dahulu',
                 style: TextStyle(
@@ -88,9 +121,13 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
 
         // ── Selector Dokter ──
         _buildSelectorButton(
-          onTap: isDokterEnabled ? onTapDokter : onTapPoli,
+          onTap: isLoadingInitial
+              ? null
+              : (isDokterEnabled ? onTapDokter : onTapPoli),
           icon: Icons.person_search_rounded,
-          text: selectedDokter?.nama ?? 'PILIH DOKTER',
+          text: isLoadingInitial && selectedDokter == null
+              ? 'Memuat dokter...'
+              : (selectedDokter?.nama ?? 'PILIH DOKTER'),
           isSelected: selectedDokter != null,
           isEnabled: isDokterEnabled,
         ),
@@ -99,7 +136,7 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
   }
 
   Widget _buildSelectorButton({
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     required IconData icon,
     required String text,
     required bool isSelected,

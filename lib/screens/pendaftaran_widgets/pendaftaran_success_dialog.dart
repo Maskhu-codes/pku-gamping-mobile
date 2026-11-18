@@ -13,7 +13,7 @@ class PendaftaranSuccessDialog extends StatelessWidget {
     required this.poli,
     required this.dokter,
     required this.slot,
-    required this.jaminan,
+    this.jaminan,
   });
 
   final String nomorAntrean;
@@ -21,7 +21,7 @@ class PendaftaranSuccessDialog extends StatelessWidget {
   final PoliModel poli;
   final DokterPendaftaranModel dokter;
   final JadwalSlotModel slot;
-  final JenisJaminan jaminan;
+  final JenisJaminan? jaminan;
 
   static Future<void> show({
     required BuildContext context,
@@ -30,7 +30,7 @@ class PendaftaranSuccessDialog extends StatelessWidget {
     required PoliModel poli,
     required DokterPendaftaranModel dokter,
     required JadwalSlotModel slot,
-    required JenisJaminan jaminan,
+    JenisJaminan? jaminan,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -237,8 +237,6 @@ class PendaftaranSuccessDialog extends StatelessWidget {
                           _buildTicketRow('Dokter', dokter.nama),
                           const SizedBox(height: 8),
                           _buildTicketRow('Tanggal', slot.hariTanggal),
-                          const SizedBox(height: 8),
-                          _buildTicketRow('Jaminan', jaminan.label),
                         ],
                       ),
                     ),
@@ -247,7 +245,7 @@ class PendaftaranSuccessDialog extends StatelessWidget {
               ),
               const SizedBox(height: 18),
 
-              // Catatan Kiosk
+              // Catatan Onsite / Admisi
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -265,7 +263,7 @@ class PendaftaranSuccessDialog extends StatelessWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Harap hadir 15 menit sebelum jam periksa dan lakukan check-in di kiosk rumah sakit.',
+                        'Silakan datang ke admisi/kasir onsite RS PKU Gamping 30 menit sebelum jadwal praktek.',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF78350F),

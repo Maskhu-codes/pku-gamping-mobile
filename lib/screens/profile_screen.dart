@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_app_bar.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_footer.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_header_card.dart';
@@ -9,11 +10,15 @@ import 'package:pku_gamping_app/screens/profile_widgets/profile_support_sheets.d
 import 'package:pku_gamping_app/screens/profile_widgets/sigap_membership_card.dart';
 import 'package:pku_gamping_app/services/app_notification_service.dart';
 import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 
 /// Halaman Profil Pasien RS PKU Muhammadiyah Gamping
-/// Bersih, modular, dan terstruktur sesuai kaidah Clean Code.
-class ProfileScreen extends StatelessWidget {
+///
+/// Mengambil data profil pasien langsung dari backend SIMRS (`GET /auth/me`)
+/// saat screen dibuka, lalu menyajikan identitas nama, NIK, No. Rekam Medis (MR),
+/// email akun, nomor HP, dan tanggal lahir secara reaktif dan persisten.
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     this.embedded = false,
@@ -22,11 +27,52 @@ class ProfileScreen extends StatelessWidget {
   final bool embedded;
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _muatProfil();
+  }
+
+  /// Mengambil data profil terbaru dari endpoint `GET /auth/me`
+  Future<void> _muatProfil() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      await SimrsService.getMeProfile();
+    } catch (e) {
+      debugPrint('[ProfileScreen] Gagal memuat profil: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = e
+              .toString()
+              .replaceFirst(RegExp(r'^Exception:\s*'), '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: const ProfileAppBar(),
-      bottomNavigationBar: embedded
+      bottomNavigationBar: widget.embedded
           ? null
           : AppBottomNav(
               selectedIndex: 4,
@@ -47,13 +93,12 @@ class ProfileScreen extends StatelessWidget {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return ScrollConfiguration(
-              behavior: const ScrollBehavior().copyWith(
-                overscroll: false,
-                physics: const ClampingScrollPhysics(),
-              ),
+            return RefreshIndicator(
+              onRefresh: _muatProfil,
               child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: ClampingScrollPhysics(),
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
@@ -68,8 +113,51 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. Kartu Profil Pengguna
-                          const ProfileHeaderCard(),
+                          if (_isLoading && SessionManager.namaPasien.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 12),
+                              child: LinearProgressIndicator(),
+                            ),
+
+                          if (_errorMessage != null)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFECACA)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
+                                    color: Color(0xFFDC2626),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF991B1B),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // 1. Kartu Profil Pengguna (nama, NIK, MR, email, HP, tgl lahir)
+                          ProfileHeaderCard(
+                            nama: SessionManager.namaPasien,
+                            noRm: SessionManager.noRm,
+                            nik: SessionManager.nik,
+                            email: SessionManager.email,
+                            noHp: SessionManager.noHp,
+                            tglLahir: SessionManager.fdTglLahir,
+                          ),
                           const SizedBox(height: 14),
 
                           // 2. Kartu Status SIGAP
@@ -130,7 +218,8 @@ class ProfileScreen extends StatelessWidget {
                           // 4. Bagian: Pengaturan & Bantuan
                           const SectionTitle(
                             title: 'Pengaturan & Bantuan',
-                            subtitle: 'Kelola preferensi dan informasi akun Anda',
+                            subtitle:
+                                'Kelola preferensi dan informasi akun Anda',
                           ),
                           const SizedBox(height: 12),
                           MenuCardContainer(
@@ -140,7 +229,8 @@ class ProfileScreen extends StatelessWidget {
                                 iconBgColor: const Color(0xFFEFF6FF),
                                 iconColor: const Color(0xFF2563EB),
                                 title: 'Data & Profil Pasien',
-                                subtitle: 'Perbarui biodata dan kontak domisili',
+                                subtitle:
+                                    'Perbarui biodata dan kontak domisili',
                                 showDivider: true,
                                 onTap: () {
                                   Navigator.pushNamed(
@@ -154,8 +244,8 @@ class ProfileScreen extends StatelessWidget {
                                     AppNotificationService.isEnabledNotifier,
                                 builder: (context, isEnabled, _) {
                                   return ValueListenableBuilder<int>(
-                                    valueListenable:
-                                        AppNotificationService.unreadCountNotifier,
+                                    valueListenable: AppNotificationService
+                                        .unreadCountNotifier,
                                     builder: (context, unreadCount, _) {
                                       return MenuItemRow(
                                         icon: isEnabled
@@ -204,7 +294,8 @@ class ProfileScreen extends StatelessWidget {
                                 iconBgColor: const Color(0xFFF0FDF4),
                                 iconColor: const Color(0xFF16A34A),
                                 title: 'Bantuan & Dukungan',
-                                subtitle: 'Hubungi tim layanan RS PKU Gamping',
+                                subtitle:
+                                    'Hubungi tim layanan RS PKU Gamping',
                                 showDivider: true,
                                 onTap: () => BantuanSheet.show(context),
                               ),

@@ -84,10 +84,10 @@ void main() {
       }
     });
 
-    test('PendaftaranService.getListPoli mengembalikan seluruh 52 poli saat fallback', () async {
+    test('PendaftaranService.getListPoli mengembalikan seluruh 56 poli dari SIMRS', () async {
       final list = await PendaftaranService.getListPoli();
-      expect(list.length, 52);
-    });
+      expect(list.length, 56);
+    }, tags: ['live_db']);
 
     test('Pencarian poli bekerja dengan benar', () {
       // Cari "Bedah" -> harus menemukan seluruh 11 poli bedah

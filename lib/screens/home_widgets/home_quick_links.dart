@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
-import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'home_constants.dart';
 
 /// Baris menu cepat beranda: Hasil Lab dan Riwayat.
@@ -24,19 +24,12 @@ class HomeQuickLinks extends StatelessWidget {
           ),
           const SizedBox(width: 42),
 
-          // 2. Riwayat
+          // 2. Riwayat (navigasi instan — RiwayatPemeriksaanScreen memuat data + loading sendiri)
           _QuickLinkItem(
             icon: Icons.description_outlined,
             label: 'Riwayat',
-            onTap: () async {
-              final riwayatList =
-                  await PemeriksaanPenunjangService.getRiwayatPemeriksaan();
-              if (!context.mounted) return;
-              Navigator.pushNamed(
-                context,
-                AppRoutes.riwayatPemeriksaan,
-                arguments: riwayatList,
-              );
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.riwayatPemeriksaan);
             },
           ),
         ],
@@ -58,9 +51,9 @@ class _QuickLinkItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      pressedScale: 0.96,
       child: Column(
         children: [
           Container(

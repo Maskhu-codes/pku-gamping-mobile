@@ -1,32 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'jadwal_widgets/jadwal_constants.dart';
-import 'jadwal_widgets/jadwal_header.dart';
-import 'jadwal_widgets/jadwal_search_bar.dart';
-import 'jadwal_widgets/jadwal_date_strip.dart';
-import 'jadwal_widgets/jadwal_poli_filter.dart';
-import 'jadwal_widgets/jadwal_dokter_list.dart';
-import 'jadwal_widgets/jadwal_footer_note.dart';
+import 'package:intl/intl.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/models/pendaftaran_model.dart';
+import 'package:pku_gamping_app/services/pendaftaran_service.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 import 'package:pku_gamping_app/widgets/hospital_brand_header.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
+import 'jadwal_widgets/jadwal_constants.dart';
+import 'jadwal_widgets/jadwal_date_strip.dart';
+import 'jadwal_widgets/jadwal_dokter_list.dart';
+import 'jadwal_widgets/jadwal_footer_note.dart';
+import 'jadwal_widgets/jadwal_header.dart';
+import 'jadwal_widgets/jadwal_poli_filter.dart';
+import 'jadwal_widgets/jadwal_search_bar.dart';
 
-import 'package:pku_gamping_app/services/simrs_service.dart';
+/// Cache jadwal dokter (beserta slot 45 hari) untuk satu poliklinik.
+class _DokterWithSlots {
+  const _DokterWithSlots({
+    required this.dokter,
+    required this.slots,
+  });
 
-/// Data jadwal dokter dan daftar poli terintegrasi dari SimrsService
-final List<DokterJadwal> _dummyDokter = SimrsService.defaultJadwalDokter;
-const _poliList = <String>[
-  'Penyakit Dalam',
-  'Anak',
-  'Jantung',
-  'Mata',
-  'Bedah',
-];
+  final DokterPendaftaranModel dokter;
+  final List<JadwalSlotModel> slots;
+}
 
 /// ─── Halaman Jadwal Dokter ───
 ///
-/// Screen utama yang menggabungkan seluruh widget jadwal secara modular:
-/// Header → Search → DateStrip → PoliFilter → DokterList → FooterNote
+/// Screen utama yang terintegrasi penuh dengan API SIMRS RS PKU Gamping:
+/// - `GET /layanan/list` untuk daftar poliklinik
+/// - `GET /dokter/list?fs_kd_layanan=...` untuk daftar dokter pada poli terpilih
+/// - `GET /jadwal/list?fs_kd_layanan=...&fs_kd_petugas_medis=...` untuk jadwal 45 hari
 class JadwalScreen extends StatefulWidget {
   const JadwalScreen({
     super.key,
@@ -41,15 +47,27 @@ class JadwalScreen extends StatefulWidget {
 
 class _JadwalScreenState extends State<JadwalScreen> {
   late DateTime _selectedDate;
-  String _selectedPoli = 'Semua';
   String _searchQuery = '';
   bool _localeInitialized = false;
+
+  // State data SIMRS
+  List<PoliModel> _listPoli = [];
+  PoliModel? _selectedPoli;
+  bool _isLoadingPoli = true;
+  bool _isLoadingJadwal = false;
+  String? _errorMessage;
+
+  // Cache dokter & slot 45 hari per fs_kd_layanan agar ganti tanggal/poli cepat
+  final Map<String, List<_DokterWithSlots>> _poliJadwalCache = {};
+  int _loadRequestId = 0;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
     _initializeLocale();
+    _muatDaftarPoli();
   }
 
   Future<void> _initializeLocale() async {
@@ -59,24 +77,172 @@ class _JadwalScreenState extends State<JadwalScreen> {
     }
   }
 
-  /// Memfilter daftar dokter berdasarkan poli dan kata kunci pencarian.
+  /// Memuat daftar poliklinik asli dari SIMRS (`GET /layanan/list`)
+  /// lalu otomatis memuat jadwal dokter untuk poli pertama yang tersedia.
+  Future<void> _muatDaftarPoli({bool forceRefresh = false}) async {
+    setState(() {
+      _isLoadingPoli = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final listPoli = await PendaftaranService.getListPoli();
+      if (!mounted) return;
+
+      PoliModel? nextPoli = _selectedPoli;
+      if (nextPoli == null ||
+          !listPoli.any((p) => p.id == nextPoli!.id)) {
+        nextPoli = listPoli.isNotEmpty ? listPoli.first : null;
+      }
+
+      setState(() {
+        _listPoli = listPoli;
+        _selectedPoli = nextPoli;
+        _isLoadingPoli = false;
+      });
+
+      if (nextPoli != null) {
+        await _muatJadwalPoli(nextPoli, forceRefresh: forceRefresh);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingPoli = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  /// Memuat daftar dokter dan slot jadwal 45 hari untuk satu poli terpilih.
+  Future<void> _muatJadwalPoli(
+    PoliModel poli, {
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh && _poliJadwalCache.containsKey(poli.id)) {
+      setState(() {
+        _selectedPoli = poli;
+        _isLoadingJadwal = false;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    final requestId = ++_loadRequestId;
+    setState(() {
+      _selectedPoli = poli;
+      _isLoadingJadwal = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final doctors = await PendaftaranService.getListDokter(poliId: poli.id);
+      if (!mounted || requestId != _loadRequestId) return;
+
+      final dokterWithSlots = await Future.wait(
+        doctors.map((dokter) async {
+          try {
+            final slots = await SimrsService.getJadwalDokter(
+              fsKdLayanan: poli.id,
+              fsKdPetugasMedis: dokter.id,
+            );
+            return _DokterWithSlots(dokter: dokter, slots: slots);
+          } catch (e) {
+            debugPrint(
+              '[JadwalScreen] Gagal memuat jadwal dokter ${dokter.id}: $e',
+            );
+            return _DokterWithSlots(dokter: dokter, slots: const []);
+          }
+        }),
+      );
+
+      if (!mounted || requestId != _loadRequestId) return;
+
+      setState(() {
+        _poliJadwalCache[poli.id] = dokterWithSlots;
+        _isLoadingJadwal = false;
+      });
+    } catch (e) {
+      if (!mounted || requestId != _loadRequestId) return;
+      setState(() {
+        _isLoadingJadwal = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  Future<void> _handleRefresh() async {
+    _poliJadwalCache.clear();
+    if (_listPoli.isEmpty || _selectedPoli == null) {
+      await _muatDaftarPoli(forceRefresh: true);
+    } else {
+      await _muatJadwalPoli(_selectedPoli!, forceRefresh: true);
+    }
+  }
+
+  StatusDokter _mapSlotStatus(JadwalSlotModel slot) {
+    if (slot.isClosed) return StatusDokter.tutup;
+    if (slot.isPenuh) return StatusDokter.penuh;
+    if (slot.canBook) return StatusDokter.tersedia;
+    return StatusDokter.selesai;
+  }
+
+  ({String mulai, String selesai}) _extractJamRange(JadwalSlotModel slot) {
+    final cleanedJam = slot.jam.replaceAll('WIB', '').trim();
+    if (cleanedJam.contains('-')) {
+      final parts = cleanedJam.split('-');
+      final mulai = parts.first.trim();
+      final selesai = parts.length > 1 ? parts[1].trim() : '';
+      if (mulai.isNotEmpty) {
+        return (mulai: mulai, selesai: selesai);
+      }
+    }
+    final fallbackMulai =
+        slot.jamMulai.trim().isNotEmpty ? slot.jamMulai.trim() : cleanedJam;
+    return (mulai: fallbackMulai, selesai: '');
+  }
+
+  /// Memfilter jadwal dokter SIMRS berdasarkan poli aktif, tanggal terpilih, dan pencarian.
   List<DokterJadwal> get _filteredDokter {
-    return _dummyDokter.where((d) {
-      // Filter poli
-      if (_selectedPoli != 'Semua') {
-        if (!d.poli.toLowerCase().contains(_selectedPoli.toLowerCase())) {
-          return false;
-        }
+    final poli = _selectedPoli;
+    if (poli == null) return const [];
+
+    final cached = _poliJadwalCache[poli.id];
+    if (cached == null || cached.isEmpty) return const [];
+
+    final targetDateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final query = _searchQuery.trim().toLowerCase();
+    final results = <DokterJadwal>[];
+
+    for (final entry in cached) {
+      final dokter = entry.dokter;
+      if (query.isNotEmpty) {
+        final matchNama = dokter.nama.toLowerCase().contains(query);
+        final matchPoli = poli.nama.toLowerCase().contains(query);
+        if (!matchNama && !matchPoli) continue;
       }
-      // Filter pencarian (nama atau poli)
-      if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        final matchNama = d.nama.toLowerCase().contains(query);
-        final matchPoli = d.poli.toLowerCase().contains(query);
-        if (!matchNama && !matchPoli) return false;
+
+      final matchingSlots = entry.slots.where(
+        (slot) => slot.tanggal.trim() == targetDateStr,
+      );
+
+      for (final slot in matchingSlots) {
+        final jamRange = _extractJamRange(slot);
+        results.add(
+          DokterJadwal(
+            nama: dokter.nama,
+            poli: poli.nama,
+            jamMulai: jamRange.mulai,
+            jamSelesai: jamRange.selesai,
+            fotoUrl: dokter.fotoUrl,
+            status: _mapSlotStatus(slot),
+            fsKdLayanan: poli.id,
+            fsKdPetugasMedis: dokter.id,
+          ),
+        );
       }
-      return true;
-    }).toList();
+    }
+
+    return results;
   }
 
   @override
@@ -89,6 +255,7 @@ class _JadwalScreenState extends State<JadwalScreen> {
     }
 
     final baseTheme = Theme.of(context);
+    final poliNames = _listPoli.map((p) => p.nama).toList();
 
     return Theme(
       data: baseTheme.copyWith(
@@ -105,57 +272,85 @@ class _JadwalScreenState extends State<JadwalScreen> {
 
               // ── Konten Scrollable ──
               Expanded(
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context)
-                      .copyWith(overscroll: false),
-                  child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. Judul + Subtitle
-                        const JadwalHeader(),
-                        const SizedBox(height: 20),
+                child: RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  color: kPrimaryBlue,
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context)
+                        .copyWith(overscroll: false),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Judul + Subtitle
+                          const JadwalHeader(),
+                          const SizedBox(height: 20),
 
-                        // 2. Section "Jadwal Dokter" + Label
-                        _buildSectionTitle(),
-                        const SizedBox(height: 14),
+                          // 2. Section "Jadwal Dokter" + Label
+                          _buildSectionTitle(),
+                          const SizedBox(height: 14),
 
-                        // 3. Search Bar
-                        JadwalSearchBar(
-                          onChanged: (value) {
-                            setState(() => _searchQuery = value);
-                          },
-                        ),
-                        const SizedBox(height: 16),
+                          // 3. Search Bar
+                          JadwalSearchBar(
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                          ),
+                          const SizedBox(height: 16),
 
-                        // 4. Date Strip
-                        JadwalDateStrip(
-                          selectedDate: _selectedDate,
-                          onDateSelected: (date) {
-                            setState(() => _selectedDate = date);
-                          },
-                        ),
-                        const SizedBox(height: 14),
+                          // 4. Date Strip
+                          JadwalDateStrip(
+                            selectedDate: _selectedDate,
+                            onDateSelected: (date) {
+                              setState(() => _selectedDate = date);
+                            },
+                          ),
+                          const SizedBox(height: 14),
 
-                        // 5. Poli Filter Chips
-                        JadwalPoliFilter(
-                          poliList: _poliList,
-                          selectedPoli: _selectedPoli,
-                          onPoliSelected: (poli) {
-                            setState(() => _selectedPoli = poli);
-                          },
-                        ),
-                        const SizedBox(height: 20),
+                          // 5. Poli Filter Chips (Real SIMRS /layanan/list)
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            child: _isLoadingPoli
+                                ? const PoliChipsSkeleton(
+                                    key: ValueKey('poli_chips_skeleton'),
+                                  )
+                                : poliNames.isNotEmpty
+                                    ? JadwalPoliFilter(
+                                        key: const ValueKey('poli_chips_data'),
+                                        poliList: poliNames,
+                                        selectedPoli: _selectedPoli?.nama ?? '',
+                                        includeAllOption: false,
+                                        onPoliSelected: (poliNama) {
+                                          final target = _listPoli.firstWhere(
+                                            (p) => p.nama == poliNama,
+                                            orElse: () => _listPoli.first,
+                                          );
+                                          _muatJadwalPoli(target);
+                                        },
+                                      )
+                                    : const SizedBox.shrink(),
+                          ),
+                          const SizedBox(height: 20),
 
-                        // 6. Daftar Dokter
-                        JadwalDokterList(dokterList: _filteredDokter),
-                        const SizedBox(height: 20),
+                          // 6. Daftar Dokter / Loading / Error State
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            child: _buildJadwalContent(),
+                          ),
+                          const SizedBox(height: 20),
 
-                        // 7. Footer Note
-                        const JadwalFooterNote(),
-                        const SizedBox(height: 28),
-                      ],
+                          // 7. Footer Note
+                          const JadwalFooterNote(),
+                          const SizedBox(height: 28),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -185,6 +380,78 @@ class _JadwalScreenState extends State<JadwalScreen> {
     );
   }
 
+  Widget _buildJadwalContent() {
+    if (_isLoadingPoli || _isLoadingJadwal) {
+      return const JadwalDokterListSkeleton(
+        key: ValueKey('jadwal_content_loading'),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        key: const ValueKey('jadwal_content_error'),
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kCardBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Color(0xFFDC2626),
+              size: 40,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Gagal Memuat Jadwal',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: kInk,
+                fontFamily: kFontFamily,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: kMuted,
+                height: 1.4,
+                fontFamily: kFontFamily,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (_listPoli.isEmpty || _selectedPoli == null) {
+                  _muatDaftarPoli(forceRefresh: true);
+                } else {
+                  _muatJadwalPoli(_selectedPoli!, forceRefresh: true);
+                }
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return JadwalDokterList(dokterList: _filteredDokter);
+  }
 
   /// Sub-header section "Jadwal Dokter" dengan label keterangan.
   Widget _buildSectionTitle() {

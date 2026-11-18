@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pku_gamping_app/core/config/app_config.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/app_feedback_service.dart';
 
@@ -10,17 +11,8 @@ class ApiClient {
   // ===========================================================================
   // KONFIGURASI BASE URL BACKEND
   // ===========================================================================
-  // Pilih salah satu URL di bawah sesuai lingkungan pengujian Anda:
-  // - emulatorUrl: Jika backend jalan di laptop dan dites via Android Emulator
-  // - lanUrl     : Jika dites via HP fisik (sesuaikan IP laptop Anda)
-  // - productionUrl: Jika backend sudah dideploy ke server online/staging
-  static const String emulatorUrl = 'http://10.0.2.2:8000/api/v1';
-  static const String lanUrl = 'http://192.168.1.100:8000/api/v1';
-  static const String productionUrl = 'https://simrs.pkugamping.com/api/v1';
-
-  /// URL aktif yang digunakan oleh aplikasi.
-  /// Ubah baris ini saat ingin mengarahkan ke IP backend Anda.
-  static String baseUrl = emulatorUrl;
+  /// URL aktif yang digunakan oleh aplikasi, mengacu ke [AppConfig.baseUrl].
+  static String baseUrl = AppConfig.baseUrl;
 
   static Dio? _dioInstance;
 
@@ -42,8 +34,8 @@ class ApiClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(seconds: 20),
+        connectTimeout: Duration(seconds: AppConfig.connectTimeoutSeconds),
+        receiveTimeout: Duration(seconds: AppConfig.receiveTimeoutSeconds),
         sendTimeout: const Duration(seconds: 20),
         headers: {
           'Accept': 'application/json',

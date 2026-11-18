@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-
-const Color _navPrimaryBlue = Color(0xFF0D4FC1);
-const Color _navMuted = Color(0xFF91A3BE);
-const Color _navBorder = Color(0xFFE1E6EE);
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
+import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 
 /// Unified Bottom Navigation Bar untuk RS PKU Muhammadiyah Gamping.
 ///
-/// Menyediakan 5 slot interaksi:
-/// 1. Beranda (index 0)
-/// 2. Antrean (index 1)
-/// 3. (+) Daftar (Tombol Action tengah)
-/// 4. Jadwal (index 3)
-/// 5. Profil (index 4)
+/// Menyediakan 5 slot interaksi dengan indikator aktif biru tipis lembut,
+/// pembeda ikon *outlined* ↔ *filled*, serta tombol utama `+ Daftar`
+/// bertaktil + haptic dengan aksen cincin emas hangat.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -28,19 +23,26 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _navBorder)),
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.cardBorder)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A17233B),
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 64,
+          height: 66,
           child: Row(
             children: [
               // 1. Beranda
               _buildNavItem(
-                index: 0,
-                icon: Icons.home_rounded,
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
                 label: 'Beranda',
                 isSelected: selectedIndex == 0,
                 onTap: () => onItemSelected(0),
@@ -48,52 +50,57 @@ class AppBottomNav extends StatelessWidget {
 
               // 2. Antrean
               _buildNavItem(
-                index: 1,
                 icon: Icons.confirmation_number_outlined,
+                activeIcon: Icons.confirmation_number_rounded,
                 label: 'Antrean',
                 isSelected: selectedIndex == 1,
                 onTap: () => onItemSelected(1),
               ),
 
-              // 3. Tombol Tengah (+) "Daftar"
+              // 3. Tombol Tengah (+) "Daftar" (Aksi Penting: Tactile + Haptic + Gold Ring)
               Expanded(
-                child: GestureDetector(
+                child: PressableScale(
                   onTap: onDaftarPressed,
-                  behavior: HitTestBehavior.opaque,
+                  pressedScale: 0.94,
+                  enableHaptic: true,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Transform.translate(
-                        offset: const Offset(0, -17),
+                        offset: const Offset(0, -16),
                         child: Container(
-                          width: 46,
-                          height: 46,
-                          decoration: const BoxDecoration(
-                            color: _navPrimaryBlue,
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
-                            boxShadow: [
+                            border: Border.all(
+                              color: AppColors.goldBorder,
+                              width: 1.6,
+                            ),
+                            boxShadow: const [
                               BoxShadow(
-                                color: Color(0x330D4FC1),
+                                color: Color(0x300D4FC1),
                                 blurRadius: 10,
                                 offset: Offset(0, 4),
                               ),
                             ],
                           ),
                           child: const Icon(
-                            Icons.add,
+                            Icons.add_rounded,
                             color: Colors.white,
                             size: 27,
                           ),
                         ),
                       ),
                       Transform.translate(
-                        offset: const Offset(0, -17),
+                        offset: const Offset(0, -15),
                         child: const Text(
                           'Daftar',
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _navPrimaryBlue,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -104,8 +111,8 @@ class AppBottomNav extends StatelessWidget {
 
               // 4. Jadwal
               _buildNavItem(
-                index: 3,
                 icon: Icons.calendar_month_outlined,
+                activeIcon: Icons.calendar_month_rounded,
                 label: 'Jadwal',
                 isSelected: selectedIndex == 3,
                 onTap: () => onItemSelected(3),
@@ -113,8 +120,8 @@ class AppBottomNav extends StatelessWidget {
 
               // 5. Profil
               _buildNavItem(
-                index: 4,
                 icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
                 label: 'Profil',
                 isSelected: selectedIndex == 4,
                 onTap: () => onItemSelected(4),
@@ -127,25 +134,43 @@ class AppBottomNav extends StatelessWidget {
   }
 
   Widget _buildNavItem({
-    required int index,
     required IconData icon,
+    required IconData activeIcon,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final color = isSelected ? _navPrimaryBlue : _navMuted;
+    final color = isSelected ? AppColors.primary : AppColors.textMuted;
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        splashColor: _navPrimaryBlue.withValues(alpha: 0.1),
+        splashColor: AppColors.primary.withValues(alpha: 0.08),
         highlightColor: Colors.transparent,
         child: SizedBox(
-          height: 64,
+          height: 66,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 24, color: color),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSelected ? 14 : 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primarySoft
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  isSelected ? activeIcon : icon,
+                  size: 22,
+                  color: color,
+                ),
+              ),
               const SizedBox(height: 3),
               Text(
                 label,

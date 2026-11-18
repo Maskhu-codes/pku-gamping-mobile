@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 import 'pendaftaran_constants.dart';
 
-/// Bagian pemilihan Jaminan Pasien (Umum/Pribadi vs Relasi)
-/// serta banner edukasi pasien BPJS via Mobile JKN.
+/// Bagian pemilihan Jaminan Pasien (Umum/Pribadi, BPJS Kesehatan, Relasi)
+/// serta form input Nomor Kartu, Nomor Rujukan, dan Nomor HP saat BPJS dipilih.
 class PendaftaranJaminanSelector extends StatelessWidget {
   const PendaftaranJaminanSelector({
     super.key,
     required this.selectedJaminan,
     required this.onJaminanChanged,
+    this.noKartuBpjsController,
+    this.noRujukanBpjsController,
+    this.noHpBpjsController,
+    this.onBpjsFieldChanged,
   });
 
   final JenisJaminan selectedJaminan;
   final ValueChanged<JenisJaminan> onJaminanChanged;
+  final TextEditingController? noKartuBpjsController;
+  final TextEditingController? noRujukanBpjsController;
+  final TextEditingController? noHpBpjsController;
+  final ValueChanged<String>? onBpjsFieldChanged;
 
   @override
   Widget build(BuildContext context) {
+    final isBpjs = selectedJaminan == JenisJaminan.bpjs;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -30,7 +40,7 @@ class PendaftaranJaminanSelector extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // ── Radio Opsi Row ──
+        // ── Radio Opsi Row 1: Umum / Pribadi & BPJS Kesehatan ──
         Row(
           children: [
             Expanded(
@@ -42,15 +52,80 @@ class PendaftaranJaminanSelector extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildRadioOption(
-                label: 'Relasi',
-                value: JenisJaminan.relasi,
+                label: 'BPJS Kesehatan',
+                value: JenisJaminan.bpjs,
               ),
             ),
           ],
         ),
+        const SizedBox(height: 10),
+
+        // ── Radio Opsi Row 2: Relasi ──
+        _buildRadioOption(
+          label: 'Relasi',
+          value: JenisJaminan.relasi,
+        ),
         const SizedBox(height: 12),
 
-        // ── Banner Info Pasien BPJS ──
+        // ── Form Input Khusus BPJS Kesehatan ──
+        if (isBpjs) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: kPendaftaranPrimary.withValues(alpha: 0.35)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0A0D4FC1),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Data Kepesertaan BPJS Kesehatan',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: kPendaftaranInk,
+                    fontFamily: kPendaftaranFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildBpjsInputField(
+                  fieldKey: const Key('bpjs_no_kartu_field'),
+                  controller: noKartuBpjsController,
+                  label: 'Nomor Kartu BPJS',
+                  hint: 'Masukkan 13 digit nomor kartu BPJS',
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                _buildBpjsInputField(
+                  fieldKey: const Key('bpjs_no_rujukan_field'),
+                  controller: noRujukanBpjsController,
+                  label: 'Nomor Rujukan',
+                  hint: 'Masukkan nomor rujukan FKTP / RS',
+                  keyboardType: TextInputType.text,
+                ),
+                const SizedBox(height: 12),
+                _buildBpjsInputField(
+                  fieldKey: const Key('bpjs_no_hp_field'),
+                  controller: noHpBpjsController,
+                  label: 'Nomor HP Aktif',
+                  hint: 'Contoh: 081234567890',
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // ── Banner Info Pasien BPJS / Umum ──
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
@@ -71,31 +146,84 @@ class PendaftaranJaminanSelector extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: kPendaftaranBannerText,
-                      fontFamily: kPendaftaranFontFamily,
-                      height: 1.4,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Pasien BPJS melakukan pendaftaran melalui aplikasi ',
-                      ),
-                      TextSpan(
-                        text: 'Mobile JKN',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF78350F),
-                        ),
-                      ),
-                      TextSpan(text: '.'),
-                    ],
+                child: Text(
+                  isBpjs
+                      ? 'Pastikan nomor kartu BPJS, nomor rujukan aktif, dan nomor HP sudah benar sebelum konfirmasi pendaftaran.'
+                      : 'Pilih BPJS Kesehatan apabila Anda mendaftar menggunakan jaminan BPJS dengan surat rujukan aktif.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: kPendaftaranBannerText,
+                    fontFamily: kPendaftaranFontFamily,
+                    height: 1.4,
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBpjsInputField({
+    required Key fieldKey,
+    required TextEditingController? controller,
+    required String label,
+    required String hint,
+    required TextInputType keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: kPendaftaranInk,
+            fontFamily: kPendaftaranFontFamily,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          key: fieldKey,
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onBpjsFieldChanged,
+          style: const TextStyle(
+            fontSize: 13,
+            color: kPendaftaranInk,
+            fontFamily: kPendaftaranFontFamily,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontSize: 12,
+              color: kPendaftaranMuted,
+              fontFamily: kPendaftaranFontFamily,
+            ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 11,
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kPendaftaranCardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kPendaftaranCardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: kPendaftaranPrimary,
+                width: 1.4,
+              ),
+            ),
           ),
         ),
       ],

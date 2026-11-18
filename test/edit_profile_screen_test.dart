@@ -9,7 +9,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       'pku_nama_pasien': 'Dahlan Muda',
-      'pku_no_rm': '01-88-24-90',
+      'pku_no_rm': '347104100407951',
       'pku_nik': '3471040506920001',
       'pku_user_password': 'password123',
     });

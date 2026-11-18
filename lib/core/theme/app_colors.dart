@@ -4,16 +4,22 @@ class AppColors {
   // Primary Blue - warna utama RS PKU Muhammadiyah Gamping
   static const Color primary = Color(0xFF0D4FC1);
   static const Color primaryLight = Color(0xFF1976D2);
-  static const Color primaryDark = Color(0xFF073F9F);
+  static const Color primaryDark = Color(0xFF0A3A8A);
+  static const Color primarySoft = Color(0xFFF2F6FC);
+  static const Color primaryTintBorder = Color(0xFFDBE7FA);
 
-  // Accent
-  static const Color accent = Color(0xFFFFC107);
+  // Accent - emas hangat tipis (classy Muhammadiyah accent)
+  static const Color accent = Color(0xFFD4A017);
+  static const Color goldSoft = Color(0xFFFFFBF0);
+  static const Color goldBorder = Color(0xFFF3E0B2);
+  static const Color goldText = Color(0xFF8A5D00);
 
   // Background & Surface
   static const Color background = Color(0xFFF5F7FA);
   static const Color pageBackground = Color(0xFFF6F8FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color cardBorder = Color(0xFFE2E8F0);
 
   // Text
   static const Color textPrimary = Color(0xFF202124);
