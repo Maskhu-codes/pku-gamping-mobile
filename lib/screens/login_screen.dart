@@ -92,8 +92,13 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!mounted) return;
 
-      // Validasi respon dari backend: pastikan statusnya true
-      if (res['status'] != true) {
+      // Validasi respon dari backend: pastikan statusnya berhasil (true/success)
+      final isSuccess = res['status'] == true ||
+          res['status'] == 'success' ||
+          res['status'] == 1 ||
+          res['status'] == 200;
+
+      if (!isSuccess) {
         throw Exception(
           res['message']?.toString() ?? 'Email atau kata sandi salah.',
         );
