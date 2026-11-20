@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
-import 'package:pku_gamping_app/services/simrs_service.dart';
-import 'package:pku_gamping_app/core/session/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _didCheckArgs = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -44,6 +45,33 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didCheckArgs) {
+      _didCheckArgs = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        if (args['email'] != null) {
+          _emailController.text = args['email'].toString();
+        }
+        if (args['message'] != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(args['message'].toString()),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          });
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _animController.dispose();
     _emailController.dispose();
@@ -52,56 +80,56 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() {
-    _isLoading = true;
-  });
+    setState(() => _isLoading = true);
 
-  try {
-    final response = await SimrsService.login(
-      username: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
-
-    if (!mounted) return;
-
-    // Pastikan backend menyatakan login berhasil.
-    if (response['status'] != true) {
-      throw Exception(
-        response['message'] ?? 'Login gagal.',
+    try {
+      final res = await SimrsService.login(
+        username: _emailController.text.trim(),
+        password: _passwordController.text,
       );
-    }
 
-    // Pastikan token benar-benar tersimpan.
-    if (!SessionManager.isLoggedIn) {
-      throw Exception('Token login tidak berhasil disimpan.');
-    }
+      if (!mounted) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.home,
-      arguments: TopNotificationType.loginSuccess,
-    );
-  } catch (e) {
-    if (!mounted) return;
+      // Validasi respon dari backend: pastikan statusnya berhasil (true/success)
+      final isSuccess = res['status'] == true ||
+          res['status'] == 'success' ||
+          res['status'] == 1 ||
+          res['status'] == 200;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          e.toString().replaceFirst('Exception: ', ''),
+      if (!isSuccess) {
+        throw Exception(
+          res['message']?.toString() ?? 'Email atau kata sandi salah.',
+        );
+      }
+
+      // Pastikan sesi dan token login tersimpan di storage lokal
+      if (!SessionManager.isLoggedIn) {
+        throw Exception('Token login tidak berhasil disimpan.');
+      }
+
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.home,
+        arguments: TopNotificationType.loginSuccess,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
