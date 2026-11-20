@@ -38,15 +38,30 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late int _currentIndex;
 
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || widget.notification == null) return;
-      TopNotification.show(context, type: widget.notification!);
-    });
-  }
+  
+@override
+void initState() {
+  super.initState();
+  _currentIndex = widget.initialIndex;
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+
+    debugPrint('=== HOME SCREEN TERBUKA ===');
+    debugPrint('Login: ${SessionManager.isLoggedIn}');
+    debugPrint('Token tersedia: ${SessionManager.token?.isNotEmpty ?? false}');
+
+    AntreanService.refreshAntreanDariApi();
+
+    if (widget.notification != null) {
+      TopNotification.show(
+        context,
+        type: widget.notification!,
+      );
+    }
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +157,7 @@ class HomeTabContent extends StatelessWidget {
                       },
                     ),
 
-                    // ── Menu Cepat (Hasil Lab, Riwayat, Ambil Obat) ──
+                    // ── Menu Cepat (Penunjang, Riwayat) ──
                     const HomeQuickLinks(),
 
                     // ── Section Informasi & Berita ──

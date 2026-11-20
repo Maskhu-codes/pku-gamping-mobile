@@ -26,9 +26,8 @@ class QueueDetailScreen extends StatelessWidget {
       context: context,
       builder: (context) => Theme(
         data: Theme.of(context).copyWith(
-          textTheme: Theme.of(
-            context,
-          ).textTheme.apply(fontFamily: 'Plus Jakarta Sans'),
+          textTheme: Theme.of(context).textTheme
+              .apply(fontFamily: 'Plus Jakarta Sans'),
         ),
         child: AlertDialog(
           title: const Text('Bantuan antrean'),
@@ -205,7 +204,6 @@ class QueueDetailScreen extends StatelessWidget {
                           nomorAntrean: antrean?.nomorAntrean ?? 'A-000',
                           nomorSebelumnya: antrean?.nomorSebelumnya ?? '-',
                           poli: antrean?.poli ?? '-',
-                          gedungLokasi: antrean?.gedungLokasi ?? '-',
                         ),
                         const SizedBox(height: 24),
 
@@ -215,7 +213,6 @@ class QueueDetailScreen extends StatelessWidget {
                           dokter: antrean?.dokter ?? '-',
                           tanggalJam:
                               '${antrean?.tanggal ?? '-'} • ${antrean?.jam ?? '-'}',
-                          gedungLokasi: antrean?.gedungLokasi ?? '-',
                           jenisJaminan: antrean?.jenisJaminan ?? '-',
                         ),
                         const SizedBox(height: 26),
@@ -257,7 +254,8 @@ class QueueDetailScreen extends StatelessWidget {
                           style: TextStyle(color: _muted, fontSize: 12),
                         ),
                         TextButton.icon(
-                          onPressed: onContact ??
+                          onPressed:
+                              onContact ??
                               () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -368,13 +366,11 @@ class _QueueNumberCard extends StatelessWidget {
     required this.nomorAntrean,
     required this.nomorSebelumnya,
     required this.poli,
-    required this.gedungLokasi,
   });
 
   final String nomorAntrean;
   final String nomorSebelumnya;
   final String poli;
-  final String gedungLokasi;
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +470,7 @@ class _QueueNumberCard extends StatelessWidget {
                           text: 'Silakan bersiap di ruang tunggu ',
                         ),
                         TextSpan(
-                          text: '$poli $gedungLokasi',
+                          text: poli,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         const TextSpan(text: ' saat antrean mencapai '),
@@ -504,14 +500,12 @@ class _VisitInformationCard extends StatelessWidget {
     required this.poli,
     required this.dokter,
     required this.tanggalJam,
-    required this.gedungLokasi,
     required this.jenisJaminan,
   });
 
   final String poli;
   final String dokter;
   final String tanggalJam;
-  final String gedungLokasi;
   final String jenisJaminan;
 
   @override
@@ -587,14 +581,6 @@ class _VisitInformationCard extends StatelessWidget {
             iconBackground: const Color(0xFFE8E9EB),
             label: 'Waktu Periksa',
             value: tanggalJam,
-          ),
-          const SizedBox(height: 15),
-          _VisitInformationRow(
-            icon: Icons.location_on_outlined,
-            iconColor: const Color(0xFF795500),
-            iconBackground: const Color(0xFFFFDEA3),
-            label: 'Lokasi Pelayanan',
-            value: gedungLokasi,
           ),
         ],
       ),

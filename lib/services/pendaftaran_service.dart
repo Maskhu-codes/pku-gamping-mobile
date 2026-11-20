@@ -72,6 +72,94 @@ class PendaftaranService {
     }
   }
 
+  /// Mengirim pendaftaran booking ke backend SIMRS
+static Future<Map<String, dynamic>> buatBooking({
+  required String fsMr,
+  required String tanggalLahir,
+  required String kodeLayanan,
+  required String kodeDokter,
+  required int hari,
+  required String tanggalAntrian,
+  required String sesiPoli,
+  required String jamMulai,
+}) async {
+  try {
+    final response = await _dio.post(
+      '/booking/simpan',
+      data: {
+        'fs_mr': fsMr,
+        'fd_tgl_lahir': tanggalLahir,
+        'fs_kd_layanan': kodeLayanan,
+        'fs_kd_petugas_medis': kodeDokter,
+        'fn_hari': hari,
+        'fd_tgl_antrian': tanggalAntrian,
+        'fs_kd_sesion_poli': sesiPoli,
+        'fs_jam_mulai': jamMulai,
+      },
+    );
+
+    if (response.data is Map) {
+      final data = Map<String, dynamic>.from(response.data);
+
+      if (data['status'] == true) {
+        return data;
+      }
+
+      throw Exception(
+        data['message'] ?? 'Booking gagal dilakukan',
+      );
+    }
+
+    throw Exception('Format respons booking tidak valid');
+  } on DioException catch (e) {
+  throw Exception(
+    ApiClient.extractErrorMessage(
+      e,
+      defaultMessage: 'Gagal mengirim pendaftaran.',
+    ),
+  );
+}
+}
+
+/// Mengambil jadwal praktik dokter langsung dari SIMRS
+static Future<List<JadwalSimrsModel>> getJadwalSimrs({
+  required String kodeLayanan,
+  required String kodeDokter,
+}) async {
+  try {
+    final response = await _dio.get(
+      '/jadwal/list',
+      queryParameters: {
+        'fs_kd_layanan': kodeLayanan,
+        'fs_kd_petugas_medis': kodeDokter,
+      },
+    );
+
+    final responseData = response.data;
+
+    if (responseData is Map &&
+        responseData['status'] == true &&
+        responseData['data'] is List) {
+      return (responseData['data'] as List)
+          .map(
+            (item) => JadwalSimrsModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList();
+    }
+
+    throw Exception('Format respons jadwal SIMRS tidak valid');
+  } on DioException catch (e) {
+    throw Exception(
+      ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Gagal mengambil jadwal dokter.',
+      ),
+    );
+  }
+}
+
   static List<DokterPendaftaranModel> _filterMockDokter(String? poliId) {
     if (poliId == null) {
       return PendaftaranDummyData.listDokter;
@@ -79,3 +167,4 @@ class PendaftaranService {
     return PendaftaranDummyData.getDokterByPoliId(poliId);
   }
 }
+

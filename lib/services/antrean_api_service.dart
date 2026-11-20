@@ -7,7 +7,7 @@ class AntreanApiService {
   // Mengambil booking aktif pasien
   static Future<Map<String, dynamic>> getBookingAktif() async {
     try {
-      final response = await ApiClient.dio.get('/booking/aktif');
+      final response = await ApiClient.dio.get('booking/aktif');
 
       final data = response.data;
 
@@ -35,12 +35,14 @@ class AntreanApiService {
   }) async {
     try {
       final response = await ApiClient.dio.get(
-        '/antrean/status',
+        'antrean/status',
         queryParameters: {
           'fs_kd_layanan': kodeLayanan,
           'fs_kd_petugas_medis': kodeDokter,
-          'fs_kd_antrian': ?nomorAntrean,
-          'tanggal': ?tanggal,
+          if (nomorAntrean != null && nomorAntrean.isNotEmpty)
+            'fs_kd_antrian': nomorAntrean,
+          if (tanggal != null && tanggal.isNotEmpty)
+            'tanggal': tanggal,
         },
       );
 
@@ -61,11 +63,15 @@ class AntreanApiService {
     }
   }
 
-  static Future<AntreanAktifModel?> getBookingAktifModel() async {
+  
+static Future<AntreanAktifModel?> getBookingAktifModel() async {
+  try {
     final response = await getBookingAktif();
 
     if (response['status'] != true) {
-      throw const SimrsApiException(message: 'Gagal mengambil booking aktif.');
+      throw const SimrsApiException(
+        message: 'Gagal mengambil booking aktif.',
+      );
     }
 
     final data = response['data'];
@@ -81,7 +87,16 @@ class AntreanApiService {
     }
 
     return AntreanAktifModel.fromBookingJson(data);
+  } on SimrsApiException catch (e) {
+    if (e.statusCode == 404 &&
+        e.message == 'Tidak ada pendaftaran aktif') {
+      return null;
+    }
+
+    rethrow;
   }
+}
+
 
   static Future<StatusAntreanModel> getStatusAntreanModel({
     required String kodeLayanan,

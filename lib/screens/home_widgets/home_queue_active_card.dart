@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
+
 import 'home_constants.dart';
 
 /// Kartu antrean ketika pasien SUDAH MEMILIKI antrean aktif.
@@ -33,7 +34,7 @@ class HomeQueueActiveCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Baris Tag Poli, Lokasi, dan Status Antrean
+          // Baris Tag Poli dan Status Antrean
           Row(
             children: [
               _buildTag(
@@ -41,19 +42,7 @@ class HomeQueueActiveCard extends StatelessWidget {
                 foreground: kHomePrimaryBlue,
                 background: const Color(0xFFF0F5FF),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  antrean.gedungLokasi,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: kHomeMuted,
-                    fontSize: 12,
-                    fontFamily: kHomeFontFamily,
-                  ),
-                ),
-              ),
+              const Spacer(),
               const SizedBox(width: 6),
               _buildTag(
                 label: antrean.statusAntrean,

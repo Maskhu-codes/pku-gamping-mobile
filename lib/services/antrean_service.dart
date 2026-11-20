@@ -62,7 +62,6 @@ class AntreanService {
       jam: jam,
       tanggal: tanggal,
       jenisJaminan: jenisJaminan,
-      gedungLokasi: gedungLokasi,
       statusAntrean: statusAntreanText,
       sisaAntrean: sisaAntrean,
     );
@@ -81,7 +80,6 @@ class AntreanService {
       namaPasien: 'Dahlan Muda',
       noRm: '01-88-24-90',
       poli: 'Poli Penyakit Dalam',
-      gedungLokasi: 'Gedung A • Lt. 2',
       dokter: 'dr. Hendra Wicaksono, Sp.PD',
       jam: '07:30 WIB',
       statusAntrean: 'Antrean Berjalan',
@@ -127,10 +125,15 @@ class AntreanService {
 
   
 static Future<void> refreshAntreanDariApi() async {
+  debugPrint('=== REFRESH ANTREAN DIPANGGIL ===');
+
   if (isLoadingApi.value) return;
 
-  // Pastikan pengguna memiliki sesi dan token.
   final token = SessionManager.token;
+
+  debugPrint('Status login: ${SessionManager.isLoggedIn}');
+  debugPrint('Token tersedia: ${token?.isNotEmpty ?? false}');
+
 
   if (!SessionManager.isLoggedIn ||
       token == null ||

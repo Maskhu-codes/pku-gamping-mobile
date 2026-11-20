@@ -22,13 +22,12 @@ class SimrsService {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/login',
-        data: {
-          'username': username,
-          'email': username,
-          'password': password,
-        },
-      );
+  'auth/login',
+  data: {
+    'fs_email': username,
+    'fs_password': password,
+  },
+);
 
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>

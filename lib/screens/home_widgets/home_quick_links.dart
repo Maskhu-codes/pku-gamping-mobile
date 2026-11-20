@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
 import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
+
 import 'home_constants.dart';
 
-/// Baris menu cepat beranda: Hasil Lab dan Riwayat.
+/// Baris menu cepat beranda: Penunjang dan Riwayat.
 class HomeQuickLinks extends StatelessWidget {
   const HomeQuickLinks({super.key});
 
@@ -14,10 +15,10 @@ class HomeQuickLinks extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // 1. Hasil Lab (Pemeriksaan Penunjang)
+          // 1. Pemeriksaan Penunjang
           _QuickLinkItem(
             icon: Icons.biotech_outlined,
-            label: 'Hasil Lab',
+            label: 'Penunjang',
             onTap: () {
               Navigator.pushNamed(context, AppRoutes.pemeriksaanPenunjang);
             },
@@ -78,11 +79,7 @@ class _QuickLinkItem extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(
-              icon,
-              color: kHomePrimaryBlue,
-              size: 28,
-            ),
+            child: Icon(icon, color: kHomePrimaryBlue, size: 28),
           ),
           const SizedBox(height: 8),
           Text(

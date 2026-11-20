@@ -4,7 +4,6 @@ import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_active_card.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_brand_header.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_doctor_card.dart';
-import 'package:pku_gamping_app/screens/queue_widgets/queue_room_directions_card.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_service_value_card.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
@@ -72,7 +71,6 @@ class _QueueScreenState extends State<QueueScreen> {
                               poli: antrean.poli,
                               tanggal: antrean.tanggal,
                               jam: antrean.jam,
-                              gedungLokasi: antrean.gedungLokasi,
                             ),
 
                             // ── Kartu Antrean Aktif + Nomor Live ──
@@ -118,12 +116,6 @@ class _QueueScreenState extends State<QueueScreen> {
                         },
                       ),
 
-
-                            // ── Petunjuk Lokasi Ruangan ──
-                            RoomDirectionsCard(
-                              gedungLokasi: antrean.gedungLokasi,
-                            ),
-
                             // ── Nilai Layanan SIGAP ──
                             const QueueServiceValueCard(),
                           ],
@@ -168,8 +160,7 @@ class _QueueScreenState extends State<QueueScreen> {
 
   Widget _buildEmptyQueue(BuildContext context) {
     return ScrollConfiguration(
-      behavior:
-          ScrollConfiguration.of(context).copyWith(overscroll: false),
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 28),
@@ -194,8 +185,7 @@ class _QueueScreenState extends State<QueueScreen> {
                   const AppEmptyState(
                     icon: Icons.calendar_today_outlined,
                     title: 'Belum Ada Antrean Aktif',
-                    message:
-                        'Anda belum mendaftar layanan dokter atau belum memiliki antrean aktif hari ini.',
+                    message: 'Anda belum mendaftar layanan dokter atau belum memiliki antrean aktif hari ini.',
                     circleSize: 64,
                     iconSize: 30,
                   ),
@@ -288,9 +278,6 @@ class _QueueScreenState extends State<QueueScreen> {
                   ),
                 ],
               ),
-            ),
-            const RoomDirectionsCard(
-              gedungLokasi: 'Gedung Rawat Jalan Terpadu',
             ),
             const QueueServiceValueCard(),
           ],

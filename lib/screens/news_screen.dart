@@ -36,9 +36,9 @@ class NewsScreen extends StatelessWidget {
           mainAxisSpacing: 14,
           childAspectRatio: 0.72,
         ),
-        itemCount: kHomeNewsList.length,
+        itemCount: kHomeSortedNews.length,
         itemBuilder: (context, index) {
-          return _NewsCard(news: kHomeNewsList[index]);
+          return _NewsCard(news: kHomeSortedNews[index]);
         },
       ),
     );

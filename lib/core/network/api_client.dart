@@ -14,13 +14,16 @@ class ApiClient {
   // - emulatorUrl: Jika backend jalan di laptop dan dites via Android Emulator
   // - lanUrl     : Jika dites via HP fisik (sesuaikan IP laptop Anda)
   // - productionUrl: Jika backend sudah dideploy ke server online/staging
-  static const String emulatorUrl = 'http://10.0.2.2:8000/api/v1';
-  static const String lanUrl = 'http://192.168.1.100:8000/api/v1';
-  static const String productionUrl = 'https://simrs.pkugamping.com/api/v1';
+  static const String emulatorUrl =
+    'http://10.0.2.2/pkug-onlineapi-master/index.php/api/';
 
-  /// URL aktif yang digunakan oleh aplikasi.
-  /// Ubah baris ini saat ingin mengarahkan ke IP backend Anda.
-  static String baseUrl = emulatorUrl;
+static const String lanUrl =
+    'http://IP-LAPTOP-KAMU/pkug-onlineapi-master/index.php/api/';
+
+static const String productionUrl =
+    'https://simrs.pkugamping.com/api/v1';
+
+static String baseUrl = emulatorUrl;
 
   static Dio? _dioInstance;
 

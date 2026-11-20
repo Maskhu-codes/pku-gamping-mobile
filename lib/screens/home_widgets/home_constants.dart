@@ -13,71 +13,94 @@ const String kHomeFontFamily = 'Plus Jakarta Sans';
 /// Model Item Berita Beranda
 class HomeNewsItem {
   final String title;
-  final String date;
+  final DateTime publishedAt;
   final String category;
   final IconData icon;
 
-  const HomeNewsItem({
+  HomeNewsItem({
     required this.title,
-    required this.date,
+    required this.publishedAt,
     required this.category,
     required this.icon,
   });
+
+  String get date {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return '${publishedAt.day} ${months[publishedAt.month - 1]} ${publishedAt.year}';
+  }
 }
 
 /// Data Berita Dummy
-const List<HomeNewsItem> kHomeNewsList = [
+final List<HomeNewsItem> kHomeNewsList = List<HomeNewsItem>.unmodifiable([
   HomeNewsItem(
     title: 'Layanan Kateterisasi Jantung 24 Jam di RS PKU Gamping',
-    date: '24 Okt 2026',
+    publishedAt: DateTime(2026, 10, 24),
     category: 'Layanan Baru',
     icon: Icons.favorite_border_rounded,
   ),
   HomeNewsItem(
     title: 'Tips Menjaga Kesehatan Jantung di Usia Produktif',
-    date: '22 Okt 2026',
+    publishedAt: DateTime(2026, 10, 22),
     category: 'Edukasi',
     icon: Icons.health_and_safety_outlined,
   ),
   HomeNewsItem(
     title: 'Jadwal Poliklinik Rawat Jalan Selama Libur Nasional',
-    date: '18 Okt 2026',
+    publishedAt: DateTime(2026, 10, 18),
     category: 'Pengumuman',
     icon: Icons.campaign_outlined,
   ),
   HomeNewsItem(
     title: 'RS PKU Gamping Raih Akreditasi Paripurna',
-    date: '15 Okt 2026',
+    publishedAt: DateTime(2026, 10, 15),
     category: 'Prestasi',
     icon: Icons.verified_outlined,
   ),
   HomeNewsItem(
     title: 'Pendaftaran Vaksinasi Influenza Telah Dibuka',
-    date: '7 Okt 2026',
+    publishedAt: DateTime(2026, 10, 7),
     category: 'Pengumuman',
     icon: Icons.vaccines_outlined,
   ),
   HomeNewsItem(
     title: 'Mengenal Layanan Home Care RS PKU Gamping',
-    date: '30 Sep 2026',
+    publishedAt: DateTime(2026, 9, 30),
     category: 'Layanan',
     icon: Icons.home_outlined,
   ),
   HomeNewsItem(
     title: 'Kegiatan Donor Darah Bersama PMI Yogyakarta',
-    date: '24 Sep 2026',
+    publishedAt: DateTime(2026, 9, 24),
     category: 'Kegiatan',
     icon: Icons.bloodtype_outlined,
   ),
   HomeNewsItem(
     title: 'Pentingnya Pemeriksaan Kesehatan Berkala',
-    date: '16 Sep 2026',
+    publishedAt: DateTime(2026, 9, 16),
     category: 'Edukasi',
     icon: Icons.monitor_heart_outlined,
   ),
-];
+]);
+
+final List<HomeNewsItem> kHomeSortedNews = List<HomeNewsItem>.unmodifiable(
+  [...kHomeNewsList]
+    ..sort((first, second) => second.publishedAt.compareTo(first.publishedAt)),
+);
 
 /// Empat berita terbaru yang ditampilkan pada Beranda.
-final List<HomeNewsItem> kHomeLatestNews = kHomeNewsList
+final List<HomeNewsItem> kHomeLatestNews = kHomeSortedNews
     .take(4)
     .toList(growable: false);

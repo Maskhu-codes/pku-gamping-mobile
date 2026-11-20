@@ -4,7 +4,6 @@ class AntreanAktifModel {
   final String namaPasien; // e.g. "Dahlan Muda"
   final String noRm; // e.g. "01-88-24-90"
   final String poli; // e.g. "Poli Penyakit Dalam"
-  final String gedungLokasi; // e.g. "Gedung A • Lt. 2"
   final String dokter; // e.g. "dr. Hendra Wicaksono, Sp.PD"
   final String jam; // e.g. "07:30 WIB"
   final String statusAntrean; // e.g. "Antrean Berjalan"
@@ -21,7 +20,6 @@ final String? kodeDokter;
   required this.namaPasien,
   required this.noRm,
   required this.poli,
-  required this.gedungLokasi,
   required this.dokter,
   required this.jam,
   required this.statusAntrean,
@@ -40,7 +38,6 @@ final String? kodeDokter;
         'namaPasien': namaPasien,
         'noRm': noRm,
         'poli': poli,
-        'gedungLokasi': gedungLokasi,
         'dokter': dokter,
         'jam': jam,
         'statusAntrean': statusAntrean,
@@ -59,7 +56,6 @@ final String? kodeDokter;
         namaPasien: json['namaPasien'] as String? ?? 'Dahlan Muda',
         noRm: json['noRm'] as String? ?? '01-88-24-90',
         poli: json['poli'] as String? ?? 'Poli Penyakit Dalam',
-        gedungLokasi: json['gedungLokasi'] as String? ?? 'Gedung A • Lt. 2',
         dokter: json['dokter'] as String? ?? 'dr. Hendra Wicaksono, Sp.PD',
         jam: json['jam'] as String? ?? '07:30 WIB',
         statusAntrean: json['statusAntrean'] as String? ?? 'Antrean Berjalan',
@@ -75,7 +71,8 @@ final String? kodeDokter;
       );
 
       
-  factory AntreanAktifModel.fromBookingJson(
+  
+factory AntreanAktifModel.fromBookingJson(
   Map<String, dynamic> json,
 ) {
   String bacaString(String key) {
@@ -97,7 +94,6 @@ final String? kodeDokter;
     namaPasien: bacaString('nama_pasien'),
     noRm: bacaString('fs_rm'),
     poli: bacaString('poliName'),
-    gedungLokasi: bacaString('lokasi'),
     dokter: bacaString('dokterName'),
     jam: bacaString('fs_jam_mulai'),
     statusAntrean: 'Terdaftar',
@@ -105,13 +101,13 @@ final String? kodeDokter;
     tanggal: bacaString('fd_tgl_periksa'),
     jenisJaminan: bacaString('jenis_jaminan'),
 
-    // Data backend
     noBooking: bacaString('no_booking'),
     noUrut: bacaInt('no_urut'),
     kodeLayanan: bacaString('fs_kd_layanan'),
     kodeDokter: bacaString('fs_kd_petugas_medis'),
   );
 }
+
   /// Menghitung nomor antrean yang sedang dilayani saat ini
   /// Contoh: nomorAntrean="A-014", sisaAntrean=3 → "A-011"
   String get nomorSedangDilayani {

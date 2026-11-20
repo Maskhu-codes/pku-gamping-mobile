@@ -9,14 +9,12 @@ class DoctorSummaryCard extends StatelessWidget {
     required this.poli,
     required this.tanggal,
     required this.jam,
-    required this.gedungLokasi,
   });
 
   final String dokter;
   final String poli;
   final String tanggal;
   final String jam;
-  final String gedungLokasi;
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +87,6 @@ class DoctorSummaryCard extends StatelessWidget {
                       backgroundColor: const Color(0xFFDCE4FF),
                       textColor: const Color(0xFF092C68),
                     ),
-                    DoctorBadge(
-                      label: gedungLokasi,
-                      backgroundColor: const Color(0xFFE8E9EB),
-                      textColor: const Color(0xFF454B59),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -109,7 +102,10 @@ class DoctorSummaryCard extends StatelessWidget {
                 ),
                 Text(
                   poli,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(

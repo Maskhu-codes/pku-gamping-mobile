@@ -1,6 +1,6 @@
 
 class StatusAntreanModel {
-  final int sedangDilayani;
+  final String sedangDilayani;
   final int statusPasien;
 
   const StatusAntreanModel({
@@ -11,15 +11,11 @@ class StatusAntreanModel {
   factory StatusAntreanModel.fromJson(
     Map<String, dynamic> json,
   ) {
-    int bacaAngka(dynamic value) {
-      if (value is int) return value;
-      if (value is num) return value.toInt();
-      return int.tryParse(value?.toString() ?? '') ?? 0;
-    }
-
     return StatusAntreanModel(
-      sedangDilayani: bacaAngka(json['sedang_dilayani']),
-      statusPasien: bacaAngka(json['status_pasien']),
+      sedangDilayani:
+          json['sedang_dilayani']?.toString() ?? '-',
+      statusPasien:
+          int.tryParse(json['status_pasien']?.toString() ?? '') ?? 0,
     );
   }
 
@@ -28,11 +24,11 @@ class StatusAntreanModel {
       case 0:
         return 'Belum Terdaftar';
       case 1:
-        return 'Terdaftar - Menuju Triase';
+        return 'Terdaftar - Menuju Triage';
       case 2:
-        return 'Selesai Triase - Menunggu Poli';
+        return 'Selesai Triage - Menunggu Poli';
       case 3:
-        return 'Selesai Poli - Menuju Farmasi';
+        return 'Tercatat di Pelayanan Medis';
       default:
         return 'Status Tidak Diketahui';
     }

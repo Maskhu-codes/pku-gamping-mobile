@@ -129,3 +129,57 @@ extension JenisJaminanLabel on JenisJaminan {
     }
   }
 }
+
+/// Model jadwal praktik dokter dari API SIMRS
+class JadwalSimrsModel {
+  final String kodeDokter;
+  final String kodeLayanan;
+  final int hari;
+  final String tanggal;
+  final String namaHari;
+  final String sesiPoli;
+  final String jamMulai;
+  final String jamSelesai;
+  final int totalKuota;
+  final int terdaftar;
+  final bool isClosed;
+  final bool isFull;
+  final bool canBook;
+
+  const JadwalSimrsModel({
+    required this.kodeDokter,
+    required this.kodeLayanan,
+    required this.hari,
+    required this.tanggal,
+    required this.namaHari,
+    required this.sesiPoli,
+    required this.jamMulai,
+    required this.jamSelesai,
+    required this.totalKuota,
+    required this.terdaftar,
+    required this.isClosed,
+    required this.isFull,
+    required this.canBook,
+  });
+
+  factory JadwalSimrsModel.fromJson(Map<String, dynamic> json) {
+    return JadwalSimrsModel(
+      kodeDokter: json['FS_KD_DOKTER']?.toString() ?? '',
+      kodeLayanan: json['FS_KD_LAYANAN']?.toString() ?? '',
+      hari: int.tryParse(
+            (json['FN_HARI'] ?? json['fn_hari']).toString(),
+          ) ??
+          0,
+      tanggal: json['fd_tgl']?.toString() ?? '',
+      namaHari: json['fs_nm_hari']?.toString() ?? '',
+      sesiPoli: json['FS_KD_SESION_POLI']?.toString() ?? '',
+      jamMulai: json['FS_JAM_MULAI']?.toString() ?? '',
+      jamSelesai: json['FS_JAM_SELESAI']?.toString() ?? '',
+      totalKuota: int.tryParse(json['FN_MAX'].toString()) ?? 0,
+      terdaftar: int.tryParse(json['terdaftar'].toString()) ?? 0,
+      isClosed: json['is_closed'] == true,
+      isFull: json['is_full'] == true,
+      canBook: json['can_book'] == true,
+    );
+  }
+}
