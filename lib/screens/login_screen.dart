@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
@@ -89,20 +90,26 @@ class _LoginScreenState extends State<LoginScreen>
         password: _passwordController.text,
       );
 
+      if (!mounted) return;
+
       // Validasi respon dari backend: pastikan statusnya true
-      if (res['status'] == false) {
-        throw Exception(res['message']?.toString() ?? 'Email atau kata sandi salah.');
+      if (res['status'] != true) {
+        throw Exception(
+          res['message']?.toString() ?? 'Email atau kata sandi salah.',
+        );
       }
 
-      if (!mounted) return;
+      // Pastikan sesi dan token login tersimpan di storage lokal
+      if (!SessionManager.isLoggedIn) {
+        throw Exception('Token login tidak berhasil disimpan.');
+      }
+
       Navigator.pushReplacementNamed(
         context,
         AppRoutes.home,
         arguments: TopNotificationType.loginSuccess,
       );
-
-    }
-    catch (e) {
+    } catch (e) {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,8 +119,7 @@ class _LoginScreenState extends State<LoginScreen>
           behavior: SnackBarBehavior.floating,
         ),
       );
-   }
-    finally {
+    } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
