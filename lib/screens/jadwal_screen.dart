@@ -6,6 +6,7 @@ import 'package:pku_gamping_app/models/pendaftaran_model.dart';
 import 'package:pku_gamping_app/services/pendaftaran_service.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 import 'package:pku_gamping_app/widgets/hospital_brand_header.dart';
 import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 import 'jadwal_widgets/jadwal_constants.dart';
@@ -370,6 +371,14 @@ class _JadwalScreenState extends State<JadwalScreen> {
                     );
                   },
                   onDaftarPressed: () {
+                    if (!GuestGuard.check(
+                      context,
+                      featureName: 'pendaftaran layanan',
+                      message:
+                          'Untuk melakukan booking jadwal dokter dan pendaftaran layanan, Anda harus masuk ke akun pasien terlebih dahulu.',
+                    )) {
+                      return;
+                    }
                     Navigator.pushNamed(context, AppRoutes.pendaftaran);
                   },
                 ),

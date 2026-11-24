@@ -14,28 +14,6 @@ class PendaftaranDummyData {
     hubungan: 'Diri Sendiri',
   );
 
-  static const List<PasienModel> listPasienTersimpan = [
-    defaultPasien,
-    PasienModel(
-      id: 'p-2',
-      nama: 'Siti Aminah',
-      noRm: '347104100408892',
-      nik: '3471045678900002',
-      tanggalLahir: '24-08-1992',
-      isTerhubung: true,
-      hubungan: 'Istri',
-    ),
-    PasienModel(
-      id: 'p-3',
-      nama: 'Fahri Hamzah Muda',
-      noRm: '347104100409941',
-      nik: '3471049988770003',
-      tanggalLahir: '03-11-2018',
-      isTerhubung: true,
-      hubungan: 'Anak',
-    ),
-  ];
-
   static const List<PoliModel> listPoli = [
     PoliModel(
       id: 'poli-anak',

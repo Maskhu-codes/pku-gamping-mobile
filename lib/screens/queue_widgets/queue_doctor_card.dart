@@ -21,15 +21,16 @@ class DoctorSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 34, 16, 0),
+      margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D17233B),
-            blurRadius: 5,
+            color: Color(0x0617233B),
+            blurRadius: 8,
             offset: Offset(0, 2),
           ),
         ],
@@ -37,41 +38,20 @@ class DoctorSummaryCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Avatar Dokter ──
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 58,
-                height: 66,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE7EDF6),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: Color(0xFF7890AC),
-                  size: 42,
-                ),
-              ),
-              Positioned(
-                right: -4,
-                bottom: -3,
-                child: Container(
-                  width: 25,
-                  height: 25,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF82A5FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Color(0xFF063F99),
-                    size: 15,
-                  ),
-                ),
-              ),
-            ],
+          // ── Avatar Dokter Klinis ──
+          Container(
+            width: 52,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primaryTintBorder),
+            ),
+            child: const Icon(
+              Icons.medical_services_outlined,
+              color: AppColors.primary,
+              size: 26,
+            ),
           ),
           const SizedBox(width: 14),
 

@@ -83,7 +83,7 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
         // ── Selector Poli ──
         _buildSelectorButton(
           onTap: isLoadingInitial ? null : onTapPoli,
-          icon: Icons.favorite_border_rounded,
+          icon: Icons.local_hospital_outlined,
           text: isLoadingInitial && selectedPoli == null
               ? 'Memuat poliklinik...'
               : (selectedPoli?.nama ?? 'PILIH POLI'),
@@ -124,7 +124,7 @@ class PendaftaranPoliDokterSelector extends StatelessWidget {
           onTap: isLoadingInitial
               ? null
               : (isDokterEnabled ? onTapDokter : onTapPoli),
-          icon: Icons.person_search_rounded,
+          icon: Icons.medical_services_outlined,
           text: isLoadingInitial && selectedDokter == null
               ? 'Memuat dokter...'
               : (selectedDokter?.nama ?? 'PILIH DOKTER'),

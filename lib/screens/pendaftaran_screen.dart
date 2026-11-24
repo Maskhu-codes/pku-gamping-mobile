@@ -3,13 +3,13 @@ import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/services/app_feedback_service.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 import 'jadwal_widgets/jadwal_constants.dart' show DokterJadwal;
 import 'pendaftaran_widgets/pendaftaran_confirm_button.dart';
 import 'pendaftaran_widgets/pendaftaran_constants.dart';
 import 'pendaftaran_widgets/pendaftaran_header.dart';
 import 'pendaftaran_widgets/pendaftaran_jadwal_picker.dart';
 import 'pendaftaran_widgets/pendaftaran_pasien_card.dart';
-import 'pendaftaran_widgets/pendaftaran_pasien_modal.dart';
 import 'pendaftaran_widgets/pendaftaran_poli_dokter_selector.dart';
 import 'pendaftaran_widgets/pendaftaran_ringkasan_card.dart';
 import 'pendaftaran_widgets/pendaftaran_selection_sheets.dart';
@@ -286,10 +286,9 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Kartu Pasien & Ganti Pasien
+                    // 1. Kartu Pasien Resmi (1 Akun = 1 Pasien)
                     PendaftaranPasienCard(
                       pasien: _selectedPasien,
-                      onGantiPasien: _bukaModalGantiPasien,
                     ),
                     const SizedBox(height: 20),
 
@@ -341,16 +340,6 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
   }
 
   // ── Handlers Interaksi ──
-
-  void _bukaModalGantiPasien() {
-    PendaftaranPasienModal.show(
-      context: context,
-      selectedPasien: _selectedPasien,
-      onPasienChanged: (pasienBaru) {
-        setState(() => _selectedPasien = pasienBaru);
-      },
-    );
-  }
 
   void _bukaSheetPoli() {
     PoliSelectionSheet.show(
@@ -431,6 +420,15 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
 
   void _handleKonfirmasi() {
     if (_isSubmitting) return;
+    if (SessionManager.isGuestMode || SessionManager.fsMr.trim().isEmpty) {
+      GuestGuard.check(
+        context,
+        featureName: 'booking jadwal dokter',
+        message:
+            'Untuk melakukan booking jadwal dokter, Anda harus masuk ke akun pasien terlebih dahulu.',
+      );
+      return;
+    }
     if (!_isBaseFormValid) {
       AppFeedback.showError(
         context,
@@ -460,8 +458,15 @@ class _PendaftaranScreenState extends State<PendaftaranScreen> {
       final fsMr = SessionManager.fsMr.isNotEmpty
           ? SessionManager.fsMr
           : _selectedPasien.noRm;
-      if (fsMr.trim().isEmpty) {
-        throw Exception('Nomor Rekam Medis (fs_mr) tidak ditemukan pada sesi.');
+      if (SessionManager.isGuestMode || fsMr.trim().isEmpty) {
+        setState(() => _isSubmitting = false);
+        GuestGuard.check(
+          context,
+          featureName: 'booking jadwal dokter',
+          message:
+              'Untuk melakukan booking jadwal dokter, Anda harus masuk ke akun pasien terlebih dahulu.',
+        );
+        return;
       }
 
       var fdTglLahir = SessionManager.fdTglLahir ??

@@ -67,7 +67,7 @@ void main() {
       expect(namaList, contains('JANTUNG'));
       expect(namaList, contains('MATA'));
       expect(namaList, contains('SYARAF'));
-      expect(namaList, contains('T.H.T'));
+      expect(namaList, contains('THT'));
 
       // Verify structure of first item
       final first = listPoli.first;

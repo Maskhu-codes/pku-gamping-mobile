@@ -69,45 +69,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               children: [
                 const SizedBox(height: 24),
 
-                // Ikon kunci + tanda tanya
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                      ),
-                      child: Icon(
-                        Icons.lock_outline_rounded,
-                        color: AppColors.primary,
-                        size: 44,
-                      ),
-                    ),
-                    Positioned(
-                      top: -4,
-                      right: -4,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accent,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.question_mark_rounded,
-                          color: Colors.white,
-                          size: 15,
-                        ),
-                      ),
-                    ),
-                  ],
+                // Ikon Pemulihan Akun (Clean Institutional)
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primarySoft,
+                    border: Border.all(color: AppColors.primaryTintBorder),
+                  ),
+                  child: const Icon(
+                    Icons.lock_reset_rounded,
+                    color: AppColors.primary,
+                    size: 34,
+                  ),
                 ),
                 const SizedBox(height: 24),
 

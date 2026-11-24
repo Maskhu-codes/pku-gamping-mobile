@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_active_card.dart';
 import 'package:pku_gamping_app/screens/queue_widgets/queue_brand_header.dart';
@@ -11,6 +12,7 @@ import 'package:pku_gamping_app/screens/queue_widgets/queue_status_stepper_card.
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 import 'package:pku_gamping_app/widgets/app_empty_state.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 import 'package:pku_gamping_app/widgets/motion/app_motion.dart';
 
 /// Layar Antrean Aktif Rawat Jalan.
@@ -71,6 +73,9 @@ class _QueueScreenState extends State<QueueScreen> {
   }
 
   Future<void> _muatBookingAktif() async {
+    if (SessionManager.isGuestMode) {
+      return;
+    }
     if (mounted) {
       setState(() => _isLoading = true);
     }
@@ -264,6 +269,12 @@ class _QueueScreenState extends State<QueueScreen> {
                     }
                   },
                   onDaftarPressed: () {
+                    if (!GuestGuard.check(
+                      context,
+                      featureName: 'pendaftaran layanan',
+                    )) {
+                      return;
+                    }
                     Navigator.pushNamed(context, AppRoutes.pendaftaran);
                   },
                 ),
@@ -313,6 +324,9 @@ class _QueueScreenState extends State<QueueScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () {
+                        if (!GuestGuard.check(context, featureName: 'Pembuatan Antrean')) {
+                          return;
+                        }
                         Navigator.pushNamed(context, AppRoutes.pendaftaran);
                       },
                       icon: const Icon(Icons.add_circle_outline, size: 20),

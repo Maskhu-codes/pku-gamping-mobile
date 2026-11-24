@@ -40,49 +40,113 @@ class PendaftaranRingkasanCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // ── Container Ringkasan ──
+        // ── Container Ringkasan (Pre-Admission Slip) ──
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: kPendaftaranCardBorder),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x06172340),
-                blurRadius: 10,
-                offset: Offset(0, 3),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSummaryRow(
-                label: 'Pasien',
-                value: pasien.nama,
-                isBold: true,
+              // 1. Data Pasien & Jaminan
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'PASIEN',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: kPendaftaranMuted,
+                            letterSpacing: 0.6,
+                            fontFamily: kPendaftaranFontFamily,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          pasien.nama,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: kPendaftaranInk,
+                            fontFamily: kPendaftaranFontFamily,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (jaminan != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: jaminan == JenisJaminan.bpjs
+                            ? const Color(0xFFF0FDF4)
+                            : const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: jaminan == JenisJaminan.bpjs
+                              ? const Color(0xFFBBF7D0)
+                              : const Color(0xFFBFDBFE),
+                        ),
+                      ),
+                      child: Text(
+                        jaminan == JenisJaminan.bpjs ? 'BPJS' : 'Umum',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: jaminan == JenisJaminan.bpjs
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFF1D4ED8),
+                          fontFamily: kPendaftaranFontFamily,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 10),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+              ),
+
+              // 2. Poli & Dokter
               _buildSummaryRow(
                 label: 'Poli',
                 value: poli?.nama ?? 'Belum dipilih',
                 isPlaceholder: poli == null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               _buildSummaryRow(
                 label: 'Dokter',
                 value: dokter?.nama ?? 'Belum dipilih',
                 isPlaceholder: dokter == null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
+
+              // 3. Tanggal & Jam Praktik
               _buildSummaryRow(
                 label: 'Tanggal',
                 value: slot?.hariTanggal ?? 'Belum dipilih',
                 isPlaceholder: slot == null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               _buildSummaryRow(
-                label: 'Jam',
+                label: 'Jam Praktik',
                 value: slot?.jam ?? '-',
                 isPlaceholder: slot == null,
               ),

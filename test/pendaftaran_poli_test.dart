@@ -1,8 +1,19 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pku_gamping_app/core/config/app_config.dart';
+import 'package:pku_gamping_app/core/network/api_client.dart';
 import 'package:pku_gamping_app/services/mock/pendaftaran_mock_data.dart';
 import 'package:pku_gamping_app/services/pendaftaran_service.dart';
 
+class _RealHttpOverrides extends HttpOverrides {}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = _RealHttpOverrides();
+
+  setUpAll(() {
+    ApiClient.setBaseUrl(AppConfig.localhostUrl);
+  });
   const expectedPoliList = [
     'Anak',
     'Anak Neurologi',

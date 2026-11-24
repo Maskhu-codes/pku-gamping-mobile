@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 import 'jadwal_constants.dart';
 import 'jadwal_dokter_card.dart';
 
@@ -42,6 +43,14 @@ class JadwalDokterList extends StatelessWidget {
               dokter: dokterList[index],
               showDivider: !isLast,
               onTap: () {
+                if (!GuestGuard.check(
+                  context,
+                  featureName: 'booking jadwal dokter',
+                  message:
+                      'Untuk melakukan booking jadwal dokter, Anda harus masuk ke akun pasien terlebih dahulu.',
+                )) {
+                  return;
+                }
                 Navigator.of(context).pushNamed(
                   AppRoutes.pendaftaran,
                   arguments: {'initialDokter': dokterList[index]},

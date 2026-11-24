@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/main.dart';
 import 'package:pku_gamping_app/screens/home_screen.dart';
 import 'package:pku_gamping_app/screens/login_screen.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 
 void main() {
+  setUp(() {
+    SessionManager.setGuestMode(false);
+  });
+
   testWidgets('PkuGampingApp opens the login screen after splash', (
     WidgetTester tester,
   ) async {
@@ -33,7 +38,7 @@ void main() {
     AntreanService.setAntreanDummy();
     await tester.pumpAndSettle();
 
-    expect(find.text('NOMOR ANTREAN ANDA'), findsOneWidget);
+    expect(find.text('NOMOR ANTREAN'), findsOneWidget);
     expect(find.text('A-014'), findsOneWidget);
     AntreanService.kosongkanAntrean();
   });

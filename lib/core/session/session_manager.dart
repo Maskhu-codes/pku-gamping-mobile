@@ -15,6 +15,7 @@ class SessionManager {
   static const String _keyIsLoggedIn = 'pku_is_logged_in';
   static const String _keyNamaPasien = 'pku_nama_pasien';
   static const String _keyNoRm = 'pku_no_rm';
+  static bool _isGuestMode = false;
   static const String _keyNik = 'pku_nik';
   static const String _keyEmail = 'pku_email';
   static const String _keyUsername = 'pku_username';
@@ -50,6 +51,14 @@ class SessionManager {
   /// Cek status login pengguna
   static bool get isLoggedIn => _prefs?.getBool(_keyIsLoggedIn) ?? false;
 
+  /// Status Mode Tamu (Guest Mode)
+  static bool get isGuestMode => _isGuestMode;
+
+  /// Mengaktifkan atau menonaktifkan Mode Tamu
+  static void setGuestMode(bool value) {
+    _isGuestMode = value;
+  }
+
   /// Memvalidasi apakah sesi aktif dan memiliki token yang valid
   static bool hasValidSession() {
     final t = token;
@@ -60,14 +69,18 @@ class SessionManager {
   static String? get token => _prefs?.getString(_keyToken);
 
   /// Ambil nomor rekam medis (fs_mr / noRm) yang bersih dari '-' dan spasi
-  static String get fsMr =>
-      (_prefs?.getString(_keyNoRm) ?? '').replaceAll('-', '').replaceAll(' ', '').trim();
+  static String get fsMr {
+    if (_isGuestMode) return '';
+    return (_prefs?.getString(_keyNoRm) ?? '').replaceAll('-', '').replaceAll(' ', '').trim();
+  }
   static String get noRm => fsMr;
 
   /// Ambil nama pasien (fs_nm_pasien)
-  static String get fsNmPasien => _prefs?.getString(_keyNamaPasien) ?? '';
-  static String get namaPasien =>
-      _prefs?.getString(_keyNamaPasien) ?? 'Dahlan Muda';
+  static String get fsNmPasien => _isGuestMode ? 'Tamu Pengunjung' : (_prefs?.getString(_keyNamaPasien) ?? '');
+  static String get namaPasien {
+    if (_isGuestMode) return 'Tamu Pengunjung';
+    return _prefs?.getString(_keyNamaPasien) ?? 'Dahlan Muda';
+  }
 
   /// Ambil NIK pasien (fs_nik)
   static String? get fsNik => _prefs?.getString(_keyNik);
@@ -127,6 +140,7 @@ class SessionManager {
     final resolvedNik = fsNik ?? nik;
     final resolvedEmail = fsEmail ?? email;
 
+    _isGuestMode = false;
     await Future.wait([
       p.setString(_keyToken, token),
       p.setBool(_keyIsLoggedIn, true),
@@ -275,6 +289,7 @@ class SessionManager {
   }) async {
     final p = _prefs ?? await SharedPreferences.getInstance();
     _prefs = p;
+    _isGuestMode = false;
     await Future.wait([
       if (fsKdAntrian.trim().isNotEmpty)
         p.setString(_keyFsKdAntrian, fsKdAntrian.trim()),
@@ -316,6 +331,7 @@ class SessionManager {
   static Future<void> clearSession() async {
     final p = _prefs ?? await SharedPreferences.getInstance();
     _prefs = p;
+    _isGuestMode = false;
     await Future.wait([
       p.remove(_keyToken),
       p.setBool(_keyIsLoggedIn, false),

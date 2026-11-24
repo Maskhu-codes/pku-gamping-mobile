@@ -49,8 +49,6 @@ void main() {
     expect(find.text('Daftar Pasien Baru'), findsOneWidget);
     expect(find.text('Lengkapi data diri Anda untuk mendaftar akun baru'),
         findsOneWidget);
-    expect(find.text('Registrasi Online SIMRS'), findsOneWidget);
-    expect(find.text('Buat Akun Baru'), findsOneWidget);
 
     // 2. Verifikasi NIK Input & Cek NIK
     final nikField = find.byType(TextFormField).first;

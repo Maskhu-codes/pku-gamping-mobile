@@ -13,19 +13,19 @@ class JadwalHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Jadwal',
+            'Jadwal Poliklinik',
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: kInk,
-              letterSpacing: -0.5,
+              letterSpacing: -0.4,
             ),
           ),
           SizedBox(height: 4),
           Text(
-            'Lihat jadwal kunjungan dan dokter.',
+            'Jadwal praktik dokter rawat jalan RS PKU Gamping.',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: kMuted,
             ),
           ),

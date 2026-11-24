@@ -94,12 +94,13 @@ class QueueStatusStepperCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0E17233B),
+            color: Color(0x0617233B),
             blurRadius: 8,
-            offset: Offset(0, 3),
+            offset: Offset(0, 2),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
@@ -61,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    final password = _passwordController.text.trim();
 
     try {
       await SimrsService.login(
@@ -86,21 +87,26 @@ class _LoginScreenState extends State<LoginScreen>
         SnackBar(
           content: Row(
             children: [
-               const Icon(Icons.error_outline_rounded,
+              const Icon(Icons.error_outline_rounded,
                   color: Colors.white, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   errorText,
-                  style: const TextStyle(fontSize: 13, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: const Color(0xFF991B1B),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -129,28 +135,40 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 40),
 
                   // Logo PKU
-                  _PkuLogoWidget(size: 92),
-                  const SizedBox(height: 20),
+                  _PkuLogoWidget(size: 84),
+                  const SizedBox(height: 18),
 
-                  // Judul
-                  Text(
-                    'Selamat Datang',
+                  // Kicker & Judul Medis
+                  const Text(
+                    'PORTAL PASIEN RESMI',
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
                       color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
 
-                  Text(
-                    'PKU Muhammadiyah Gamping Online',
+                  const Text(
+                    'Selamat Datang',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF182238),
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    'RS PKU Muhammadiyah Gamping',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // Form Login
                   Form(
@@ -222,6 +240,67 @@ class _LoginScreenState extends State<LoginScreen>
                           label: 'Masuk',
                           isLoading: _isLoading,
                           onTap: _isLoading ? null : _handleLogin,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Pemisah atau
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Divider(color: AppColors.border, height: 1),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Text(
+                                'atau',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const Expanded(
+                              child: Divider(color: AppColors.border, height: 1),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Tombol Jelajahi sebagai Tamu
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            SessionManager.setGuestMode(true);
+                            Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.home,
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                            side: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.textPrimary,
+                          ),
+                          icon: const Icon(
+                            Icons.explore_outlined,
+                            size: 19,
+                            color: AppColors.primary,
+                          ),
+                          label: const Text(
+                            'Jelajahi sebagai Tamu',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 24),
 

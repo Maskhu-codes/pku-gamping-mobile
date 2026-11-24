@@ -229,9 +229,9 @@ class _EmptyResults extends StatelessWidget {
         icon: Icons.science_outlined,
         title: 'Belum Ada Hasil Laboratorium',
         message: 'Hasil pemeriksaan laboratorium Anda belum tersedia.',
-        circleSize: 100,
-        iconSize: 48,
-        circleBackgroundColor: Color(0xFFDCE4FF),
+        circleSize: 76,
+        iconSize: 36,
+        circleBackgroundColor: Color(0xFFEFF6FF),
         action: Padding(
           padding: EdgeInsets.only(top: 24),
           child: _SynchronizationNotice(),

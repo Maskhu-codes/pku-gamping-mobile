@@ -52,7 +52,7 @@ class HomeNewsSection extends StatelessWidget {
 
         // Carousel Horizontal Berita
         SizedBox(
-          height: 220,
+          height: 195,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             scrollDirection: Axis.horizontal,
@@ -61,98 +61,106 @@ class HomeNewsSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final news = kHomeLatestNews[index];
               return Container(
-                width: 240,
+                width: 250,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x0617233B),
-                      blurRadius: 10,
-                      offset: Offset(0, 3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Gambar / Header Berita
-                    Container(
-                      height: 105,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(15),
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          news.icon,
-                          color: kHomePrimaryBlue,
-                          size: 38,
-                        ),
-                      ),
-                    ),
-
-                    // Konten
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Kartu: Kategori & Ikon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            news.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: kHomeInk,
-                              fontFamily: kHomeFontFamily,
-                              height: 1.3,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFFDBEAFE),
+                              ),
+                            ),
+                            child: Text(
+                              news.category,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: kHomePrimaryBlue,
+                                fontFamily: kHomeFontFamily,
+                                letterSpacing: 0.2,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  news.date,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: kHomeMuted,
-                                    fontFamily: kHomeFontFamily,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  news.category,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF475569),
-                                    fontFamily: kHomeFontFamily,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              news.icon,
+                              color: kHomePrimaryBlue,
+                              size: 17,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+
+                      // Judul Berita
+                      Expanded(
+                        child: Text(
+                          news.title,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: kHomeInk,
+                            fontFamily: kHomeFontFamily,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Tanggal Berita
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 11,
+                            color: kHomeMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            news.date,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: kHomeMuted,
+                              fontFamily: kHomeFontFamily,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

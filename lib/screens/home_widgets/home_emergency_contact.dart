@@ -7,28 +7,37 @@ class HomeEmergencyContact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const igdPhoneNumber = '(0274) 6499118';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFFECACA)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0617233B),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: const BoxDecoration(
-                color: Color(0xFFFEE2E2),
+                color: Color(0xFFFEF2F2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.emergency_outlined,
                 color: Color(0xFFDC2626),
-                size: 24,
+                size: 22,
               ),
             ),
             const SizedBox(width: 14),
@@ -47,41 +56,45 @@ class HomeEmergencyContact extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    '(0274) 6499118',
+                    igdPhoneNumber,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFFB91C1C),
                       fontFamily: kHomeFontFamily,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ],
               ),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Menghubungi IGD RS PKU Gamping: (0274) 6499706'),
-                    backgroundColor: Color(0xFFDC2626),
+                    content: Text('Menghubungi IGD RS PKU Gamping: $igdPhoneNumber'),
+                    backgroundColor: Color(0xFF991B1B),
+                    behavior: SnackBarBehavior.floating,
                     duration: Duration(seconds: 3),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
+              icon: const Icon(Icons.call_rounded, size: 14),
+              label: const Text(
                 'Hubungi',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   fontFamily: kHomeFontFamily,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
                 ),
               ),
             ),

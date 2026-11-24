@@ -23,12 +23,13 @@ class SimrsService {
     required String password,
   }) async {
     final targetEmail = (email ?? username ?? '').trim();
+    final targetPassword = password.trim();
     try {
       final response = await _dio.post(
         '/auth/login',
         data: {
           'fs_email': targetEmail,
-          'fs_password': password,
+          'fs_password': targetPassword,
         },
       );
 

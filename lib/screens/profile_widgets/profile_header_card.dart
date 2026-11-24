@@ -82,11 +82,12 @@ class ProfileHeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Color(0x0617233B),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),

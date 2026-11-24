@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_shimmer.dart';
 
-/// Skeleton horizontal chip poliklinik (meniru bentuk `JadwalPoliFilter`).
+/// Skeleton selektor poliklinik (meniru bentuk `JadwalPoliFilter` kartu selektor).
 class PoliChipsSkeleton extends StatelessWidget {
   const PoliChipsSkeleton({super.key, this.itemCount = 4});
 
@@ -9,21 +9,33 @@ class PoliChipsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const widths = [88.0, 108.0, 76.0, 96.0, 84.0];
     return AppShimmer(
-      child: SizedBox(
-        height: 38,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          itemCount: itemCount,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (_, index) => SkeletonBox(
-            width: widths[index % widths.length],
-            height: 38,
-            borderRadius: 20,
-          ),
+      child: Container(
+        height: 58,
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            const SkeletonBox(width: 38, height: 38, borderRadius: 10),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SkeletonBox(width: 80, height: 10, borderRadius: 4),
+                  SizedBox(height: 6),
+                  SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                ],
+              ),
+            ),
+            const SkeletonBox(width: 64, height: 28, borderRadius: 10),
+          ],
         ),
       ),
     );

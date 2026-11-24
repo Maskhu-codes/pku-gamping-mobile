@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_brand_header.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_constants.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_emergency_contact.dart';
+import 'package:pku_gamping_app/screens/home_widgets/home_guest_schedule_card.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_news_section.dart';
+import 'package:pku_gamping_app/screens/home_widgets/home_patient_header.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_with_queue.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_without_queue.dart';
 import 'package:pku_gamping_app/screens/home_widgets/home_quick_links.dart';
@@ -13,6 +16,7 @@ import 'package:pku_gamping_app/screens/profile_screen.dart';
 import 'package:pku_gamping_app/screens/queue_screen.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 import 'package:pku_gamping_app/widgets/notifications/home_notification_banner.dart';
 import 'package:pku_gamping_app/widgets/top_notification.dart';
 
@@ -62,8 +66,12 @@ class _HomeScreenState extends State<HomeScreen> {
         body: IndexedStack(
           index: _currentIndex,
           children: [
-            // Tab 0: Beranda (const terisolasi)
-            const HomeTabContent(),
+            // Tab 0: Beranda
+            HomeTabContent(
+              onLihatJadwal: () {
+                setState(() => _currentIndex = 3);
+              },
+            ),
 
             // Tab 1: Antrean (Reaktif internal)
             const QueueScreen(embedded: true),
@@ -81,11 +89,19 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: AppBottomNav(
           selectedIndex: _currentIndex,
           onItemSelected: (index) {
+            if (index == 1 && SessionManager.isGuestMode) {
+              if (!GuestGuard.check(context, featureName: 'Pantau Antrean')) {
+                return;
+              }
+            }
             setState(() {
               _currentIndex = index;
             });
           },
           onDaftarPressed: () {
+            if (!GuestGuard.check(context, featureName: 'Pendaftaran Layanan')) {
+              return;
+            }
             Navigator.pushNamed(context, AppRoutes.pendaftaran);
           },
         ),
@@ -94,9 +110,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// Konten Utama Halaman Beranda (Scrollable) yang terisolasi sebagai const widget
+/// Konten Utama Halaman Beranda (Scrollable) yang terisolasi sebagai widget
 class HomeTabContent extends StatelessWidget {
-  const HomeTabContent({super.key});
+  const HomeTabContent({super.key, this.onLihatJadwal});
+
+  final VoidCallback? onLihatJadwal;
 
   @override
   Widget build(BuildContext context) {
@@ -117,31 +135,48 @@ class HomeTabContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Banner Biru + Kartu Antrean Reaktif ──
-                    ValueListenableBuilder<AntreanAktifModel?>(
-                      valueListenable: AntreanService.antreanAktif,
-                      builder: (context, antrean, _) {
-                        if (antrean == null) {
-                          return HomeWithoutQueue(
-                            namaPasien: SessionManager.namaPasien,
-                            noRm: SessionManager.noRm,
-                            onDaftarPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                AppRoutes.pendaftaran,
-                              );
+                    // ── Banner Biru + Kartu Antrean Reaktif / Mode Tamu ──
+                    if (SessionManager.isGuestMode)
+                      HomePatientHeader(
+                        namaPasien: 'Tamu Pengunjung',
+                        noRm: '',
+                        queueCard: HomeGuestScheduleCard(
+                          onLihatJadwal: () => onLihatJadwal?.call(),
+                          onMasukAkun: () {
+                            SessionManager.setGuestMode(false);
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.login,
+                              (route) => false,
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      ValueListenableBuilder<AntreanAktifModel?>(
+                        valueListenable: AntreanService.antreanAktif,
+                        builder: (context, antrean, _) {
+                          if (antrean == null) {
+                            return HomeWithoutQueue(
+                              namaPasien: SessionManager.namaPasien,
+                              noRm: SessionManager.noRm,
+                              onDaftarPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.pendaftaran,
+                                );
+                              },
+                            );
+                          }
+
+                          return HomeWithQueue(
+                            antrean: antrean,
+                            onPantauPressed: () {
+                              Navigator.pushNamed(context, AppRoutes.queueDetail);
                             },
                           );
-                        }
-
-                        return HomeWithQueue(
-                          antrean: antrean,
-                          onPantauPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.queueDetail);
-                          },
-                        );
-                      },
-                    ),
+                        },
+                      ),
 
                     // ── Banner Edukasi Notifikasi (Sebelum Aktif) ──
                     const HomeNotificationBanner(),

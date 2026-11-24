@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import '../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 650),
       vsync: this,
     );
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -28,11 +30,11 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 650),
       vsync: this,
     );
     _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.08),
+      begin: const Offset(0, 0.04),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
 
@@ -40,12 +42,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startAnimation() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (!mounted) return;
     _fadeController.forward();
     _slideController.forward();
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(milliseconds: 850));
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+      final destination =
+          SessionManager.hasValidSession() ? AppRoutes.home : AppRoutes.login;
+      Navigator.pushReplacementNamed(context, destination);
     }
   }
 
@@ -71,40 +76,44 @@ class _SplashScreenState extends State<SplashScreen>
                 const Spacer(),
                 // Logo Splash PKU Muhammadiyah Gamping
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: Image.asset(
                     'assets/images/splashLogo.png',
-                    width: 320,
+                    width: 300,
                     fit: BoxFit.contain,
                   ),
                 ),
                 const Spacer(),
-                // Footer
+                // Institutional Subline Footer
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 40),
+                  padding: const EdgeInsets.only(bottom: 32),
                   child: Column(
                     children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary.withValues(alpha: 0.5),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '© 2024 PKU Muhammadiyah Gamping',
+                      const SizedBox(height: 14),
+                      const Text(
+                        'RS PKU Muhammadiyah Gamping',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textHint,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      Text(
-                        'All rights reserved',
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Portal Pasien Resmi',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: AppColors.textHint,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ],

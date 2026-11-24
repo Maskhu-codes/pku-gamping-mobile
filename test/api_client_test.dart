@@ -1,10 +1,21 @@
 @Tags(['live_db'])
 library;
 
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pku_gamping_app/core/config/app_config.dart';
 import 'package:pku_gamping_app/core/network/api_client.dart';
 
+class _RealHttpOverrides extends HttpOverrides {}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = _RealHttpOverrides();
+
+  setUpAll(() {
+    ApiClient.setBaseUrl(AppConfig.localhostUrl);
+  });
+
   test('ApiClient GET /layanan/list mengembalikan data JSON dari backend', () async {
     final response = await ApiClient.dio.get('/layanan/list');
 

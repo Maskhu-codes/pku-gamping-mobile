@@ -37,35 +37,39 @@ class JadwalDokterCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nama + Status
+                      // Nama Dokter (Full width, menghargai gelar spesialis/subspesialis)
+                      Text(
+                        dokter.nama,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: kInk,
+                          fontFamily: kFontFamily,
+                          height: 1.25,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Poli & Status Badge
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              dokter.nama,
+                              dokter.poli,
                               style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: kInk,
+                                fontSize: 12,
+                                color: kMuted,
                                 fontFamily: kFontFamily,
                               ),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           _buildStatusBadge(),
                         ],
-                      ),
-                      const SizedBox(height: 3),
-
-                      // Poli
-                      Text(
-                        dokter.poli,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: kMuted,
-                          fontFamily: kFontFamily,
-                        ),
                       ),
                       const SizedBox(height: 4),
 

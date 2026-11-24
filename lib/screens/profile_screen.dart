@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_app_bar.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_footer.dart';
 import 'package:pku_gamping_app/screens/profile_widgets/profile_header_card.dart';
@@ -12,6 +13,7 @@ import 'package:pku_gamping_app/services/app_notification_service.dart';
 import 'package:pku_gamping_app/services/pemeriksaan_penunjang_service.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
+import 'package:pku_gamping_app/widgets/guest/guest_guard.dart';
 
 /// Halaman Profil Pasien RS PKU Muhammadiyah Gamping
 ///
@@ -42,6 +44,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Mengambil data profil terbaru dari endpoint `GET /auth/me`
   Future<void> _muatProfil() async {
+    if (SessionManager.isGuestMode) {
+      return;
+    }
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -86,6 +91,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
               onDaftarPressed: () {
+                if (!GuestGuard.check(
+                  context,
+                  featureName: 'pendaftaran layanan',
+                )) {
+                  return;
+                }
                 Navigator.pushNamed(context, AppRoutes.pendaftaran);
               },
             ),
@@ -160,8 +171,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 14),
 
-                          // 2. Kartu Status SIGAP
-                          const SigapMembershipCard(),
+                          // 2. Kartu Status SIGAP / Kartu Tamu
+                          if (SessionManager.isGuestMode)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primarySoft,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.account_circle_outlined,
+                                      color: AppColors.primary,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Hubungkan Akun Pasien',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'Masuk untuk akses rekam medis & antrean',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      SessionManager.setGuestMode(false);
+                                      Navigator.of(context, rootNavigator: true)
+                                          .pushNamedAndRemoveUntil(
+                                        AppRoutes.login,
+                                        (route) => false,
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 8,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Masuk',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            const SigapMembershipCard(),
                           const SizedBox(height: 24),
 
                           // 3. Bagian: Riwayat Saya
@@ -185,6 +279,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 badgeTextColor: const Color(0xFFDC2626),
                                 showDivider: true,
                                 onTap: () async {
+                                  if (!GuestGuard.check(
+                                    context,
+                                    featureName: 'Riwayat Pemeriksaan',
+                                  )) {
+                                    return;
+                                  }
                                   final riwayatList =
                                       await PemeriksaanPenunjangService
                                           .getRiwayatPemeriksaan();
@@ -205,6 +305,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     'Daftar obat & status pengambilan farmasi',
                                 showDivider: false,
                                 onTap: () {
+                                  if (!GuestGuard.check(
+                                    context,
+                                    featureName: 'Riwayat Resep',
+                                  )) {
+                                    return;
+                                  }
                                   Navigator.pushNamed(
                                     context,
                                     AppRoutes.riwayatResep,

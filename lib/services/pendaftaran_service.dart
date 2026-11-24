@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:pku_gamping_app/core/network/api_client.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
-import 'package:pku_gamping_app/models/pasien_model.dart';
 import 'package:pku_gamping_app/models/pendaftaran_model.dart';
 import 'package:pku_gamping_app/services/antrean_service.dart';
-import 'package:pku_gamping_app/services/mock/pendaftaran_mock_data.dart';
 import 'package:pku_gamping_app/services/simrs_service.dart';
 
 /// Service Terpusat Alur Pendaftaran Rawat Jalan RS PKU Gamping.
@@ -214,21 +212,4 @@ class PendaftaranService {
         fsMr: fsMr,
         tanggal: tanggal,
       );
-
-  /// Mengambil daftar profil pasien yang tersimpan dalam akun
-  static Future<List<PasienModel>> getListPasienTersimpan() async {
-    try {
-      final response = await _dio.get('/pasien/tersimpan');
-      if (response.data is List) {
-        return (response.data as List)
-            .map((json) => PasienModel.fromJson(json as Map<String, dynamic>))
-            .toList();
-      }
-      return PendaftaranDummyData.listPasienTersimpan;
-    } on DioException catch (_) {
-      return PendaftaranDummyData.listPasienTersimpan;
-    } catch (_) {
-      return PendaftaranDummyData.listPasienTersimpan;
-    }
-  }
 }

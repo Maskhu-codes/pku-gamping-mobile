@@ -122,7 +122,7 @@ class HomePatientHeader extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'No. RM $noRm',
+                            noRm.isEmpty ? 'Mode Tamu • Akses Publik' : 'No. RM $noRm',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

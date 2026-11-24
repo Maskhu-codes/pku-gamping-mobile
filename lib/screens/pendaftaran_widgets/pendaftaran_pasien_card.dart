@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'pendaftaran_constants.dart';
 
-/// Kartu Informasi Pasien yang sedang mendaftar.
-/// Menampilkan Avatar inisial, Nama, Status Terhubung, Checklist,
-/// No. Rekam Medis, serta tombol "Ganti Pasien >".
+/// Kartu Informasi Pasien Resmi yang sedang mendaftar.
+/// Menampilkan Avatar inisial, Nama, Status Akun Resmi Terdaftar SIMRS,
+/// dan No. Rekam Medis (1 Akun = 1 Pasien).
 class PendaftaranPasienCard extends StatelessWidget {
   const PendaftaranPasienCard({
     super.key,
     required this.pasien,
-    required this.onGantiPasien,
+    this.onGantiPasien,
   });
 
   final PasienModel pasien;
-  final VoidCallback onGantiPasien;
+  final VoidCallback? onGantiPasien;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header Baris: "Pasien" dan "Ganti Pasien >" ──
+        // ── Header Baris: "Identitas Pasien" dan Badge Resmi ──
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Pasien',
+              'Identitas Pasien',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -32,30 +32,32 @@ class PendaftaranPasienCard extends StatelessWidget {
                 fontFamily: kPendaftaranFontFamily,
               ),
             ),
-            InkWell(
-              onTap: onGantiPasien,
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text(
-                      'Ganti Pasien',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: kPendaftaranPrimary,
-                        fontFamily: kPendaftaranFontFamily,
-                      ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFA7F3D0), width: 0.8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.verified_rounded,
+                    size: 13,
+                    color: Color(0xFF059669),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Akun Resmi Terdaftar',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF059669),
+                      fontFamily: kPendaftaranFontFamily,
                     ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: kPendaftaranPrimary,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -107,7 +109,7 @@ class PendaftaranPasienCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Baris Nama + Badge Terhubung + Icon Checklist
+                    // Baris Nama + Checklist
                     Row(
                       children: [
                         Flexible(
@@ -123,49 +125,11 @@ class PendaftaranPasienCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        if (pasien.isTerhubung)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFBFDBFE),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text(
-                                  '• ',
-                                  style: TextStyle(
-                                    color: Color(0xFF2563EB),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                Text(
-                                  'Terhubung',
-                                  style: TextStyle(
-                                    color: Color(0xFF2563EB),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: kPendaftaranFontFamily,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         const SizedBox(width: 6),
                         const Icon(
-                          Icons.check_circle_outline_rounded,
-                          color: Color(0xFF475569),
-                          size: 18,
+                          Icons.check_circle_rounded,
+                          color: Color(0xFF10B981),
+                          size: 17,
                         ),
                       ],
                     ),
