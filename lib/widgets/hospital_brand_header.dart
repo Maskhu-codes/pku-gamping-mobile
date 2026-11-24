@@ -10,11 +10,15 @@ class HospitalBrandHeader extends StatelessWidget {
     this.backgroundColor = Colors.white,
     this.useGradient = false,
     this.showBorder = true,
+    this.leadingWidget,
+    this.trailingWidget,
   });
 
   final Color backgroundColor;
   final bool useGradient;
   final bool showBorder;
+  final Widget? leadingWidget;
+  final Widget? trailingWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +42,10 @@ class HospitalBrandHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (leadingWidget != null) ...[
+            leadingWidget!,
+            const SizedBox(width: 6),
+          ],
           // Logo RS PKU Gamping (Ukuran 38x38 seragam)
           Image.asset(
             'assets/images/logo_pkugamping.png',
@@ -88,10 +96,13 @@ class HospitalBrandHeader extends StatelessWidget {
             ),
           ),
 
-          // Lonceng Notifikasi: Berbeda tampilan sebelum vs setelah aktif
-          ValueListenableBuilder<bool>(
-            valueListenable: AppNotificationService.isEnabledNotifier,
-            builder: (context, isEnabled, _) {
+          // Trailing Action atau Lonceng Notifikasi
+          if (trailingWidget != null)
+            trailingWidget!
+          else
+            ValueListenableBuilder<bool>(
+              valueListenable: AppNotificationService.isEnabledNotifier,
+              builder: (context, isEnabled, _) {
               return ValueListenableBuilder<int>(
                 valueListenable: AppNotificationService.unreadCountNotifier,
                 builder: (context, unreadCount, _) {

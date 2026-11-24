@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _didCheckArgs = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -44,6 +45,33 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didCheckArgs) {
+      _didCheckArgs = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        if (args['email'] != null) {
+          _emailController.text = args['email'].toString();
+        }
+        if (args['message'] != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(args['message'].toString()),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          });
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _animController.dispose();
     _emailController.dispose();
@@ -51,26 +79,47 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  Future<void> _handleGuestMode() async {
+    await SessionManager.setGuestMode(true);
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.jadwal,
+      arguments: {'isGuest': true},
+    );
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isLoading) return;
 
     FocusScope.of(context).unfocus();
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+    setState(() => _isLoading = true);
 
     try {
-      await SimrsService.login(
-        email: email,
-        password: password,
+      final res = await SimrsService.login(
+        username: _emailController.text.trim(),
+        password: _passwordController.text,
       );
 
       if (!mounted) return;
+
+      // Validasi respon dari backend: pastikan statusnya berhasil (true/success)
+      final isSuccess = res['status'] == true ||
+          res['status'] == 'success' ||
+          res['status'] == 1 ||
+          res['status'] == 200;
+
+      if (!isSuccess) {
+        throw Exception(
+          res['message']?.toString() ?? 'Email atau kata sandi salah.',
+        );
+      }
+
+      // Pastikan sesi dan token login tersimpan di storage lokal
+      if (!SessionManager.isLoggedIn) {
+        throw Exception('Token login tidak berhasil disimpan.');
+      }
 
       Navigator.pushReplacementNamed(
         context,
@@ -112,9 +161,7 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -132,7 +179,16 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 12),
+
+                  // Tombol Ramping Mode Tamu di Pojok Kanan Atas
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _GuestModeTopPill(
+                      onTap: _handleGuestMode,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Logo PKU
                   _PkuLogoWidget(size: 84),
@@ -433,4 +489,58 @@ Widget _primaryButton({
             ),
     ),
   );
+}
+
+// Widget Pill Mode Tamu Ramping di Pojok Kanan Atas
+class _GuestModeTopPill extends StatelessWidget {
+  const _GuestModeTopPill({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF), // soft blue background
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFBFDBFE), // border-blue-200
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.visibility_outlined,
+                size: 15,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'Mode Tamu',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 10,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

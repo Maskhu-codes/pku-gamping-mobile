@@ -20,6 +20,8 @@ class RegisterStep1Nik extends StatelessWidget {
     required this.onLanjut,
     required this.onLoginTap,
     required this.onNikChanged,
+    this.existingMr,
+    this.existingNama,
   });
 
   final TextEditingController nikController;
@@ -31,6 +33,8 @@ class RegisterStep1Nik extends StatelessWidget {
   final VoidCallback onLanjut;
   final VoidCallback onLoginTap;
   final VoidCallback onNikChanged;
+  final String? existingMr;
+  final String? existingNama;
 
   @override
   Widget build(BuildContext context) {
@@ -277,14 +281,16 @@ class RegisterStep1Nik extends StatelessWidget {
                   )
                 else if (nikHasBeenChecked && isNikVerified)
                   Row(
-                    children: const [
-                      Icon(Icons.check_circle_outline_rounded,
+                    children: [
+                      const Icon(Icons.check_circle_outline_rounded,
                           size: 13, color: Color(0xFF2E7D32)),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          'NIK valid dan belum terdaftar. Silakan lanjutkan.',
-                          style: TextStyle(
+                          existingMr != null && existingMr!.isNotEmpty
+                              ? 'Data SIMRS ditemukan (No. RM: $existingMr). Langsung ke Langkah 3.'
+                              : 'NIK valid dan belum terdaftar. Silakan lanjutkan.',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: Color(0xFF2E7D32),
                             fontWeight: FontWeight.w500,
@@ -308,49 +314,99 @@ class RegisterStep1Nik extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ── Info SIMRS Banner ──
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: Color(0xFFD97706),
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Pendaftaran Pasien Baru',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF92400E),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Nomor Rekam Medis (No. RM) baru akan dibuatkan secara otomatis berdasarkan data identitas di atas.\n\nTerkoneksi dengan Sistem SIMRS RS PKU Muhammadiyah Gamping.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFB45309),
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
+          if (nikHasBeenChecked &&
+              isNikVerified &&
+              existingMr != null &&
+              existingMr!.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.verified_rounded,
+                    color: Color(0xFF16A34A),
+                    size: 20,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pasien Lama Terdeteksi di SIMRS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'No. RM: $existingMr\n'
+                          '${existingNama != null && existingNama!.isNotEmpty ? 'Nama: $existingNama\n' : ''}'
+                          'Data rekam medis Anda telah terdaftar di RS PKU Gamping. Pengisian biodata (Langkah 2) dilewati otomatis dan langsung lanjut ke pembuatan akun.',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF166534),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Color(0xFFD97706),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Pendaftaran Pasien Baru',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Nomor Rekam Medis (No. RM) baru akan dibuatkan secara otomatis berdasarkan data identitas di atas.\n\nTerkoneksi dengan Sistem SIMRS RS PKU Muhammadiyah Gamping.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFB45309),
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           const SizedBox(height: 24),
 
@@ -370,7 +426,9 @@ class RegisterStep1Nik extends StatelessWidget {
               ),
               child: Text(
                 nikHasBeenChecked && isNikVerified
-                    ? 'Lanjutkan →'
+                    ? (existingMr != null && existingMr!.isNotEmpty
+                        ? 'Lanjut Buat Akun (Langkah 3) →'
+                        : 'Lanjut Isi Biodata (Langkah 2) →')
                     : 'Cek NIK & Lanjutkan →',
                 style: const TextStyle(
                   fontSize: 14,

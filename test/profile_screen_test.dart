@@ -124,7 +124,7 @@ void main() {
       expect(capturedPath, '/auth/me');
       expect(capturedMethod, 'GET');
       expect(capturedAuthHeader, contains('Bearer valid-jwt-token'));
-      expect(result['fs_email'], 'ahmad.dahlan@muhammadiyah.id');
+      expect(result!['fs_email'], 'ahmad.dahlan@muhammadiyah.id');
 
       // Verifikasi SessionManager terupdate
       expect(SessionManager.namaPasien, 'KH. Ahmad Dahlan');
@@ -344,7 +344,7 @@ void main() {
         );
 
         final profile = await SimrsService.getMeProfile();
-        expect(profile.containsKey('fs_email'), isTrue);
+        expect(profile!.containsKey('fs_email'), isTrue);
         expect(SessionManager.namaPasien.isNotEmpty, isTrue);
       },
     );

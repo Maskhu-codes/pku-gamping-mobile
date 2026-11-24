@@ -14,9 +14,7 @@ class SimrsService {
 
   static Dio get _dio => ApiClient.dio;
 
-  /// Autentikasi Login Pasien ke Backend SIMRS
-  ///
-  /// Mengirim kredensial langsung ke server backend (/auth/login).
+  /// Autentikasi Login Pasien ke Backend SIMRS (/auth/login)
   static Future<Map<String, dynamic>> login({
     String? email,
     String? username,
@@ -30,6 +28,9 @@ class SimrsService {
         data: {
           'fs_email': targetEmail,
           'fs_password': targetPassword,
+          'username': targetEmail,
+          'email': targetEmail,
+          'password': targetPassword,
         },
       );
 
@@ -37,25 +38,52 @@ class SimrsService {
           ? response.data as Map<String, dynamic>
           : <String, dynamic>{};
 
-      // Parsing token autentikasi dari backend
+      // 1. Validasi respon dari backend: jika status false/error, lempar exception
+      if (data['status'] == false ||
+          data['status'] == 0 ||
+          data['status'] == 'failed' ||
+          data['status'] == 'error') {
+        final message = data['message']?.toString() ??
+            'Email atau kata sandi salah. Silakan periksa kembali.';
+        throw Exception(message);
+      }
+
+      // 2. Parsing token autentikasi dari backend
       final token = data['token'] as String? ??
           data['access_token'] as String? ??
           '';
 
-      // Parsing objek identitas pasien dari field 'user'
-      final userObj = data['user'] is Map<String, dynamic>
-          ? data['user'] as Map<String, dynamic>
-          : (data['pasien'] is Map<String, dynamic>
-              ? data['pasien'] as Map<String, dynamic>
-              : <String, dynamic>{});
+      if (token.isEmpty) {
+        throw Exception('Token autentikasi tidak ditemukan dari respon server backend.');
+      }
 
-      final rawMr = userObj['fs_mr'] as String? ?? userObj['no_rm'] as String? ?? '';
+      // 3. Parsing objek identitas pasien dari respon login awal
+      final userObj = (data['user'] ?? data['pasien'] ?? data['data'] ?? data) is Map<String, dynamic>
+          ? Map<String, dynamic>.from((data['user'] ?? data['pasien'] ?? data['data'] ?? data) as Map)
+          : <String, dynamic>{};
+
+      final simrsObj = userObj['simrs'] as Map<String, dynamic>?;
+      final rawMr = userObj['fs_mr'] as String? ??
+          simrsObj?['FS_MR'] as String? ??
+          userObj['no_rm'] as String? ??
+          data['no_rm'] as String? ??
+          '';
       final cleanMr = rawMr.replaceAll('-', '').replaceAll(' ', '').trim();
-      final fsNmPasien = userObj['fs_nm_pasien'] as String? ?? userObj['nama'] as String? ?? '';
-      final fsNik = userObj['fs_nik'] as String? ?? userObj['nik'] as String?;
-      final fsEmail = userObj['fs_email'] as String? ?? userObj['email'] as String? ?? targetEmail;
+      final fsNmPasien = simrsObj?['FS_NM_PASIEN']?.toString() ??
+          userObj['fs_nm_pasien']?.toString() ??
+          userObj['nama']?.toString() ??
+          userObj['name']?.toString() ??
+          data['nama']?.toString() ??
+          'Pasien';
+      final fsNik = userObj['fs_nik']?.toString() ??
+          simrsObj?['FS_KD_IDENTITAS']?.toString() ??
+          userObj['nik']?.toString() ??
+          data['nik']?.toString();
+      final fsEmail = userObj['fs_email'] as String? ??
+          userObj['email'] as String? ??
+          targetEmail;
 
-      // Simpan tiket sesi dan data pasien ke SessionManager
+      // 4. Simpan tiket sesi awal ke SessionManager
       await SessionManager.saveSession(
         token: token,
         fsMr: cleanMr,
@@ -65,8 +93,23 @@ class SimrsService {
         username: fsEmail,
       );
 
+      if (fsNik != null && fsNik.isNotEmpty) {
+        final cachedNikProfile = SessionManager.getProfileByNik(fsNik);
+        if (cachedNikProfile != null) {
+          userObj.addAll(cachedNikProfile);
+        }
+      }
+
       if (userObj.isNotEmpty) {
         await SessionManager.savePatientData(userObj);
+      }
+
+      // 5. Alur Pengiriman Balik Token ke Backend (/auth/me):
+      // Sinkronisasi data profil SIMRS lengkap via /auth/me
+      try {
+        await checkSession();
+      } catch (e) {
+        debugPrint('[SimrsService] Sinkronisasi /auth/me setelah login: $e');
       }
 
       return data;
@@ -80,17 +123,55 @@ class SimrsService {
     }
   }
 
+  /// Cek sesi aktif pasien ke backend SIMRS (/auth/me)
+  static Future<Map<String, dynamic>?> checkSession() async {
+    try {
+      final response = await _dio.get('/auth/me');
+      final data = response.data;
+      if (data is Map<String, dynamic> && (data['status'] == true || data['status'] == 'success')) {
+        final userData = (data['data'] ?? data['user']) as Map<String, dynamic>?;
+        if (userData != null) {
+          final simrsObj = userData['simrs'] as Map<String, dynamic>?;
+          final nama = simrsObj?['FS_NM_PASIEN']?.toString() ??
+              userData['fs_nm_pasien']?.toString() ??
+              userData['nama']?.toString() ??
+              SessionManager.namaPasien;
+          final noRm = userData['fs_mr']?.toString() ??
+              simrsObj?['FS_MR']?.toString() ??
+              SessionManager.noRm;
+          final nik = userData['fs_nik']?.toString() ??
+              simrsObj?['FS_KD_IDENTITAS']?.toString() ??
+              SessionManager.nik;
+
+          await SessionManager.saveSession(
+            token: SessionManager.token ?? '',
+            namaPasien: nama,
+            noRm: noRm,
+            nik: nik,
+            username: userData['fs_email']?.toString() ?? SessionManager.username,
+          );
+          if (nik != null && nik.isNotEmpty) {
+            final cachedNikProfile = SessionManager.getProfileByNik(nik);
+            if (cachedNikProfile != null) {
+              userData.addAll(cachedNikProfile);
+            }
+          }
+
+          await SessionManager.savePatientData(userData);
+        }
+        return data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[SimrsService] checkSession error: $e');
+      return null;
+    }
+  }
+
+  /// Alias getMeProfile untuk kompatibilitas
+  static Future<Map<String, dynamic>?> getMeProfile() => checkSession();
+
   /// Verifikasi NIK ke backend SIMRS & akun online (/auth/cekNik)
-  ///
-  /// Mengirim `fs_nik` via POST ke `/auth/cekNik`.
-  /// Mengembalikan Map:
-  /// - `status`: bool (true jika NIK valid & belum punya akun)
-  /// - `found`: bool (true jika data pasien lama ditemukan di SIMRS)
-  /// - `isAlreadyRegistered`: bool (true jika NIK sudah terdaftar sebagai akun mobile)
-  /// - `fs_mr`: String? (nomor rekam medis jika ditemukan)
-  /// - `fs_nm_pasien`: String? (nama pasien jika ditemukan)
-  /// - `fd_tgl_lahir`: String? (tanggal lahir jika ditemukan)
-  /// - `message`: String
   static Future<Map<String, dynamic>> cekNik(String nik) async {
     final cleanNik = nik.trim();
     if (cleanNik.length != 16) {
@@ -144,117 +225,26 @@ class SimrsService {
     }
   }
 
-  /// Cek apakah NIK sudah terdaftar sebagai akun mobile
-  /// (Memanfaatkan hasil dari [cekNik])
+  /// Alias verifyNik untuk kompatibilitas
+  static Future<Map<String, dynamic>> verifyNik(String nik) => cekNik(nik);
+
+  /// Cek apakah NIK sudah terdaftar di SIMRS
   static Future<bool> isNikAlreadyRegistered(String nik) async {
     try {
-      final result = await cekNik(nik);
-      return result['isAlreadyRegistered'] == true;
+      final res = await verifyNik(nik);
+      if (res['status'] == false || res['registered'] == true) {
+        return true;
+      }
+      return false;
     } catch (_) {
       return false;
     }
   }
 
   /// Registrasi Pasien Baru ke Backend SIMRS (/auth/register)
-  ///
-  /// Melakukan remap semua field (camelCase -> format fs_ yang diharapkan backend),
-  /// memanggil `POST /auth/register`, mengurai JWT token & objek user,
-  /// serta menyimpan sesi pasien secara otomatis ke [SessionManager].
   static Future<Map<String, dynamic>> registerPasien(
-    Map<String, dynamic> rawPayload,
+    Map<String, dynamic> payload,
   ) async {
-    // 1. Remap field camelCase ke format prefix fs_ sesuai backend SIMRS
-    final payload = <String, dynamic>{
-      'fs_email': (rawPayload['fs_email'] ?? rawPayload['email'] ?? '').toString().trim(),
-      'fs_password': (rawPayload['fs_password'] ?? rawPayload['password'] ?? '').toString(),
-      'fs_nik': (rawPayload['fs_nik'] ?? rawPayload['nik'] ?? '').toString().trim(),
-    };
-
-    // Optional / data pasien
-    final mr = rawPayload['fs_mr'] ?? rawPayload['noRm'] ?? rawPayload['fsMr'];
-    if (mr != null && mr.toString().trim().isNotEmpty) {
-      payload['fs_mr'] = mr.toString().trim();
-    }
-
-    final nama = rawPayload['fs_nm_pasien'] ?? rawPayload['nama'] ?? rawPayload['namaPasien'];
-    if (nama != null && nama.toString().trim().isNotEmpty) {
-      payload['fs_nm_pasien'] = nama.toString().trim();
-    }
-
-    final noHp = rawPayload['fs_no_hp'] ?? rawPayload['noHp'] ?? rawPayload['telepon'];
-    if (noHp != null && noHp.toString().trim().isNotEmpty) {
-      payload['fs_no_hp'] = noHp.toString().trim();
-    }
-
-    final tempatLahir = rawPayload['fs_temp_lahir'] ?? rawPayload['tempatLahir'];
-    if (tempatLahir != null && tempatLahir.toString().trim().isNotEmpty) {
-      payload['fs_temp_lahir'] = tempatLahir.toString().trim();
-    }
-
-    final tglLahir = rawPayload['fd_tgl_lahir'] ?? rawPayload['tanggalLahir'];
-    if (tglLahir != null && tglLahir.toString().trim().isNotEmpty) {
-      payload['fd_tgl_lahir'] = tglLahir.toString().trim();
-    }
-
-    final jnsKelamin = rawPayload['fs_jenis_kelamin'] ?? rawPayload['jenisKelamin'];
-    if (jnsKelamin != null) {
-      final str = jnsKelamin.toString().trim();
-      payload['fs_jenis_kelamin'] = (str == 'Perempuan' || str == '2') ? '2' : '1';
-    }
-
-    final golDarah = rawPayload['fs_gol_darah'] ?? rawPayload['golDarah'];
-    if (golDarah != null && golDarah.toString().trim().isNotEmpty) {
-      payload['fs_gol_darah'] = golDarah.toString().trim();
-    }
-
-    final alamat = rawPayload['fs_alamat'] ?? rawPayload['alamat'];
-    if (alamat != null && alamat.toString().trim().isNotEmpty) {
-      payload['fs_alamat'] = alamat.toString().trim();
-    }
-
-    final kdAgama = rawPayload['fs_kd_agama'] ?? rawPayload['agama'] ?? rawPayload['kdAgama'];
-    if (kdAgama != null && kdAgama.toString().trim().isNotEmpty) {
-      payload['fs_kd_agama'] = kdAgama.toString().trim();
-    }
-
-    final kdPekerjaan = rawPayload['fs_kd_pekerjaan'] ?? rawPayload['pekerjaan'] ?? rawPayload['kdPekerjaan'];
-    if (kdPekerjaan != null && kdPekerjaan.toString().trim().isNotEmpty) {
-      final pk = kdPekerjaan.toString().trim();
-      payload['fs_kd_pekerjaan'] = pk.length < 3 ? pk.padLeft(3, '0') : (pk.length > 3 ? pk.substring(0, 3) : pk);
-    }
-
-    final kdPendidikan = rawPayload['fs_kd_pendidikan'] ?? rawPayload['pendidikan'] ?? rawPayload['kdPendidikan'];
-    if (kdPendidikan != null && kdPendidikan.toString().trim().isNotEmpty) {
-      final p = kdPendidikan.toString().trim();
-      payload['fs_kd_pendidikan'] = p.length > 1 ? p.substring(p.length - 1) : p;
-    }
-
-    final statusKawin = rawPayload['fs_status_kawin'] ?? rawPayload['statusKawin'] ?? rawPayload['kdStatusKawin'];
-    if (statusKawin != null && statusKawin.toString().trim().isNotEmpty) {
-      payload['fs_status_kawin'] = statusKawin.toString().trim();
-    }
-
-    final kdSuku = rawPayload['fs_kd_suku'] ?? rawPayload['suku'] ?? rawPayload['kdSuku'];
-    payload['fs_kd_suku'] = (kdSuku != null && kdSuku.toString().trim().isNotEmpty)
-        ? kdSuku.toString().trim()
-        : '004';
-
-    final namaIbu = rawPayload['fs_nm_ibu_kandung'] ?? rawPayload['namaIbu'] ?? rawPayload['namaIbuKandung'];
-    if (namaIbu != null && namaIbu.toString().trim().isNotEmpty) {
-      payload['fs_nm_ibu_kandung'] = namaIbu.toString().trim();
-    }
-
-    final wargaNegara = rawPayload['fs_warga_negara'] ?? rawPayload['wargaNegara'];
-    if (wargaNegara != null && wargaNegara.toString().trim().isNotEmpty) {
-      final wn = wargaNegara.toString().trim().toUpperCase();
-      payload['fs_warga_negara'] = (wn == 'WNA' || wn == 'A' || wn == 'ASING') ? 'A' : 'I';
-    }
-
-    final kdKelurahan = rawPayload['fs_kd_kelurahan'] ?? rawPayload['kelurahan'] ?? rawPayload['kdKelurahan'];
-    if (kdKelurahan != null && kdKelurahan.toString().trim().isNotEmpty) {
-      payload['fs_kd_kelurahan'] = kdKelurahan.toString().trim();
-    }
-
     try {
       final response = await _dio.post(
         '/auth/register',
@@ -263,31 +253,48 @@ class SimrsService {
 
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
-          : <String, dynamic>{};
+          : <String, dynamic>{'status': true, 'message': 'Pendaftaran berhasil'};
 
-      // 2. Parsing token autentikasi & objek user jika auto-login aktif di backend
-      final token = data['token'] as String? ??
-          data['access_token'] as String? ??
-          '';
+      // Validasi respon dari backend
+      if (data['status'] == false ||
+          data['status'] == 0 ||
+          data['status'] == 'failed' ||
+          data['status'] == 'error') {
+        final message = data['message']?.toString() ??
+            'Gagal melakukan pendaftaran. Silakan periksa kembali data Anda.';
+        throw Exception(message);
+      }
 
-      final userObj = data['user'] is Map<String, dynamic>
-          ? data['user'] as Map<String, dynamic>
-          : <String, dynamic>{};
-
-      if (token.isNotEmpty && userObj.isNotEmpty) {
-        final fsMr = userObj['fs_mr'] as String? ?? payload['fs_mr'] as String? ?? '';
-        final fsNmPasien = userObj['fs_nm_pasien'] as String? ?? payload['fs_nm_pasien'] as String? ?? '';
-        final fsNik = userObj['fs_nik'] as String? ?? payload['fs_nik'] as String?;
-        final fsEmail = userObj['fs_email'] as String? ?? payload['fs_email'] as String? ?? '';
-
+      // Auto-login jika backend menyertakan token JWT
+      final token = data['token'] as String?;
+      final userObj = (data['user'] ?? data['data']) as Map<String, dynamic>?;
+      if (token != null && token.isNotEmpty) {
+        final simrsObj = userObj?['simrs'] as Map<String, dynamic>?;
+        final nama = simrsObj?['FS_NM_PASIEN']?.toString() ??
+            userObj?['fs_nm_pasien']?.toString() ??
+            userObj?['nama']?.toString() ??
+            payload['fs_nm_pasien']?.toString() ??
+            'Pasien';
+        final noRm = userObj?['fs_mr']?.toString() ??
+            simrsObj?['FS_MR']?.toString() ??
+            userObj?['no_rm']?.toString() ??
+            payload['fs_mr']?.toString() ??
+            '-';
         await SessionManager.saveSession(
           token: token,
-          fsMr: fsMr,
-          fsNmPasien: fsNmPasien,
-          fsNik: fsNik,
-          fsEmail: fsEmail,
-          username: fsEmail,
+          namaPasien: nama,
+          noRm: noRm,
+          nik: payload['fs_nik']?.toString(),
+          username: payload['fs_email']?.toString(),
         );
+        if (userObj != null) {
+          await SessionManager.savePatientData(userObj);
+        }
+
+        // Sinkronisasi data SIMRS lengkap via /auth/me
+        try {
+          await checkSession();
+        } catch (_) {}
       }
 
       return data;
@@ -301,41 +308,63 @@ class SimrsService {
     }
   }
 
-  /// Mengambil profil pasien aktif dari backend SIMRS (`/auth/me`)
-  ///
-  /// Sekaligus menyegarkan `FD_TGL_LAHIR` ke [SessionManager] agar siap
-  /// digunakan saat submit booking ke `/booking/simpan`.
-  static Future<Map<String, dynamic>> getMeProfile() async {
-    try {
-      final response = await _dio.get('/auth/me');
-      final body = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : <String, dynamic>{};
-
-      final dataObj = body['data'] is Map<String, dynamic>
-          ? body['data'] as Map<String, dynamic>
-          : body;
-
-      // Sinkronisasi data identitas pasien ke SessionManager secara terpusat
-      await SessionManager.updateFromMe(dataObj);
-
-      return dataObj;
-    } on DioException catch (e) {
-      final message = ApiClient.extractErrorMessage(
-        e,
-        defaultMessage: 'Gagal memuat profil pasien.',
-      );
-      throw Exception(message);
-    }
-  }
-
-  /// Logout akun pasien (PROMPT 25 — Menghapus seluruh sesi lokal pasien).
-  ///
-  /// Karena backend SIMRS menggunakan token JWT stateless dan tidak memerlukan
-  /// endpoint khusus, logout dilakukan dengan membersihkan seluruh data sesi lokal
-  /// via [SessionManager.clearSession].
+  /// Logout dari SIMRS (/auth/logout)
   static Future<void> logout() async {
     await SessionManager.clearSession();
+  }
+
+  // ── Master Data Referensi SIMRS (Pekerjaan, Pendidikan, Status Kawin, Agama) ──
+
+  /// Ambil daftar master pekerjaan dari SIMRS (GET /master/pekerjaan)
+  static Future<List<Map<String, dynamic>>> getMasterPekerjaan() async {
+    try {
+      final res = await _dio.get('/master/pekerjaan');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterPekerjaan error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master pendidikan dari SIMRS (GET /master/pendidikan)
+  static Future<List<Map<String, dynamic>>> getMasterPendidikan() async {
+    try {
+      final res = await _dio.get('/master/pendidikan');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterPendidikan error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master status kawin dari SIMRS (GET /master/status_kawin)
+  static Future<List<Map<String, dynamic>>> getMasterStatusKawin() async {
+    try {
+      final res = await _dio.get('/master/status_kawin');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterStatusKawin error: $e');
+    }
+    return [];
+  }
+
+  /// Ambil daftar master agama dari SIMRS (GET /master/agama)
+  static Future<List<Map<String, dynamic>>> getMasterAgama() async {
+    try {
+      final res = await _dio.get('/master/agama');
+      if (res.data is Map<String, dynamic> && res.data['data'] is List) {
+        return List<Map<String, dynamic>>.from(res.data['data']);
+      }
+    } catch (e) {
+      debugPrint('[SimrsService] getMasterAgama error: $e');
+    }
+    return [];
   }
 
   /// Kirim kode OTP Lupa Kata Sandi (/auth/forgotPassword)
@@ -347,12 +376,8 @@ class SimrsService {
       );
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        if (data['status'] == false ||
-            data['status'] == 0 ||
-            data['status'] == 'error' ||
-            data['status'] == 'failed') {
-          throw Exception(data['message']?.toString() ??
-              'Gagal mengirim kode OTP. Pastikan email terdaftar.');
+        if (data['status'] == false || data['status'] == 0 || data['status'] == 'error' || data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ?? 'Gagal mengirim kode OTP. Pastikan email terdaftar.');
         }
         return data;
       }
@@ -384,12 +409,8 @@ class SimrsService {
       );
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        if (data['status'] == false ||
-            data['status'] == 0 ||
-            data['status'] == 'error' ||
-            data['status'] == 'failed') {
-          throw Exception(data['message']?.toString() ??
-              'Kode OTP tidak valid atau sudah kedaluwarsa.');
+        if (data['status'] == false || data['status'] == 0 || data['status'] == 'error' || data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ?? 'Kode OTP tidak valid atau sudah kedaluwarsa.');
         }
         return data;
       }
@@ -413,12 +434,8 @@ class SimrsService {
       );
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        if (data['status'] == false ||
-            data['status'] == 0 ||
-            data['status'] == 'error' ||
-            data['status'] == 'failed') {
-          throw Exception(
-              data['message']?.toString() ?? 'Gagal mengirim ulang kode OTP.');
+        if (data['status'] == false || data['status'] == 0 || data['status'] == 'error' || data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ?? 'Gagal mengirim ulang kode OTP.');
         }
         return data;
       }
@@ -455,12 +472,8 @@ class SimrsService {
       );
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        if (data['status'] == false ||
-            data['status'] == 0 ||
-            data['status'] == 'error' ||
-            data['status'] == 'failed') {
-          throw Exception(data['message']?.toString() ??
-              'Gagal mengatur ulang kata sandi.');
+        if (data['status'] == false || data['status'] == 0 || data['status'] == 'error' || data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ?? 'Gagal mengatur ulang kata sandi.');
         }
         return data;
       }

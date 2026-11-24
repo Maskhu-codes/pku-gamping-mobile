@@ -27,6 +27,8 @@ class SessionManager {
   static const String _keyFsKdAntrian = 'pku_fs_kd_antrian';
   static const String _keyNoBooking = 'pku_no_booking';
   static const String _keyNoUrutAntrean = 'pku_no_urut_antrean';
+  static const String _keyProfilePrefix = 'pku_profile_nik_';
+  static const String _keyIsGuest = 'pku_is_guest';
 
   /// Notifier reaktif untuk foto profil pasien
   static final ValueNotifier<String?> profilePhotoNotifier =
@@ -51,12 +53,18 @@ class SessionManager {
   /// Cek status login pengguna
   static bool get isLoggedIn => _prefs?.getBool(_keyIsLoggedIn) ?? false;
 
-  /// Status Mode Tamu (Guest Mode)
-  static bool get isGuestMode => _isGuestMode;
+  /// Cek apakah pengguna saat ini masuk dalam Mode Tamu (Guest Mode)
+  static bool get isGuest => _prefs?.getBool(_keyIsGuest) ?? false;
 
-  /// Mengaktifkan atau menonaktifkan Mode Tamu
-  static void setGuestMode(bool value) {
+  /// Alias status Mode Tamu
+  static bool get isGuestMode => isGuest;
+
+  /// Atur status Mode Tamu (persisten)
+  static Future<void> setGuestMode(bool value) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
     _isGuestMode = value;
+    await p.setBool(_keyIsGuest, value);
   }
 
   /// Memvalidasi apakah sesi aktif dan memiliki token yang valid
@@ -119,6 +127,28 @@ class SessionManager {
     }
   }
 
+  /// Ambil data SIMRS pasien (objek 'simrs' jika tersedia dari /auth/me)
+  static Map<String, dynamic>? get simrsData {
+    final data = patientData;
+    if (data == null) return null;
+    final simrs = data['simrs'];
+    if (simrs is Map<String, dynamic>) return simrs;
+    return null;
+  }
+
+  /// Ambil tanggal lahir pasien (dari SIMRS 'FD_TGL_LAHIR' atau fallback)
+  static String? get tanggalLahir {
+    return simrsData?['FD_TGL_LAHIR'] as String? ??
+        simrsData?['fd_tgl_lahir'] as String? ??
+        patientData?['fd_tgl_lahir'] as String? ??
+        patientData?['tanggal_lahir'] as String?;
+  }
+
+  /// Ambil waktu pembuatan akun (dari 'fd_created_at')
+  static String? get createdAt {
+    return patientData?['fd_created_at'] as String?;
+  }
+
   /// Simpan sesi baru setelah login / registrasi berhasil
   static Future<void> saveSession({
     required String token,
@@ -144,12 +174,43 @@ class SessionManager {
     await Future.wait([
       p.setString(_keyToken, token),
       p.setBool(_keyIsLoggedIn, true),
+      p.setBool(_keyIsGuest, false),
       p.setString(_keyNamaPasien, resolvedNama),
       p.setString(_keyNoRm, resolvedMr),
       if (resolvedNik != null) p.setString(_keyNik, resolvedNik),
       if (resolvedEmail != null) p.setString(_keyEmail, resolvedEmail),
       if (username != null) p.setString(_keyUsername, username),
     ]);
+  }
+
+  /// Simpan profil lokal lengkap berdasarkan NIK (tersimpan persisten per NIK pasien)
+  static Future<void> saveProfileByNik(String nik, Map<String, dynamic> data) async {
+    if (nik.trim().isEmpty) return;
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    final cleanNik = nik.trim();
+    final current = getProfileByNik(cleanNik) ?? {};
+    final merged = {...current, ...data};
+    // Sanitasi data sensitif
+    merged.remove('password');
+    merged.remove('kata_sandi');
+    merged.remove('confirm_password');
+    merged.remove('pin');
+    await p.setString('$_keyProfilePrefix$cleanNik', jsonEncode(merged));
+  }
+
+  /// Ambil profil lokal lengkap berdasarkan NIK
+  static Map<String, dynamic>? getProfileByNik(String nik) {
+    if (nik.trim().isEmpty) return null;
+    final p = _prefs;
+    final cleanNik = nik.trim();
+    final jsonStr = p?.getString('$_keyProfilePrefix$cleanNik');
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      return jsonDecode(jsonStr) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Simpan data pasien lengkap ke session (dengan sanitasi kredensial keamanan)
@@ -186,7 +247,25 @@ class SessionManager {
     if (rawNoHp != null && rawNoHp.isNotEmpty) {
       await p.setString(_keyNoHp, rawNoHp);
     }
-    await p.setString(_keyPatientData, jsonEncode(safeData));
+
+    // Merge dengan data pasien yang sudah tersimpan sebelumnya agar field tidak hilang
+    final existingData = patientData ?? {};
+    final mergedData = {...existingData, ...safeData};
+
+    // Jika ada NIK, gabungkan juga dengan profil yang tersimpan untuk NIK ini
+    final currentNik = nik ?? mergedData['fs_nik']?.toString() ?? mergedData['nik']?.toString();
+    if (currentNik != null && currentNik.trim().isNotEmpty) {
+      final cachedProfile = getProfileByNik(currentNik.trim());
+      if (cachedProfile != null) {
+        cachedProfile.forEach((key, val) {
+          if (!mergedData.containsKey(key) || mergedData[key] == null || mergedData[key].toString().trim().isEmpty) {
+            mergedData[key] = val;
+          }
+        });
+      }
+    }
+
+    await p.setString(_keyPatientData, jsonEncode(mergedData));
   }
 
   /// Memperbarui identitas dan profil pasien dari data respons `GET /auth/me`.
@@ -335,6 +414,7 @@ class SessionManager {
     await Future.wait([
       p.remove(_keyToken),
       p.setBool(_keyIsLoggedIn, false),
+      p.setBool(_keyIsGuest, false),
       p.remove(_keyNamaPasien),
       p.remove(_keyNoRm),
       p.remove(_keyNik),

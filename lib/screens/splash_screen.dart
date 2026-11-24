@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import '../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -46,11 +47,35 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     _fadeController.forward();
     _slideController.forward();
-    await Future.delayed(const Duration(milliseconds: 850));
+    // Tunggu animasi logo selesai
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+
+    // Cek apakah ada sesi login aktif
+    final token = SessionManager.token;
+    final isLoggedIn = SessionManager.isLoggedIn;
+
+    if (isLoggedIn && token != null && token.isNotEmpty) {
+      try {
+        final sessionData = await SimrsService.checkSession();
+        if (!mounted) return;
+
+        if (sessionData != null) {
+          // Sesi masih valid di backend SIMRS -> langsung masuk ke Beranda
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          return;
+        }
+      } catch (_) {
+        // Jika offline atau error, tetap cek apakah sesi lokal masih ada
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          return;
+        }
+      }
+    }
+
     if (mounted) {
-      final destination =
-          SessionManager.hasValidSession() ? AppRoutes.home : AppRoutes.login;
-      Navigator.pushReplacementNamed(context, destination);
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
 

@@ -9,16 +9,22 @@ class RegisterHeaderStepper extends StatelessWidget {
     required this.totalPages,
     required this.onBack,
     required this.onStepTapped,
+    this.hasExistingMr = false,
   });
 
   final int currentPage;
   final int totalPages;
   final VoidCallback onBack;
   final ValueChanged<int> onStepTapped;
+  final bool hasExistingMr;
 
   @override
   Widget build(BuildContext context) {
-    final stepTitles = ['Cek Identitas', 'Data Pasien', 'Keamanan'];
+    final stepTitles = [
+      'Cek Identitas',
+      hasExistingMr ? 'Data Pasien (SIMRS)' : 'Data Pasien',
+      'Keamanan',
+    ];
 
     return Container(
       color: Colors.white,
@@ -125,7 +131,8 @@ class RegisterHeaderStepper extends StatelessWidget {
 
                 Row(
                   children: List.generate(totalPages, (i) {
-                    final isPassedOrCurrent = i <= currentPage;
+                    final isPassedOrCurrent = i <= currentPage ||
+                        (hasExistingMr && i == 1 && currentPage == 2);
                     return Expanded(
                       child: Container(
                         height: 4,
@@ -148,7 +155,12 @@ class RegisterHeaderStepper extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: _buildStepTab(0, '1. Cek NIK')),
-                    Expanded(child: _buildStepTab(1, '2. Data Pasien')),
+                    Expanded(
+                      child: _buildStepTab(
+                        1,
+                        hasExistingMr ? '2. Biodata SIMRS' : '2. Data Pasien',
+                      ),
+                    ),
                     Expanded(child: _buildStepTab(2, '3. Keamanan')),
                   ],
                 ),
@@ -163,11 +175,12 @@ class RegisterHeaderStepper extends StatelessWidget {
 
   Widget _buildStepTab(int index, String label) {
     final active = currentPage == index;
-    final done = currentPage > index;
+    final done = currentPage > index ||
+        (hasExistingMr && index == 1 && currentPage == 2);
 
     return GestureDetector(
       onTap: () {
-        if (index <= currentPage) {
+        if (index <= currentPage || (hasExistingMr && index <= 2)) {
           onStepTapped(index);
         }
       },

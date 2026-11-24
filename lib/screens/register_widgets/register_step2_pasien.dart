@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pku_gamping_app/core/theme/app_colors.dart';
 import 'package:pku_gamping_app/data/wilayah_data.dart';
+import 'package:pku_gamping_app/services/wilayah_service.dart';
 
 /// Langkah 2: Pengisian Biodata Pasien, Alamat, dan Kontak.
 ///
@@ -38,6 +39,11 @@ class RegisterStep2Pasien extends StatelessWidget {
     required this.selectedKabupaten,
     required this.selectedKecamatan,
     required this.selectedKelurahan,
+    required this.provinsiList,
+    required this.kabupatenList,
+    required this.kecamatanList,
+    required this.kelurahanList,
+    required this.isLoadingWilayah,
     required this.alamatController,
     required this.nomorHpController,
     required this.onTempatLahirChanged,
@@ -80,10 +86,17 @@ class RegisterStep2Pasien extends StatelessWidget {
   final bool isLoadingKelurahan;
   final TextEditingController namaIbuController;
 
-  final String? selectedProvinsi;
-  final String? selectedKabupaten;
-  final String? selectedKecamatan;
-  final String? selectedKelurahan;
+  final WilayahItem? selectedProvinsi;
+  final WilayahItem? selectedKabupaten;
+  final WilayahItem? selectedKecamatan;
+  final WilayahItem? selectedKelurahan;
+
+  final List<WilayahItem> provinsiList;
+  final List<WilayahItem> kabupatenList;
+  final List<WilayahItem> kecamatanList;
+  final List<WilayahItem> kelurahanList;
+  final bool isLoadingWilayah;
+
   final TextEditingController alamatController;
 
   final TextEditingController nomorHpController;
@@ -97,23 +110,16 @@ class RegisterStep2Pasien extends StatelessWidget {
   final ValueChanged<String?> onPekerjaanChanged;
   final ValueChanged<String?> onPendidikanChanged;
   final ValueChanged<String?> onStatusKawinChanged;
-  final ValueChanged<String?> onProvinsiChanged;
-  final ValueChanged<String?> onKabupatenChanged;
-  final ValueChanged<String?> onKecamatanChanged;
-  final ValueChanged<String?> onKelurahanChanged;
+  final ValueChanged<WilayahItem?> onProvinsiChanged;
+  final ValueChanged<WilayahItem?> onKabupatenChanged;
+  final ValueChanged<WilayahItem?> onKecamatanChanged;
+  final ValueChanged<WilayahItem?> onKelurahanChanged;
 
   final VoidCallback onPrev;
   final VoidCallback onLanjut;
 
   @override
   Widget build(BuildContext context) {
-    // Cascading data
-    final kabupatenList =
-        WilayahData.getKabupatenByProvinsi(selectedProvinsi);
-    final kecamatanList =
-        WilayahData.getKecamatanByKabupaten(selectedKabupaten);
-    final kelurahanList =
-        WilayahData.getKelurahanByKecamatan(selectedKecamatan);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
@@ -355,96 +361,77 @@ class RegisterStep2Pasien extends StatelessWidget {
           _buildCard(
             children: [
               _buildFieldLabel('Provinsi *'),
-              provinsiItems != null
-                  ? _buildWilayahDropdown(
-                      initialValue: selectedProvinsi,
-                      items: provinsiItems!,
-                      codeKey: 'FS_KD_PROPINSI',
-                      nameKey: 'FS_NM_PROPINSI',
-                      hint: 'Pilih Provinsi',
-                      icon: Icons.map_outlined,
-                      onChanged: onProvinsiChanged,
-                    )
-                  : _buildDropdown(
-                      initialValue: selectedProvinsi,
-                      items: WilayahData.provinsiList,
-                      hint: 'Pilih Provinsi',
-                      icon: Icons.map_outlined,
-                      onChanged: onProvinsiChanged,
-                    ),
+              _buildWilayahDropdown(
+                selectedItem: selectedProvinsi,
+                items: provinsiList,
+                hint: 'Pilih Provinsi',
+                icon: Icons.map_outlined,
+                onChanged: onProvinsiChanged,
+                isLoading: isLoadingWilayah && provinsiList.isEmpty,
+              ),
               const SizedBox(height: 12),
 
               _buildFieldLabel('Kabupaten / Kota *'),
-              provinsiItems != null
-                  ? _buildWilayahDropdown(
-                      initialValue: selectedKabupaten,
-                      items: kabupatenItems ?? [],
-                      codeKey: 'FS_KD_KABUPATEN',
-                      nameKey: 'FS_NM_KABUPATEN',
-                      hint: selectedProvinsi == null
-                          ? 'Pilih Provinsi terlebih dahulu'
-                          : 'Pilih Kabupaten / Kota',
-                      icon: Icons.location_city_outlined,
-                      onChanged: onKabupatenChanged,
-                      isLoading: isLoadingKabupaten,
-                      enabled: selectedProvinsi != null,
-                    )
-                  : _buildDropdown(
-                      initialValue: selectedKabupaten,
-                      items: kabupatenList,
-                      hint: 'Pilih Kabupaten / Kota',
-                      icon: Icons.location_city_outlined,
-                      onChanged: onKabupatenChanged,
-                    ),
+              _buildWilayahDropdown(
+                selectedItem: selectedKabupaten,
+                items: kabupatenList,
+                hint: selectedProvinsi == null ? 'Pilih Provinsi terlebih dahulu' : 'Pilih Kabupaten / Kota',
+                icon: Icons.location_city_outlined,
+                onChanged: onKabupatenChanged,
+                isLoading: isLoadingWilayah && selectedProvinsi != null && kabupatenList.isEmpty,
+              ),
               const SizedBox(height: 12),
 
               _buildFieldLabel('Kecamatan *'),
-              provinsiItems != null
-                  ? _buildWilayahDropdown(
-                      initialValue: selectedKecamatan,
-                      items: kecamatanItems ?? [],
-                      codeKey: 'FS_KD_KECAMATAN',
-                      nameKey: 'FS_NM_KECAMATAN',
-                      hint: selectedKabupaten == null
-                          ? 'Pilih Kabupaten terlebih dahulu'
-                          : 'Pilih Kecamatan',
-                      icon: Icons.navigation_outlined,
-                      onChanged: onKecamatanChanged,
-                      isLoading: isLoadingKecamatan,
-                      enabled: selectedKabupaten != null,
-                    )
-                  : _buildDropdown(
-                      initialValue: selectedKecamatan,
-                      items: kecamatanList,
-                      hint: 'Pilih Kecamatan',
-                      icon: Icons.navigation_outlined,
-                      onChanged: onKecamatanChanged,
-                    ),
+              _buildWilayahDropdown(
+                selectedItem: selectedKecamatan,
+                items: kecamatanList,
+                hint: selectedKabupaten == null ? 'Pilih Kabupaten terlebih dahulu' : 'Pilih Kecamatan',
+                icon: Icons.navigation_outlined,
+                onChanged: onKecamatanChanged,
+                isLoading: isLoadingWilayah && selectedKabupaten != null && kecamatanList.isEmpty,
+              ),
               const SizedBox(height: 12),
 
               _buildFieldLabel('Kelurahan / Desa *'),
-              provinsiItems != null
-                  ? _buildWilayahDropdown(
-                      initialValue: selectedKelurahan,
-                      items: kelurahanItems ?? [],
-                      codeKey: 'FS_KD_KELURAHAN',
-                      nameKey: 'FS_NM_KELURAHAN',
-                      hint: selectedKecamatan == null
-                          ? 'Pilih Kecamatan terlebih dahulu'
-                          : 'Pilih Kelurahan / Desa',
-                      icon: Icons.home_work_outlined,
-                      onChanged: onKelurahanChanged,
-                      isLoading: isLoadingKelurahan,
-                      enabled: selectedKecamatan != null,
-                    )
-                  : _buildDropdown(
-                      initialValue: selectedKelurahan,
-                      items: kelurahanList,
-                      hint: 'Pilih Kelurahan / Desa',
-                      icon: Icons.home_work_outlined,
-                      onChanged: onKelurahanChanged,
-                    ),
+              _buildWilayahDropdown(
+                selectedItem: selectedKelurahan,
+                items: kelurahanList,
+                hint: selectedKecamatan == null ? 'Pilih Kecamatan terlebih dahulu' : 'Pilih Kelurahan / Desa',
+                icon: Icons.home_work_outlined,
+                onChanged: onKelurahanChanged,
+                isLoading: isLoadingWilayah && selectedKecamatan != null && kelurahanList.isEmpty,
+              ),
               const SizedBox(height: 12),
+
+              if (selectedKecamatan?.nama == 'Lainnya' ||
+                  selectedKelurahan?.nama == 'Lainnya') ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Karena memilih "Lainnya", cantumkan nama Kecamatan / Kelurahan lengkap Anda di kolom Alamat di bawah.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.amber.shade900,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               _buildFieldLabel('Alamat Lengkap / Jalan *'),
               _buildInputField(
@@ -840,65 +827,78 @@ class RegisterStep2Pasien extends StatelessWidget {
     );
   }
 
-  /// Dropdown wilayah berjenjang (SIMRS)
+  /// Dropdown khusus untuk data wilayah dari API (WilayahItem).
+  /// Menampilkan loading indicator saat data sedang di-fetch.
   Widget _buildWilayahDropdown({
-    required String? initialValue,
-    required List<Map<String, dynamic>> items,
-    required String codeKey,
-    required String nameKey,
+    required WilayahItem? selectedItem,
+    required List<WilayahItem> items,
     required String hint,
     required IconData icon,
-    required ValueChanged<String?> onChanged,
+    required ValueChanged<WilayahItem?> onChanged,
     bool isLoading = false,
-    bool enabled = true,
   }) {
-    // Deduplikasi items berdasarkan codeKey
-    final seen = <String>{};
-    final uniqueItems = <Map<String, dynamic>>[];
-    for (final it in items) {
-      final code = it[codeKey]?.toString().trim();
-      if (code != null && code.isNotEmpty && seen.add(code)) {
-        uniqueItems.add(it);
+    // Pastikan selectedItem valid (ada di list items yang sedang aktif)
+    WilayahItem? validItem;
+    if (selectedItem != null && items.isNotEmpty) {
+      try {
+        validItem = items.firstWhere(
+          (e) =>
+              e.kode.toLowerCase() == selectedItem.kode.toLowerCase() ||
+              e.nama.toLowerCase() == selectedItem.nama.toLowerCase(),
+        );
+      } catch (_) {
+        validItem = null;
       }
     }
 
-    final hasMatch = uniqueItems.any((e) =>
-        e[codeKey]?.toString().trim() == initialValue ||
-        e[nameKey]?.toString().trim().toUpperCase() ==
-            initialValue?.trim().toUpperCase());
-
-    String? selectedValue;
-    if (hasMatch) {
-      final matched = uniqueItems.firstWhere((e) =>
-          e[codeKey]?.toString().trim() == initialValue ||
-          e[nameKey]?.toString().trim().toUpperCase() ==
-              initialValue?.trim().toUpperCase());
-      selectedValue = matched[codeKey]?.toString().trim();
+    if (isLoading) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textHint, size: 18),
+            const SizedBox(width: 10),
+            const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Memuat data...',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textHint,
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
-    return DropdownButtonFormField<String>(
-      key: ValueKey('${codeKey}_${uniqueItems.length}_$selectedValue'),
-      initialValue: selectedValue,
-      onChanged: enabled && !isLoading ? onChanged : null,
+    final dropdownKey = ValueKey(
+      '${hint}_${validItem?.kode ?? "empty"}_${items.length}_${items.isNotEmpty ? items.first.kode : "none"}',
+    );
+
+    return DropdownButtonFormField<WilayahItem>(
+      key: dropdownKey,
+      initialValue: validItem,
+      onChanged: items.isEmpty ? null : onChanged,
       isExpanded: true,
       style: const TextStyle(
         fontSize: 13,
         color: AppColors.textPrimary,
       ),
-      icon: isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
-              ),
-            )
-          : const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textHint,
-              size: 20,
-            ),
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: AppColors.textHint,
+        size: 20,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
@@ -907,7 +907,7 @@ class RegisterStep2Pasien extends StatelessWidget {
         ),
         prefixIcon: Icon(icon, color: AppColors.textHint, size: 18),
         filled: true,
-        fillColor: enabled ? AppColors.background : const Color(0xFFF6F7F9),
+        fillColor: AppColors.background,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 4,
@@ -920,10 +920,6 @@ class RegisterStep2Pasien extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.border),
         ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
-        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(
@@ -932,13 +928,12 @@ class RegisterStep2Pasien extends StatelessWidget {
           ),
         ),
       ),
-      items: uniqueItems
+      items: items
           .map(
-            (e) => DropdownMenuItem<String>(
-              value: e[codeKey]?.toString().trim(),
+            (e) => DropdownMenuItem<WilayahItem>(
+              value: e,
               child: Text(
-                (e[nameKey] ?? '').toString(),
-                overflow: TextOverflow.ellipsis,
+                e.nama,
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textPrimary,
