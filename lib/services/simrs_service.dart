@@ -338,6 +338,143 @@ class SimrsService {
     await SessionManager.clearSession();
   }
 
+  /// Kirim kode OTP Lupa Kata Sandi (/auth/forgotPassword)
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await _dio.post(
+        '/auth/forgotPassword',
+        data: {'fs_email': email, 'email': email},
+      );
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['status'] == false ||
+            data['status'] == 0 ||
+            data['status'] == 'error' ||
+            data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ??
+              'Gagal mengirim kode OTP. Pastikan email terdaftar.');
+        }
+        return data;
+      }
+      return {'status': true, 'message': 'Kode OTP berhasil dikirim'};
+    } on DioException catch (e) {
+      debugPrint('[SimrsService] forgotPassword error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Gagal mengirim kode OTP. Pastikan email terdaftar.',
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Verifikasi kode OTP 6 digit (/auth/verifyOtp)
+  static Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/auth/verifyOtp',
+        data: {
+          'fs_email': email,
+          'email': email,
+          'fs_otp': otp,
+          'otp': otp,
+        },
+      );
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['status'] == false ||
+            data['status'] == 0 ||
+            data['status'] == 'error' ||
+            data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ??
+              'Kode OTP tidak valid atau sudah kedaluwarsa.');
+        }
+        return data;
+      }
+      return {'status': true, 'message': 'OTP valid'};
+    } on DioException catch (e) {
+      debugPrint('[SimrsService] verifyOtp error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Kode OTP tidak valid atau sudah kedaluwarsa.',
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Kirim ulang kode OTP (/auth/resendOtp)
+  static Future<Map<String, dynamic>> resendOtp(String email) async {
+    try {
+      final response = await _dio.post(
+        '/auth/resendOtp',
+        data: {'fs_email': email, 'email': email},
+      );
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['status'] == false ||
+            data['status'] == 0 ||
+            data['status'] == 'error' ||
+            data['status'] == 'failed') {
+          throw Exception(
+              data['message']?.toString() ?? 'Gagal mengirim ulang kode OTP.');
+        }
+        return data;
+      }
+      return {'status': true, 'message': 'Kode OTP baru berhasil dikirim'};
+    } on DioException catch (e) {
+      debugPrint('[SimrsService] resendOtp error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Gagal mengirim ulang kode OTP.',
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Atur ulang kata sandi baru (/auth/resetPassword)
+  static Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String password,
+    String? resetToken,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/auth/resetPassword',
+        data: {
+          'fs_email': email,
+          'email': email,
+          'fs_password': password,
+          'password': password,
+          if (resetToken != null && resetToken.isNotEmpty) ...{
+            'fs_reset_token': resetToken,
+            'reset_token': resetToken,
+          },
+        },
+      );
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['status'] == false ||
+            data['status'] == 0 ||
+            data['status'] == 'error' ||
+            data['status'] == 'failed') {
+          throw Exception(data['message']?.toString() ??
+              'Gagal mengatur ulang kata sandi.');
+        }
+        return data;
+      }
+      return {'status': true, 'message': 'Kata sandi berhasil diperbarui'};
+    } on DioException catch (e) {
+      debugPrint('[SimrsService] resetPassword error: ${e.response?.statusCode} - ${e.message}');
+      final errorMessage = ApiClient.extractErrorMessage(
+        e,
+        defaultMessage: 'Gagal mengatur ulang kata sandi.',
+      );
+      throw Exception(errorMessage);
+    }
+  }
+
   /// Mengambil daftar jadwal dokter SIMRS untuk 45 hari ke depan
   ///
   /// Endpoint: GET /jadwal/list?fs_kd_layanan=X&fs_kd_petugas_medis=Y

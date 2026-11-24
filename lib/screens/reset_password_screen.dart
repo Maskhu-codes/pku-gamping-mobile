@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
 import 'package:pku_gamping_app/services/app_feedback_service.dart';
+import 'package:pku_gamping_app/services/simrs_service.dart';
 import 'package:pku_gamping_app/widgets/app_text_field.dart';
 import '../core/theme/app_colors.dart';
 
@@ -19,6 +19,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+
+  String? _email;
+  String? _resetToken;
 
   bool _obscurePass = true;
   bool _obscureConfirm = true;
@@ -47,6 +50,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     _animController.forward();
 
     _passwordController.addListener(_checkStrength);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      _email = args['email']?.toString();
+      _resetToken = args['reset_token']?.toString();
+    }
   }
 
   void _checkStrength() {
@@ -83,31 +96,62 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       return;
     }
 
+    if (_email == null || _email!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email tidak ditemukan. Silakan ulangi proses lupa kata sandi.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    // Simulasi proses penyimpanan kata sandi.
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final res = await SimrsService.resetPassword(
+        email: _email!,
+        password: _passwordController.text,
+        resetToken: _resetToken,
+      );
 
-    if (!mounted) return;
+      if (res['status'] == false) {
+        throw Exception(res['message']?.toString() ?? 'Gagal mengatur ulang kata sandi.');
+      }
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (!mounted) return;
 
-    AppFeedback.showSuccess(
-      context,
-      title: 'Kata Sandi Berhasil Diubah',
-      message: 'Kata sandi kamu berhasil diperbarui. Silakan masuk menggunakan kata sandi baru.',
-      confirmText: 'Kembali ke Login',
-      onDone: () {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.login,
-          (route) => false,
-        );
-      },
-    );
+      AppFeedback.showSuccess(
+        context,
+        title: 'Kata Sandi Berhasil Diubah',
+        message: 'Kata sandi kamu berhasil diperbarui. Silakan masuk menggunakan kata sandi baru.',
+        confirmText: 'Kembali ke Login',
+        onDone: () {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.login,
+            (route) => false,
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Widget _passField({
@@ -319,7 +363,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     _isLoading
                         ? 'Menyimpan...'
                         : 'Simpan Kata Sandi',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -356,12 +400,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.of(context).maybePop(),
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_rounded,
             color: AppColors.textPrimary,
           ),
         ),
-        title: Text(
+        title: const Text(
           'Atur Ulang Kata Sandi',
           style: TextStyle(
             fontSize: 16,
