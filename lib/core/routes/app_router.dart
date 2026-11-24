@@ -7,8 +7,10 @@ import 'package:pku_gamping_app/screens/forgot_password_screen.dart';
 import 'package:pku_gamping_app/screens/hasil_lab_screen.dart';
 import 'package:pku_gamping_app/screens/hasil_radiologi_screen.dart';
 import 'package:pku_gamping_app/screens/home_screen.dart';
+import 'package:pku_gamping_app/screens/jadwal_screen.dart';
 import 'package:pku_gamping_app/screens/login_screen.dart';
 import 'package:pku_gamping_app/screens/news_screen.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/screens/otp_screen.dart';
 import 'package:pku_gamping_app/screens/pemeriksaan_penunjang_screen.dart';
 import 'package:pku_gamping_app/screens/pendaftaran_screen.dart';
@@ -29,6 +31,7 @@ class AppRoutes {
   static const otp = '/otp';
   static const resetPassword = '/reset-password';
   static const home = '/home';
+  static const jadwal = '/jadwal';
   static const news = '/news';
   static const pendaftaran = '/pendaftaran';
   static const queueDetail = '/queue-detail';
@@ -85,10 +88,32 @@ class AppRouter {
           ),
         );
 
+      case AppRoutes.jadwal:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final isGuest = args?['isGuest'] as bool? ?? SessionManager.isGuest;
+        return MaterialPageRoute(
+          builder: (_) => JadwalScreen(
+            isGuestMode: isGuest,
+          ),
+          settings: settings,
+        );
+
       case AppRoutes.news:
         return MaterialPageRoute(builder: (_) => const NewsScreen());
 
       case AppRoutes.pendaftaran:
+        if (SessionManager.isGuest) {
+          return MaterialPageRoute(
+            builder: (_) => const LoginScreen(),
+            settings: const RouteSettings(
+              name: AppRoutes.login,
+              arguments: {
+                'message':
+                    'Silakan login terlebih dahulu untuk melakukan pendaftaran.',
+              },
+            ),
+          );
+        }
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
           builder: (_) => PendaftaranScreen(

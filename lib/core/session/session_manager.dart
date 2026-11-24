@@ -21,6 +21,7 @@ class SessionManager {
   static const String _keyProfilePhotoPath = 'pku_profile_photo_path';
   static const String _keyNotificationEnabled = 'pku_notification_enabled';
   static const String _keyProfilePrefix = 'pku_profile_nik_';
+  static const String _keyIsGuest = 'pku_is_guest';
 
   /// Notifier reaktif untuk foto profil pasien
   static final ValueNotifier<String?> profilePhotoNotifier =
@@ -44,6 +45,16 @@ class SessionManager {
 
   /// Cek status login pengguna
   static bool get isLoggedIn => _prefs?.getBool(_keyIsLoggedIn) ?? false;
+
+  /// Cek apakah pengguna saat ini masuk dalam Mode Tamu (Guest Mode)
+  static bool get isGuest => _prefs?.getBool(_keyIsGuest) ?? false;
+
+  /// Atur status Mode Tamu
+  static Future<void> setGuestMode(bool isGuest) async {
+    final p = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = p;
+    await p.setBool(_keyIsGuest, isGuest);
+  }
 
   /// Ambil JWT / Auth token
   static String? get token => _prefs?.getString(_keyToken);
@@ -107,6 +118,7 @@ class SessionManager {
     await Future.wait([
       p.setString(_keyToken, token),
       p.setBool(_keyIsLoggedIn, true),
+      p.setBool(_keyIsGuest, false),
       p.setString(_keyNamaPasien, namaPasien),
       p.setString(_keyNoRm, noRm),
       if (nik != null) p.setString(_keyNik, nik),
@@ -209,6 +221,7 @@ class SessionManager {
     await Future.wait([
       p.remove(_keyToken),
       p.setBool(_keyIsLoggedIn, false),
+      p.setBool(_keyIsGuest, false),
       p.remove(_keyNamaPasien),
       p.remove(_keyNoRm),
       p.remove(_keyNik),

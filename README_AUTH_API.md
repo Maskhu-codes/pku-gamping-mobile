@@ -173,7 +173,7 @@ flowchart TD
   3. Menerima JWT token dan menyimpannya ke `SessionManager`.
   4. Otomatis memicu `checkSession()` (`GET /auth/me`) untuk mengambil data No. Rekam Medis (`FS_MR`), NIK, dan Nama Pasien dari database SIMRS.
   5. Menampilkan SnackBar mengambang berwarna merah jika kredensial salah.
-* **Lokasi Baris:** `lib/screens/login_screen.dart` (Baris 48–72 untuk tangkap argumen, Baris 82–132 untuk eksekusi login)
+* **Lokasi Baris:** `lib/screens/login_screen.dart` (Baris 48–72 untuk tangkap argumen, Baris 92–142 untuk eksekusi login)
 * **Cuplikan Kodingan UI:**
 ```dart
   // 1. Menangkap Email Otomatis setelah Selesai Mendaftar (Baris 48-72)
@@ -204,7 +204,7 @@ flowchart TD
     }
   }
 
-  // 2. Eksekusi Login via API (Baris 82-132)
+  // 2. Eksekusi Login via API (Baris 92-142)
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -438,7 +438,7 @@ Halaman ini mengelola formulir pendaftaran 3 langkah (*stepper*) dengan percaban
 
 #### D. Dropdown Reaktif di `RegisterStep2Pasien`
 * **Lokasi Baris:** `lib/screens/register_widgets/register_step2_pasien.dart` (Baris 802–870)
-* **Kodingan:** Menggunakan `value: validItem` dan `ValueKey` dinamis agar FormField langsung me-rebuild dan mereset nilai saat provinsi/kabupaten berubah:
+* **Kodingan:** Menggunakan `initialValue: validItem` dan `ValueKey` dinamis agar FormField langsung me-rebuild dan mereset nilai saat provinsi/kabupaten berubah:
 ```dart
     final dropdownKey = ValueKey(
       '${hint}_${validItem?.kode ?? "empty"}_${items.length}_${items.isNotEmpty ? items.first.kode : "none"}',
@@ -446,7 +446,7 @@ Halaman ini mengelola formulir pendaftaran 3 langkah (*stepper*) dengan percaban
 
     return DropdownButtonFormField<WilayahItem>(
       key: dropdownKey,
-      value: validItem,
+      initialValue: validItem,
       onChanged: items.isEmpty ? null : onChanged,
       ...
 ```

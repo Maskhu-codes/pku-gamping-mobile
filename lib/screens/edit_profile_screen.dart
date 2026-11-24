@@ -383,14 +383,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         : '';
     if (p.isEmpty && kodeKelurahan != null && kodeKelurahan.length >= 2) {
       final provCode = kodeKelurahan.substring(0, 2);
-      if (provCode == '34') p = 'D.I. Yogyakarta';
-      else if (provCode == '32') p = 'Jawa Barat';
-      else if (provCode == '33') p = 'Jawa Tengah';
-      else if (provCode == '31') p = 'DKI Jakarta';
-      else if (provCode == '35') p = 'Jawa Timur';
-      else if (provCode == '36') p = 'Banten';
-      else if (provCode == '51') p = 'Bali';
-      else if (provCode == '16') p = 'Sumatera Selatan';
+      if (provCode == '34') {
+        p = 'D.I. Yogyakarta';
+      } else if (provCode == '32') {
+        p = 'Jawa Barat';
+      } else if (provCode == '33') {
+        p = 'Jawa Tengah';
+      } else if (provCode == '31') {
+        p = 'DKI Jakarta';
+      } else if (provCode == '35') {
+        p = 'Jawa Timur';
+      } else if (provCode == '36') {
+        p = 'Banten';
+      } else if (provCode == '51') {
+        p = 'Bali';
+      } else if (provCode == '16') {
+        p = 'Sumatera Selatan';
+      }
     }
     if (p.isEmpty) {
       p = 'D.I. Yogyakarta';
@@ -403,15 +412,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       kab = kabupaten;
     } else if (kodeKelurahan != null && kodeKelurahan.length >= 4) {
       final kabCode = kodeKelurahan.substring(0, 4);
-      if (kabCode == '3404' && kabList.contains('Kab. Sleman')) kab = 'Kab. Sleman';
-      else if (kabCode == '3402' && kabList.contains('Kab. Bantul')) kab = 'Kab. Bantul';
-      else if (kabCode == '3471' && kabList.contains('Kota Yogyakarta')) kab = 'Kota Yogyakarta';
-      else if (kabCode == '3401' && kabList.contains('Kab. Kulon Progo')) kab = 'Kab. Kulon Progo';
-      else if (kabCode == '3403' && kabList.contains('Kab. Gunungkidul')) kab = 'Kab. Gunungkidul';
-      else if (kabCode == '3273' && kabList.contains('Kota Bandung')) kab = 'Kota Bandung';
-      else if (kabCode == '3204' && kabList.contains('Kab. Bandung')) kab = 'Kab. Bandung';
-      else if (kabCode == '3217' && kabList.contains('Kab. Bandung Barat')) kab = 'Kab. Bandung Barat';
-      else if (kabList.isNotEmpty) kab = kabList.first;
+      if (kabCode == '3404' && kabList.contains('Kab. Sleman')) {
+        kab = 'Kab. Sleman';
+      } else if (kabCode == '3402' && kabList.contains('Kab. Bantul')) {
+        kab = 'Kab. Bantul';
+      } else if (kabCode == '3471' && kabList.contains('Kota Yogyakarta')) {
+        kab = 'Kota Yogyakarta';
+      } else if (kabCode == '3401' && kabList.contains('Kab. Kulon Progo')) {
+        kab = 'Kab. Kulon Progo';
+      } else if (kabCode == '3403' && kabList.contains('Kab. Gunungkidul')) {
+        kab = 'Kab. Gunungkidul';
+      } else if (kabCode == '3273' && kabList.contains('Kota Bandung')) {
+        kab = 'Kota Bandung';
+      } else if (kabCode == '3204' && kabList.contains('Kab. Bandung')) {
+        kab = 'Kab. Bandung';
+      } else if (kabCode == '3217' && kabList.contains('Kab. Bandung Barat')) {
+        kab = 'Kab. Bandung Barat';
+      } else if (kabList.isNotEmpty) {
+        kab = kabList.first;
+      }
     }
     if (kab.isEmpty && kabList.isNotEmpty) {
       kab = kabList.first;
@@ -424,10 +443,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       kec = kecamatan;
     } else if (kodeKelurahan != null && kodeKelurahan.length >= 6) {
       final kecCode = kodeKelurahan.substring(0, 6);
-      if (kecCode == '340407' && kecList.contains('Gamping')) kec = 'Gamping';
-      else if (kecCode == '340402' && kecList.contains('Godean')) kec = 'Godean';
-      else if (kecCode == '340405' && kecList.contains('Mlati')) kec = 'Mlati';
-      else if (kecList.isNotEmpty) kec = kecList.first;
+      if (kecCode == '340407' && kecList.contains('Gamping')) {
+        kec = 'Gamping';
+      } else if (kecCode == '340402' && kecList.contains('Godean')) {
+        kec = 'Godean';
+      } else if (kecCode == '340405' && kecList.contains('Mlati')) {
+        kec = 'Mlati';
+      } else if (kecList.isNotEmpty) {
+        kec = kecList.first;
+      }
     }
     if (kec.isEmpty && kecList.isNotEmpty) {
       kec = kecList.first;
@@ -439,12 +463,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (kelurahan != null && kelList.contains(kelurahan)) {
       kel = kelurahan;
     } else if (kodeKelurahan != null && kodeKelurahan.length == 10) {
-      if (kodeKelurahan == '3404072001' && kelList.contains('Ambarketawang')) kel = 'Ambarketawang';
-      else if (kodeKelurahan == '3404072002' && kelList.contains('Balecatur')) kel = 'Balecatur';
-      else if (kodeKelurahan == '3404072003' && kelList.contains('Banyuraden')) kel = 'Banyuraden';
-      else if (kodeKelurahan == '3404072004' && kelList.contains('Nogotirto')) kel = 'Nogotirto';
-      else if (kodeKelurahan == '3404072005' && kelList.contains('Trihanggo')) kel = 'Trihanggo';
-      else if (kelList.isNotEmpty) kel = kelList.first;
+      if (kodeKelurahan == '3404072001' && kelList.contains('Ambarketawang')) {
+        kel = 'Ambarketawang';
+      } else if (kodeKelurahan == '3404072002' && kelList.contains('Balecatur')) {
+        kel = 'Balecatur';
+      } else if (kodeKelurahan == '3404072003' && kelList.contains('Banyuraden')) {
+        kel = 'Banyuraden';
+      } else if (kodeKelurahan == '3404072004' && kelList.contains('Nogotirto')) {
+        kel = 'Nogotirto';
+      } else if (kodeKelurahan == '3404072005' && kelList.contains('Trihanggo')) {
+        kel = 'Trihanggo';
+      } else if (kelList.isNotEmpty) {
+        kel = kelList.first;
+      }
     }
     if (kel.isEmpty && kelList.isNotEmpty) {
       kel = kelList.first;

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
+import 'package:pku_gamping_app/widgets/guest_login_prompt_dialog.dart';
 import 'jadwal_constants.dart';
 import 'jadwal_dokter_card.dart';
 
@@ -42,6 +44,14 @@ class JadwalDokterList extends StatelessWidget {
               dokter: dokterList[index],
               showDivider: !isLast,
               onTap: () {
+                if (SessionManager.isGuest) {
+                  GuestLoginPromptDialog.show(
+                    context,
+                    dokterName: dokterList[index].nama,
+                    poliName: dokterList[index].poli,
+                  );
+                  return;
+                }
                 Navigator.of(context).pushNamed(
                   AppRoutes.pendaftaran,
                   arguments: {'initialDokter': dokterList[index]},

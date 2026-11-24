@@ -8,6 +8,7 @@ import 'jadwal_widgets/jadwal_poli_filter.dart';
 import 'jadwal_widgets/jadwal_dokter_list.dart';
 import 'jadwal_widgets/jadwal_footer_note.dart';
 import 'package:pku_gamping_app/core/routes/app_routes.dart';
+import 'package:pku_gamping_app/core/session/session_manager.dart';
 import 'package:pku_gamping_app/widgets/app_bottom_nav.dart';
 import 'package:pku_gamping_app/widgets/hospital_brand_header.dart';
 
@@ -31,9 +32,11 @@ class JadwalScreen extends StatefulWidget {
   const JadwalScreen({
     super.key,
     this.embedded = false,
+    this.isGuestMode = false,
   });
 
   final bool embedded;
+  final bool isGuestMode;
 
   @override
   State<JadwalScreen> createState() => _JadwalScreenState();
@@ -90,6 +93,8 @@ class _JadwalScreenState extends State<JadwalScreen> {
 
     final baseTheme = Theme.of(context);
 
+    final isGuest = widget.isGuestMode || (SessionManager.isGuest && !widget.embedded);
+
     return Theme(
       data: baseTheme.copyWith(
         textTheme: baseTheme.textTheme.apply(fontFamily: kFontFamily),
@@ -101,7 +106,91 @@ class _JadwalScreenState extends State<JadwalScreen> {
           child: Column(
             children: [
               // ── Brand Header ──
-              const HospitalBrandHeader(useGradient: true),
+              HospitalBrandHeader(
+                useGradient: true,
+                leadingWidget: isGuest
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 18,
+                        ),
+                        color: kInk,
+                        onPressed: () {
+                          SessionManager.setGuestMode(false);
+                          Navigator.of(context).pop();
+                        },
+                      )
+                    : null,
+                trailingWidget: isGuest
+                    ? TextButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRoutes.login);
+                        },
+                        icon: const Icon(Icons.login_rounded, size: 16),
+                        label: const Text(
+                          'Masuk',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: kPrimaryBlue,
+                          backgroundColor: const Color(0xFFEFF6FF),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+
+              // ── Banner Mode Tamu ──
+              if (isGuest)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEFF6FF),
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFDBEAFE), width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFDBEAFE),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: Color(0xFF0D4FC1),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Mode Tamu: Anda dapat melihat jadwal & poli. Masuk untuk mendaftar antrean.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF1E40AF),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               // ── Konten Scrollable ──
               Expanded(
@@ -161,8 +250,8 @@ class _JadwalScreenState extends State<JadwalScreen> {
                 ),
               ),
 
-              // ── Bottom Navigation ──
-              if (!widget.embedded)
+              // ── Bottom Navigation atau Sticky Action untuk Tamu ──
+              if (!widget.embedded && !isGuest)
                 AppBottomNav(
                   selectedIndex: 3,
                   onItemSelected: (index) {
@@ -177,6 +266,47 @@ class _JadwalScreenState extends State<JadwalScreen> {
                   onDaftarPressed: () {
                     Navigator.pushNamed(context, AppRoutes.pendaftaran);
                   },
+                )
+              else if (isGuest)
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        top: BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRoutes.login);
+                        },
+                        icon: const Icon(Icons.login_rounded, size: 20),
+                        label: const Text(
+                          'Masuk untuk Mendaftar Antrean',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryBlue,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),

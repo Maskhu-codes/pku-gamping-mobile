@@ -586,6 +586,8 @@ class _RegisterScreenState extends State<RegisterScreen>
       if (!ok) return;
     }
 
+    if (!mounted) return;
+
     if (_isNikAlreadyRegistered) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

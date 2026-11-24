@@ -857,7 +857,7 @@ class RegisterStep2Pasien extends StatelessWidget {
 
     return DropdownButtonFormField<WilayahItem>(
       key: dropdownKey,
-      value: validItem,
+      initialValue: validItem,
       onChanged: items.isEmpty ? null : onChanged,
       isExpanded: true,
       style: const TextStyle(
