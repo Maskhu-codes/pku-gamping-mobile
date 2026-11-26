@@ -8,19 +8,7 @@ import 'package:pku_gamping_app/services/app_feedback_service.dart';
 class ApiClient {
   ApiClient._();
 
-  // ===========================================================================
-  // KONFIGURASI BASE URL BACKEND
-  // ===========================================================================
-  // Pilih salah satu URL di bawah sesuai lingkungan pengujian Anda:
-  // - emulatorUrl: Jika backend jalan di laptop dan dites via Android Emulator
-  // - lanUrl     : Jika dites via HP fisik (sesuaikan IP laptop Anda)
-  // - productionUrl: Jika backend sudah dideploy ke server online/staging
-  static const String emulatorUrl = 'http://10.0.2.2/pkug-onlineapi-master/index.php/api';
-  static const String localUrl = 'http://localhost/pkug-onlineapi-master/index.php/api';
-  static const String lanUrl = 'http://192.168.1.100/pkug-onlineapi-master/index.php/api';
-  static const String productionUrl = 'https://simrs.pkugamping.com/api';
-
-  /// URL aktif yang digunakan oleh aplikasi, mengacu ke [AppConfig.baseUrl].
+  /// URL aktif yang digunakan oleh aplikasi, mengacu ke konfigurasi terpusat di [AppConfig.baseUrl].
   static String baseUrl = AppConfig.baseUrl;
 
   static Dio? _dioInstance;

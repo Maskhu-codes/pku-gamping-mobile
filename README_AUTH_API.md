@@ -14,6 +14,7 @@ Dokumen ini berisi rangkuman lengkap mengenai **arsitektur, alur kerja (*flow*),
    - [3. Halaman Registrasi (Cek NIK, Alur Pasien Baru vs Lama, Wilayah Cascading)](#3-halaman-registrasi-libscreensregister_screendart)
    - [4. Halaman Lupa Kata Sandi (Request OTP)](#4-halaman-lupa-kata-sandi-libscreensforgot_password_screendart)
    - [5. Halaman Verifikasi OTP (Validasi & Resend)](#5-halaman-verifikasi-otp-libscreensotp_screendart)
+     - [Konsep Keamanan: Mengapa Ada Dua Token (RST-... vs reset_token)?](#c-konsep-keamanan-mengapa-ada-dua-token-rst--vs-reset_token)
    - [6. Halaman Reset Password (Ubah Sandi Baru)](#6-halaman-reset-password-libscreensreset_password_screendart)
 4. [File Pendukung (Service & Master Data)](#-file-pendukung)
 
@@ -569,6 +570,33 @@ Halaman ini mengelola formulir pendaftaran 3 langkah (*stepper*) dengan percaban
       _startCountdown();
     } catch (e) { ... }
 ```
+
+#### C. Konsep Keamanan: Mengapa Ada Dua Token (`RST-...` vs `reset_token`)?
+
+Pada tabel database `ta_password_reset`, kolom token mengalami transisi dari **Token Pertama (`RST-...`)** menjadi **Token Kedua (`ebb98...`)**:
+
+1. **Token Pertama: `RST-...` (`otp_ref`) — "Nomor Resi Transaksi Pengiriman OTP"**
+   - **Kapan Dibuat:** Saat user menekan tombol *"Kirim OTP"*.
+   - **Fungsi:** Sebagai **Nomor Resi / ID Transaksi** (seperti no. resi pengiriman kurir). Nomor ini menjadi tanda pengenal: *"Ini adalah transaksi pengiriman OTP untuk akun pasien terkait"*.
+   - **Status Hak Akses:** **TIDAK BISA dan DILARANG** digunakan untuk mengganti kata sandi karena identitas user belum terbukti.
+   - **Proses Verifikasi:** Saat user mengetik 6 digit OTP di HP, HP mengirim kode OTP beserta nomor referensi `RST-...` ini. Jika cocok, tahap pengiriman OTP dinyatakan selesai.
+
+2. **Token Kedua: `ebb98...` (`reset_token`) — "Hak Akses / Izin Ganti Sandi Resmi"**
+   - **Kapan Dibuat:** Dibuat seketika **SETELAH** user berhasil mengetik 6 digit OTP dengan benar.
+   - **Fungsi:** Sebagai **HAK AKSES / TIKET IZIN RESMI** untuk menyimpan kata sandi baru di database.
+   - **Aturan Keamanan:**
+     1. **Hanya Diberikan ke Pemilik Asli:** Hanya dibuat jika user sudah lolos verifikasi OTP 6 digit. Pihak asing/hacker tidak akan pernah bisa mendapatkan token ini.
+     2. **Wajib Disertakan:** Tanpa menyertakan token ini di form kata sandi baru, server akan menolak permintaan ubah kata sandi.
+     3. **Masa Berlaku Terbatas (30 Menit) & Hangus Otomatis:** Setelah kata sandi baru berhasil disimpan, token ini langsung ditandai **`USED`** (hangus permanen) agar tidak bisa dipakai ulang.
+
+##### Ringkasan Perbedaan Dua Token:
+| Pembeda | Token 1: `RST-9A8B...` (`otp_ref`) | Token 2: `ebb98bf...` (`reset_token`) |
+| :--- | :--- | :--- |
+| **Dibuat Saat** | User baru meminta kode OTP | User sudah sukses lolos verifikasi OTP |
+| **Peran Utama** | Nomor resi transaksi pengiriman OTP | Hak akses / surat izin resmi ganti sandi |
+| **Boleh Ganti Sandi?** | **TIDAK BOLEH** (identitas belum terbukti) | **BOLEH** (identitas sudah sah terbukti) |
+| **Status Akhir** | Ditukar menjadi `reset_token` | Berubah menjadi `'USED'` setelah sandi disimpan |
+| **Jika Kedaluwarsa** | Berubah menjadi `'EXPIRED'` | Berubah menjadi `'EXPIRED'` |
 
 ---
 

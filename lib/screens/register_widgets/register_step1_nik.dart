@@ -52,7 +52,7 @@ class RegisterStep1Nik extends StatelessWidget {
       buttonFgColor = Colors.white;
     }
 
-    // Warna tombol bawah "Cek NIK & Lanjutkan"
+    // Warna tombol bawah "Lanjutkan"
     Color mainButtonBg;
     Color mainButtonFg;
     if (nikHasBeenChecked && isNikAlreadyRegistered) {
@@ -429,7 +429,7 @@ class RegisterStep1Nik extends StatelessWidget {
                     ? (existingMr != null && existingMr!.isNotEmpty
                         ? 'Lanjut Buat Akun (Langkah 3) →'
                         : 'Lanjut Isi Biodata (Langkah 2) →')
-                    : 'Cek NIK & Lanjutkan →',
+                    : 'Lanjutkan →',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

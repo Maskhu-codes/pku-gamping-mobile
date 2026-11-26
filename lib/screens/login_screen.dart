@@ -82,10 +82,9 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleGuestMode() async {
     await SessionManager.setGuestMode(true);
     if (!mounted) return;
-    Navigator.pushNamed(
+    Navigator.pushReplacementNamed(
       context,
-      AppRoutes.jadwal,
-      arguments: {'isGuest': true},
+      AppRoutes.home,
     );
   }
 
@@ -179,16 +178,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 12),
-
-                  // Tombol Ramping Mode Tamu di Pojok Kanan Atas
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _GuestModeTopPill(
-                      onTap: _handleGuestMode,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   // Logo PKU
                   _PkuLogoWidget(size: 84),
@@ -325,13 +315,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                         // Tombol Jelajahi sebagai Tamu
                         OutlinedButton.icon(
-                          onPressed: () {
-                            SessionManager.setGuestMode(true);
-                            Navigator.pushReplacementNamed(
-                              context,
-                              AppRoutes.home,
-                            );
-                          },
+                          onPressed: _handleGuestMode,
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
                             side: const BorderSide(
@@ -489,58 +473,4 @@ Widget _primaryButton({
             ),
     ),
   );
-}
-
-// Widget Pill Mode Tamu Ramping di Pojok Kanan Atas
-class _GuestModeTopPill extends StatelessWidget {
-  const _GuestModeTopPill({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF), // soft blue background
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFBFDBFE), // border-blue-200
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.visibility_outlined,
-                size: 15,
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Mode Tamu',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 10,
-                color: AppColors.primary,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -73,6 +73,56 @@ class WilayahService {
   // ── Cache in-memory hanya untuk provinsi ──
   static List<WilayahItem>? _cachedProvinsi;
 
+  static final Map<String, String> _provinsiCodeMap = {
+    'ACEH': '11',
+    'SUMATERA UTARA': '12',
+    'SUMATERA BARAT': '13',
+    'RIAU': '14',
+    'JAMBI': '15',
+    'SUMATERA SELATAN': '16',
+    'BENGKULU': '17',
+    'LAMPUNG': '18',
+    'KEPULAUAN BANGKA BELITUNG': '19',
+    'KEPULAUAN RIAU': '21',
+    'DKI JAKARTA': '31',
+    'JAWA BARAT': '32',
+    'JAWA TENGAH': '33',
+    'DAERAH ISTIMEWA YOGYAKARTA': '34',
+    'D.I. YOGYAKARTA': '34',
+    'JAWA TIMUR': '35',
+    'BANTEN': '36',
+    'BALI': '51',
+    'NUSA TENGGARA BARAT': '52',
+    'NUSA TENGGARA TIMUR': '53',
+    'KALIMANTAN BARAT': '61',
+    'KALIMANTAN TENGAH': '62',
+    'KALIMANTAN SELATAN': '63',
+    'KALIMANTAN TIMUR': '64',
+    'KALIMANTAN UTARA': '65',
+    'SULAWESI UTARA': '71',
+    'SULAWESI TENGAH': '72',
+    'SULAWESI SELATAN': '73',
+    'SULAWESI TENGGARA': '74',
+    'GORONTALO': '75',
+    'SULAWESI BARAT': '76',
+    'MALUKU': '81',
+    'MALUKU UTARA': '82',
+    'PAPUA BARAT': '91',
+    'PAPUA': '92',
+  };
+
+  static String _resolveKodePropinsi(String input) {
+    final clean = input.trim().toUpperCase();
+    if (RegExp(r'^\d+$').hasMatch(clean)) return clean;
+    if (_provinsiCodeMap.containsKey(clean)) return _provinsiCodeMap[clean]!;
+    for (final entry in _provinsiCodeMap.entries) {
+      if (clean.contains(entry.key) || entry.key.contains(clean)) {
+        return entry.value;
+      }
+    }
+    return clean;
+  }
+
   /// Ambil daftar provinsi (dengan fallback offline jika backend offline)
   static Future<List<WilayahItem>> getProvinsi() async {
     if (_cachedProvinsi != null && _cachedProvinsi!.isNotEmpty) {
@@ -90,9 +140,9 @@ class WilayahService {
       debugPrint('[WilayahService] getProvinsi error: $e');
     }
 
-    // Fallback data lokal jika API gagal/kosong
+    // Fallback data lokal jika API gagal/kosong dengan kode provinsi standar
     final fallback = WilayahData.provinsiList
-        .map((p) => WilayahItem(kode: p, nama: toTitleCase(p)))
+        .map((p) => WilayahItem(kode: _resolveKodePropinsi(p), nama: toTitleCase(p)))
         .toList();
     _cachedProvinsi = fallback;
     return fallback;
@@ -101,12 +151,16 @@ class WilayahService {
   /// Ambil daftar kabupaten/kota berdasarkan provinsi (kode atau nama).
   /// Menampilkan data murni dari API database SIMRS.
   static Future<List<WilayahItem>> getKabupaten(String kdPropinsi, [String? nmPropinsi]) async {
-    if (kdPropinsi.isEmpty && (nmPropinsi == null || nmPropinsi.isEmpty)) return [];
+    final code = _resolveKodePropinsi(kdPropinsi.isNotEmpty ? kdPropinsi : (nmPropinsi ?? ''));
+    if (code.isEmpty && (nmPropinsi == null || nmPropinsi.isEmpty)) return [];
 
     try {
       final response = await _dio.get(
         '/wilayah/kabupaten',
-        queryParameters: {'fs_kd_propinsi': kdPropinsi},
+        queryParameters: {
+          'fs_kd_propinsi': code,
+          if (nmPropinsi != null && nmPropinsi.isNotEmpty) 'fs_nm_propinsi': nmPropinsi,
+        },
       );
       final apiItems = _parseList(response.data, 'FS_KD_KABUPATEN', 'FS_NM_KABUPATEN');
       if (apiItems.isNotEmpty) {
@@ -117,7 +171,7 @@ class WilayahService {
     }
 
     // Fallback data lokal hanya jika API/database kosong atau error koneksi
-    final queryName = (nmPropinsi != null && nmPropinsi.trim().isNotEmpty) ? nmPropinsi.trim() : kdPropinsi.trim();
+    final queryName = (nmPropinsi != null && nmPropinsi.trim().isNotEmpty) ? nmPropinsi.trim() : code;
     final localNames = WilayahData.getKabupatenByProvinsi(queryName);
     return localNames.map((k) => WilayahItem(kode: k, nama: toTitleCase(k))).toList();
   }
@@ -129,7 +183,10 @@ class WilayahService {
     try {
       final response = await _dio.get(
         '/wilayah/kecamatan',
-        queryParameters: {'fs_kd_kabupaten': kdKabupaten},
+        queryParameters: {
+          'fs_kd_kabupaten': kdKabupaten,
+          if (nmKabupaten != null && nmKabupaten.isNotEmpty) 'fs_nm_kabupaten': nmKabupaten,
+        },
       );
       final apiItems = _parseList(response.data, 'FS_KD_KECAMATAN', 'FS_NM_KECAMATAN');
       if (apiItems.isNotEmpty) {
@@ -152,7 +209,10 @@ class WilayahService {
     try {
       final response = await _dio.get(
         '/wilayah/kelurahan',
-        queryParameters: {'fs_kd_kecamatan': kdKecamatan},
+        queryParameters: {
+          'fs_kd_kecamatan': kdKecamatan,
+          if (nmKecamatan != null && nmKecamatan.isNotEmpty) 'fs_nm_kecamatan': nmKecamatan,
+        },
       );
       final apiItems = _parseList(response.data, 'FS_KD_KELURAHAN', 'FS_NM_KELURAHAN');
       if (apiItems.isNotEmpty) {
@@ -220,8 +280,8 @@ class WilayahService {
   ) {
     List<dynamic> rawList;
 
-    if (responseData is Map<String, dynamic>) {
-      final dataField = responseData['data'];
+    if (responseData is Map) {
+      final dataField = responseData['data'] ?? responseData['result'] ?? responseData['items'];
       if (dataField is List) {
         rawList = dataField;
       } else {
@@ -236,9 +296,23 @@ class WilayahService {
     final items = <WilayahItem>[];
     final seen = <String>{};
     for (final item in rawList) {
-      if (item is Map<String, dynamic>) {
-        final kode = (item[kodeKey] ?? item[kodeKey.toLowerCase()] ?? '').toString().trim();
-        final rawNama = (item[namaKey] ?? item[namaKey.toLowerCase()] ?? '').toString().trim();
+      if (item is Map) {
+        final kode = (item[kodeKey] ??
+                item[kodeKey.toLowerCase()] ??
+                item[kodeKey.toUpperCase()] ??
+                item['kode'] ??
+                item['id'] ??
+                '')
+            .toString()
+            .trim();
+        final rawNama = (item[namaKey] ??
+                item[namaKey.toLowerCase()] ??
+                item[namaKey.toUpperCase()] ??
+                item['nama'] ??
+                item['name'] ??
+                '')
+            .toString()
+            .trim();
         if (kode.isNotEmpty && rawNama.isNotEmpty && seen.add(kode)) {
           items.add(WilayahItem(kode: kode, nama: toTitleCase(rawNama)));
         }

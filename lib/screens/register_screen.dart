@@ -580,10 +580,17 @@ class _RegisterScreenState extends State<RegisterScreen>
       return;
     }
 
-    // Jika belum dicek, otomatis cek NIK terlebih dahulu
+    // Jika belum dicek, wajibkan user menekan tombol Cek NIK terlebih dahulu
     if (!_nikHasBeenChecked) {
-      final ok = await _cekNikAsync();
-      if (!ok) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Silakan cek NIK terlebih dahulu dengan menekan tombol Cek NIK.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
     }
 
     if (!mounted) return;
