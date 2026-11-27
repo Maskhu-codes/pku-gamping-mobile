@@ -12,23 +12,29 @@ const _page = Color(0xFFF6F8FA);
 /// Layar Detail Antrean Rawat Jalan.
 ///
 /// Menampilkan informasi lengkap kunjungan pasien: nomor antrean,
-/// poli, dokter, jadwal, dan lokasi ruangan. Seluruh data ditarik
+/// poli, dokter, dan jadwal. Seluruh data ditarik
 /// dari [AntreanService] sehingga selalu konsisten dengan
 /// data pendaftaran yang baru saja dilakukan.
-class QueueDetailScreen extends StatelessWidget {
+class QueueDetailScreen extends StatefulWidget {
   const QueueDetailScreen({super.key, this.onCancel, this.onContact});
 
   final VoidCallback? onCancel;
   final VoidCallback? onContact;
+
+  @override
+  State<QueueDetailScreen> createState() => _QueueDetailScreenState();
+}
+
+class _QueueDetailScreenState extends State<QueueDetailScreen> {
+  bool _isCancelling = false;
 
   Future<void> _showHelp(BuildContext context) {
     return showDialog<void>(
       context: context,
       builder: (context) => Theme(
         data: Theme.of(context).copyWith(
-          textTheme: Theme.of(
-            context,
-          ).textTheme.apply(fontFamily: 'Plus Jakarta Sans'),
+          textTheme: Theme.of(context).textTheme
+              .apply(fontFamily: 'Plus Jakarta Sans'),
         ),
         child: AlertDialog(
           title: const Text('Bantuan antrean'),
@@ -161,17 +167,32 @@ class QueueDetailScreen extends StatelessWidget {
       ),
     );
 
-    if (shouldCancel == true) {
-      if (!context.mounted) return;
+    if (shouldCancel != true || !context.mounted) return;
 
-      // Bersihkan state antrean dari service terpusat
-      AntreanService.kosongkanAntrean();
+    setState(() => _isCancelling = true);
+    try {
+      final antrean = AntreanService.antreanAktif.value;
+      if (antrean == null) {
+        throw Exception(
+          'Booking aktif tidak ditemukan. Silakan muat ulang antrean.',
+        );
+      }
+
+      await AntreanService.batalkanBooking(fsKdTrs: antrean.noBooking);
+      if (!context.mounted) return;
 
       Navigator.of(context).pushNamedAndRemoveUntil(
         AppRoutes.home,
         (route) => false,
         arguments: TopNotificationType.queueCancelled,
       );
+    } catch (e) {
+      if (!context.mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
     }
   }
 
@@ -205,7 +226,6 @@ class QueueDetailScreen extends StatelessWidget {
                           nomorAntrean: antrean?.nomorAntrean ?? 'A-000',
                           nomorSebelumnya: antrean?.nomorSebelumnya ?? '-',
                           poli: antrean?.poli ?? '-',
-                          gedungLokasi: antrean?.gedungLokasi ?? '-',
                         ),
                         const SizedBox(height: 24),
 
@@ -215,7 +235,6 @@ class QueueDetailScreen extends StatelessWidget {
                           dokter: antrean?.dokter ?? '-',
                           tanggalJam:
                               '${antrean?.tanggal ?? '-'} • ${antrean?.jam ?? '-'}',
-                          gedungLokasi: antrean?.gedungLokasi ?? '-',
                           jenisJaminan: antrean?.jenisJaminan ?? '-',
                         ),
                         const SizedBox(height: 26),
@@ -224,7 +243,9 @@ class QueueDetailScreen extends StatelessWidget {
                         SizedBox(
                           height: 52,
                           child: TextButton(
-                            onPressed: () => _confirmCancel(context),
+                            onPressed: _isCancelling
+                                ? null
+                                : () => _confirmCancel(context),
                             style: TextButton.styleFrom(
                               backgroundColor: const Color(0xFFF0F2F5),
                               foregroundColor: const Color(0xFF454B59),
@@ -232,13 +253,24 @@ class QueueDetailScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(13),
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.close_rounded, size: 21),
-                                SizedBox(width: 5),
+                                if (_isCancelling)
+                                  const SizedBox(
+                                    width: 21,
+                                    height: 21,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                else
+                                  const Icon(Icons.close_rounded, size: 21),
+                                const SizedBox(width: 5),
                                 Text(
-                                  'Batalkan Antrean',
+                                  _isCancelling
+                                      ? 'Memproses...'
+                                      : 'Batalkan Antrean',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -257,7 +289,8 @@ class QueueDetailScreen extends StatelessWidget {
                           style: TextStyle(color: _muted, fontSize: 12),
                         ),
                         TextButton.icon(
-                          onPressed: onContact ??
+                          onPressed:
+                              widget.onContact ??
                               () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -368,13 +401,11 @@ class _QueueNumberCard extends StatelessWidget {
     required this.nomorAntrean,
     required this.nomorSebelumnya,
     required this.poli,
-    required this.gedungLokasi,
   });
 
   final String nomorAntrean;
   final String nomorSebelumnya;
   final String poli;
-  final String gedungLokasi;
 
   @override
   Widget build(BuildContext context) {
@@ -470,11 +501,9 @@ class _QueueNumberCard extends StatelessWidget {
                         height: 1.4,
                       ),
                       children: [
-                        const TextSpan(
-                          text: 'Silakan bersiap di ruang tunggu ',
-                        ),
+                        const TextSpan(text: 'Silakan bersiap di poliklinik '),
                         TextSpan(
-                          text: '$poli $gedungLokasi',
+                          text: poli,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         const TextSpan(text: ' saat antrean mencapai '),
@@ -504,14 +533,12 @@ class _VisitInformationCard extends StatelessWidget {
     required this.poli,
     required this.dokter,
     required this.tanggalJam,
-    required this.gedungLokasi,
     required this.jenisJaminan,
   });
 
   final String poli;
   final String dokter;
   final String tanggalJam;
-  final String gedungLokasi;
   final String jenisJaminan;
 
   @override
@@ -587,14 +614,6 @@ class _VisitInformationCard extends StatelessWidget {
             iconBackground: const Color(0xFFE8E9EB),
             label: 'Waktu Periksa',
             value: tanggalJam,
-          ),
-          const SizedBox(height: 15),
-          _VisitInformationRow(
-            icon: Icons.location_on_outlined,
-            iconColor: const Color(0xFF795500),
-            iconBackground: const Color(0xFFFFDEA3),
-            label: 'Lokasi Pelayanan',
-            value: gedungLokasi,
           ),
         ],
       ),

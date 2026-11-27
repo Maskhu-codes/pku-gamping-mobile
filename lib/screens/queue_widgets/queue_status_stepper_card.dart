@@ -9,10 +9,7 @@ import 'package:pku_gamping_app/core/theme/app_colors.dart';
 /// - Status 2: Triage Selesai (Menunggu Panggilan Dokter Poli)
 /// - Status 3: Poli Selesai (Menuju Farmasi / Selesai Pemeriksaan)
 class QueueStatusStepperCard extends StatelessWidget {
-  const QueueStatusStepperCard({
-    super.key,
-    required this.currentStatus,
-  });
+  const QueueStatusStepperCard({super.key, required this.currentStatus});
 
   /// Status alur dari backend SIMRS (0 - 3)
   final int currentStatus;
@@ -61,9 +58,9 @@ class QueueStatusStepperCard extends StatelessWidget {
   String get _statusDescription {
     switch (currentStatus) {
       case 1:
-        return 'Silakan menuju ruang triage untuk asesmen awal oleh perawat.';
+        return 'Silakan menuju petugas triage untuk asesmen awal oleh perawat.';
       case 2:
-        return 'Asesmen perawat selesai. Silakan menunggu panggilan dokter di ruang tunggu poli.';
+        return 'Asesmen perawat selesai. Silakan menunggu panggilan dokter sesuai poli Anda.';
       case 3:
         return 'Pemeriksaan dokter telah selesai. Silakan menuju loket farmasi untuk pengambilan obat.';
       case 0:
@@ -140,7 +137,10 @@ class QueueStatusStepperCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _statusBadgeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -247,7 +247,11 @@ class QueueStatusStepperCard extends StatelessWidget {
 
     if (isCompleted) {
       circleBg = const Color(0xFF16A34A);
-      centerWidget = const Icon(Icons.check_rounded, color: Colors.white, size: 18);
+      centerWidget = const Icon(
+        Icons.check_rounded,
+        color: Colors.white,
+        size: 18,
+      );
     } else if (isActive) {
       circleBg = AppColors.primary;
       centerWidget = Icon(data.icon, color: Colors.white, size: 17);
@@ -294,10 +298,14 @@ class QueueStatusStepperCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: isActive ? FontWeight.w700 : (isCompleted ? FontWeight.w600 : FontWeight.w500),
+              fontWeight: isActive
+                  ? FontWeight.w700
+                  : (isCompleted ? FontWeight.w600 : FontWeight.w500),
               color: isActive
                   ? AppColors.textPrimary
-                  : (isCompleted ? const Color(0xFF16A34A) : AppColors.textMuted),
+                  : (isCompleted
+                        ? const Color(0xFF16A34A)
+                        : AppColors.textMuted),
             ),
           ),
           Text(

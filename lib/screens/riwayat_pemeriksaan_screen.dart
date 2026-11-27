@@ -87,8 +87,10 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage =
-              e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+          _errorMessage = e.toString().replaceFirst(
+            RegExp(r'^Exception:\s*'),
+            '',
+          );
         });
       }
     } finally {
@@ -107,8 +109,8 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
       final nextPage = _currentPage + 1;
       final result =
           await PemeriksaanPenunjangService.getRiwayatPemeriksaanPaged(
-        page: nextPage,
-      );
+            page: nextPage,
+          );
 
       if (mounted) {
         setState(() {
@@ -118,7 +120,9 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[RiwayatPemeriksaanScreen] Gagal memuat halaman berikutnya: $e');
+      debugPrint(
+        '[RiwayatPemeriksaanScreen] Gagal memuat halaman berikutnya: $e',
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoadingMore = false);
@@ -174,9 +178,7 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
                 ],
               ),
             ),
-            Expanded(
-              child: _buildBody(),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
@@ -216,10 +218,7 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF4B5563),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -277,11 +276,172 @@ class _RiwayatPemeriksaanScreenState extends State<RiwayatPemeriksaanScreen> {
           return _RiwayatHistoryCard(
             key: Key('riwayat_card_$index'),
             item: item,
-            onTap: widget.onRiwayatTap == null
-                ? null
-                : () => widget.onRiwayatTap!(item),
+            onTap: () {
+              if (widget.onRiwayatTap != null) {
+                widget.onRiwayatTap!(item);
+              } else {
+                _showDetail(context, item);
+              }
+            },
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _showDetail(BuildContext context, RiwayatPemeriksaan item) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.78,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDE3EA),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Detail Riwayat',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _RiwayatDetailRow(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Tanggal Kunjungan',
+                    value: item.tanggal,
+                  ),
+                  if (item.kdReg.isNotEmpty)
+                    _RiwayatDetailRow(
+                      icon: Icons.confirmation_number_outlined,
+                      label: 'Kode Registrasi',
+                      value: item.kdReg,
+                    ),
+                  _RiwayatDetailRow(
+                    icon: Icons.local_hospital_outlined,
+                    label: 'Poli',
+                    value: item.poli,
+                  ),
+                  _RiwayatDetailRow(
+                    icon: Icons.person_outline,
+                    label: 'Dokter Pemeriksa',
+                    value: item.dokter,
+                  ),
+                  _RiwayatDetailRow(
+                    icon: Icons.medication_outlined,
+                    label: 'Terapi',
+                    value: item.terapi.isNotEmpty
+                        ? item.terapi
+                        : 'Tidak ada terapi yang tercatat',
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Tutup',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RiwayatDetailRow extends StatelessWidget {
+  const _RiwayatDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

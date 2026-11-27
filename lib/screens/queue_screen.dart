@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/routes/app_router.dart';
 import 'package:pku_gamping_app/core/session/session_manager.dart';
@@ -98,13 +99,10 @@ class _QueueScreenState extends State<QueueScreen> {
     _statusPollingTimer?.cancel();
     _pollStatusAntrean();
     _pollAntreanFarmasi();
-    _statusPollingTimer = Timer.periodic(
-      widget.pollingInterval,
-      (_) {
-        _pollStatusAntrean();
-        _pollAntreanFarmasi();
-      },
-    );
+    _statusPollingTimer = Timer.periodic(widget.pollingInterval, (_) {
+      _pollStatusAntrean();
+      _pollAntreanFarmasi();
+    });
   }
 
   void _stopStatusPolling() {
@@ -171,79 +169,85 @@ class _QueueScreenState extends State<QueueScreen> {
                       : RefreshIndicator(
                           key: const ValueKey('queue_loaded_content'),
                           onRefresh: _muatBookingAktif,
-                        child: ValueListenableBuilder<AntreanAktifModel?>(
-                          valueListenable: AntreanService.antreanAktif,
-                          builder: (context, antrean, _) {
-                            if (antrean == null) {
-                              return _buildEmptyQueue(context);
-                            }
+                          child: ValueListenableBuilder<AntreanAktifModel?>(
+                            valueListenable: AntreanService.antreanAktif,
+                            builder: (context, antrean, _) {
+                              if (antrean == null) {
+                                return _buildEmptyQueue(context);
+                              }
 
-                    return ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context)
-                          .copyWith(overscroll: false),
-                      child: SingleChildScrollView(
-                        physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.only(bottom: 28),
-                        child: Column(
-                          children: [
-                            // ── Kartu Ringkasan Dokter ──
-                            DoctorSummaryCard(
-                              dokter: antrean.dokter,
-                              poli: antrean.poli,
-                              tanggal: antrean.tanggal,
-                              jam: antrean.jam,
-                              gedungLokasi: antrean.gedungLokasi,
-                            ),
+                              return ScrollConfiguration(
+                                behavior: ScrollConfiguration.of(context)
+                                    .copyWith(overscroll: false),
+                                child: SingleChildScrollView(
+                                  physics: const ClampingScrollPhysics(),
+                                  padding: const EdgeInsets.only(bottom: 28),
+                                  child: Column(
+                                    children: [
+                                      // ── Kartu Ringkasan Dokter ──
+                                      DoctorSummaryCard(
+                                        dokter: antrean.dokter,
+                                        poli: antrean.poli,
+                                        tanggal: antrean.tanggal,
+                                        jam: antrean.jam,
+                                      ),
 
-                            // ── Kartu Antrean Aktif + Nomor Live ──
-                            ActiveQueueCard(
-                              nomorAntrean: antrean.nomorAntrean,
-                              nomorDilayani: antrean.nomorSedangDilayani,
-                              sisaAntrean: antrean.sisaAntreanLive,
-                              poli: antrean.poli,
-                              isUpcomingSchedule: antrean.isUpcomingSchedule,
-                              tanggalJadwal: antrean.tanggal,
-                              lastUpdatedLabel: _lastUpdatedLabel,
-                              soundReminderEnabled: _soundReminderEnabled,
-                              onSoundReminderChanged: (enabled) {
-                                setState(
-                                  () => _soundReminderEnabled = enabled,
-                                );
-                              },
-                              onDetailsPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.queueDetail,
-                                );
-                              },
-                            ),
+                                      // ── Kartu Antrean Aktif + Nomor Live ──
+                                      ActiveQueueCard(
+                                        nomorAntrean: antrean.nomorAntrean,
+                                        nomorDilayani:
+                                            antrean.nomorSedangDilayani,
+                                        sisaAntrean: antrean.sisaAntreanLive,
+                                        poli: antrean.poli,
+                                        isUpcomingSchedule:
+                                            antrean.isUpcomingSchedule,
+                                        tanggalJadwal: antrean.tanggal,
+                                        lastUpdatedLabel: _lastUpdatedLabel,
+                                        soundReminderEnabled:
+                                            _soundReminderEnabled,
+                                        onSoundReminderChanged: (enabled) {
+                                          setState(
+                                            () =>
+                                                _soundReminderEnabled = enabled,
+                                          );
+                                        },
+                                        onDetailsPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.queueDetail,
+                                          );
+                                        },
+                                      ),
 
-                            // ── Stepper Visual Status Antrean Poli (0 - 3) ──
-                            QueueStatusStepperCard(
-                              currentStatus: antrean.statusPasien,
-                            ),
+                                      // ── Stepper Visual Status Antrean Poli (0 - 3) ──
+                                      QueueStatusStepperCard(
+                                        currentStatus: antrean.statusPasien,
+                                      ),
 
-                            // ── Antrean Farmasi (Apotek) Real-time ──
-                            ValueListenableBuilder<AntreanFarmasiModel?>(
-                              valueListenable: AntreanService.antreanFarmasi,
-                              builder: (context, farmasi, _) {
-                                return QueueFarmasiCard(
-                                  farmasi: farmasi,
-                                  onRefresh: _pollAntreanFarmasi,
-                                  lastUpdatedLabel: _lastUpdatedLabel,
-                                );
-                              },
-                            ),
+                                      // ── Antrean Farmasi (Apotek) Real-time ──
+                                      ValueListenableBuilder<
+                                        AntreanFarmasiModel?
+                                      >(
+                                        valueListenable:
+                                            AntreanService.antreanFarmasi,
+                                        builder: (context, farmasi, _) {
+                                          return QueueFarmasiCard(
+                                            farmasi: farmasi,
+                                            onRefresh: _pollAntreanFarmasi,
+                                            lastUpdatedLabel: _lastUpdatedLabel,
+                                          );
+                                        },
+                                      ),
 
-                            // ── Nilai Layanan SIGAP ──
-                            const QueueServiceValueCard(),
-                          ],
+                                      // ── Nilai Layanan SIGAP ──
+                                      const QueueServiceValueCard(),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
                 ),
               ),
 
@@ -287,8 +291,7 @@ class _QueueScreenState extends State<QueueScreen> {
 
   Widget _buildEmptyQueue(BuildContext context) {
     return ScrollConfiguration(
-      behavior:
-          ScrollConfiguration.of(context).copyWith(overscroll: false),
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 28),
@@ -313,8 +316,7 @@ class _QueueScreenState extends State<QueueScreen> {
                   const AppEmptyState(
                     icon: Icons.calendar_today_outlined,
                     title: 'Belum ada booking',
-                    message:
-                        'Belum ada booking pendaftaran aktif. Silakan pilih layanan dokter dan buat antrean terlebih dahulu.',
+                    message: 'Belum ada booking pendaftaran aktif. Silakan pilih layanan dokter dan buat antrean terlebih dahulu.',
                     circleSize: 64,
                     iconSize: 30,
                   ),
@@ -324,7 +326,10 @@ class _QueueScreenState extends State<QueueScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        if (!GuestGuard.check(context, featureName: 'Pembuatan Antrean')) {
+                        if (!GuestGuard.check(
+                          context,
+                          featureName: 'Pembuatan Antrean',
+                        )) {
                           return;
                         }
                         Navigator.pushNamed(context, AppRoutes.pendaftaran);

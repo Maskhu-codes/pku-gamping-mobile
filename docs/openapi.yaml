@@ -887,6 +887,35 @@ paths:
         '404':
           description: Tidak ada pendaftaran aktif
 
+  /booking/batal:
+    post:
+      tags:
+        - Pendaftaran & Jadwal
+      summary: Batalkan Booking Aktif
+      description: Membatalkan booking milik pasien yang terautentikasi dengan mengisi tanggal void. Record tidak dihapus secara fisik.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fs_kd_trs
+              properties:
+                fs_kd_trs:
+                  type: string
+                  description: Nomor booking aktif
+                  example: "BO0012345A"
+      responses:
+        '200':
+          description: Booking berhasil dibatalkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+
   /bpjs/registrasi:
     post:
       tags:

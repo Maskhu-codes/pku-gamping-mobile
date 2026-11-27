@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'home_constants.dart';
 
 /// Banner Kontak Darurat (IGD 24 Jam) di bagian bawah beranda.
@@ -8,6 +10,24 @@ class HomeEmergencyContact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const igdPhoneNumber = '(0274) 6499118';
+    const igdPhoneUri = 'tel:+62276499118';
+
+    Future<void> hubungiIGD() async {
+      final uri = Uri.parse(igdPhoneUri);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aplikasi telepon tidak tersedia pada perangkat ini'),
+            backgroundColor: Color(0xFF991B1B),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -69,16 +89,7 @@ class HomeEmergencyContact extends StatelessWidget {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Menghubungi IGD RS PKU Gamping: $igdPhoneNumber'),
-                    backgroundColor: Color(0xFF991B1B),
-                    behavior: SnackBarBehavior.floating,
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-              },
+              onPressed: hubungiIGD,
               icon: const Icon(Icons.call_rounded, size: 14),
               label: const Text(
                 'Hubungi',
@@ -92,7 +103,10 @@ class HomeEmergencyContact extends StatelessWidget {
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(9),
                 ),

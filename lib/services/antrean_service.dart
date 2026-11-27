@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pku_gamping_app/core/network/api_client.dart';
@@ -108,6 +109,45 @@ class AntreanService {
     _removeFromStorage();
   }
 
+  /// Membatalkan booking aktif di backend SIMRS (`POST /booking/batal`).
+  ///
+  /// State antrean lokal hanya dikosongkan setelah backend mengonfirmasi sukses.
+  static Future<void> batalkanBooking({required String fsKdTrs}) async {
+    final bookingId = fsKdTrs.trim();
+    if (bookingId.isEmpty) {
+      throw Exception(
+        'Nomor booking tidak tersedia. Silakan muat ulang antrean.',
+      );
+    }
+
+    try {
+      final response = await ApiClient.dio.post(
+        '/booking/batal',
+        data: {'fs_kd_trs': bookingId},
+      );
+      final body = response.data;
+      if (body is! Map<String, dynamic> || body['status'] != true) {
+        final message = body is Map<String, dynamic>
+            ? body['message']?.toString()
+            : null;
+        throw Exception(
+          message?.isNotEmpty == true
+              ? message
+              : 'Booking gagal dibatalkan oleh server.',
+        );
+      }
+
+      kosongkanAntrean();
+    } on DioException catch (e) {
+      throw Exception(
+        ApiClient.extractErrorMessage(
+          e,
+          defaultMessage: 'Gagal membatalkan booking. Silakan coba lagi.',
+        ),
+      );
+    }
+  }
+
   /// Mengambil booking aktif dari backend SIMRS (`GET /booking/aktif`).
   ///
   /// Jika pasien memiliki antrean aktif pada hari ini/ke depan, mengembalikan
@@ -127,7 +167,8 @@ class AntreanService {
         final rawData = body['data'];
         if (body['status'] == true && rawData is Map<String, dynamic>) {
           final data = Map<String, dynamic>.from(rawData);
-          if ((data['namaPasien'] == null || data['namaPasien'].toString().isEmpty) &&
+          if ((data['namaPasien'] == null ||
+                  data['namaPasien'].toString().isEmpty) &&
               SessionManager.namaPasien.isNotEmpty) {
             data['namaPasien'] = SessionManager.namaPasien;
           }
